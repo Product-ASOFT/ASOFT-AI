@@ -1,6 +1,5 @@
 ﻿using ASOFT.A00.Business.Interfaces;
 using ASOFT.A00.DataAccess.Interfaces;
-using ASOFT.A00.Entities.Requests;
 using ASOFT.API.Core.Middleware;
 using ASOFT.Core.API.Httpss.Errors;
 using ASOFT.Core.API.Versions;

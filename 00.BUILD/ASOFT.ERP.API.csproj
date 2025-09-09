@@ -27,9 +27,6 @@
     <ProjectReference Include="..\00.A00\ASOFT.A00.API\ASOFT.A00.API.csproj" />
     <ProjectReference Include="..\00.CORE\ASOFT.Core.AI\ASOFT.CoreAI.API\ASOFT.CoreAI.API.csproj" />
     <ProjectReference Include="..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.API\ASOFT.Core.Business.Common.API.csproj" />
-    <ProjectReference Include="..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Devices\ASOFT.Core.Business.Devices.API\ASOFT.Core.Business.Devices.API.csproj" />
-    <ProjectReference Include="..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Files\ASOFT.Core.Business.Files.API\ASOFT.Core.Business.Files.API.csproj" />
-    <ProjectReference Include="..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Users\ASOFT.Core.Business.Users.API\ASOFT.Core.Business.Users.API.csproj" />
   </ItemGroup>
 
 </Project>

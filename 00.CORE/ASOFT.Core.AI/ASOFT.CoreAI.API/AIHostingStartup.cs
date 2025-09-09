@@ -66,21 +66,6 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<OcrService>();
         services.AddScoped<ICIF1640DAL, CIF1640DAL>();
         services.AddScoped<AgentManager>();
-        // Đăng ký kết nối Redis
-        //services.AddSingleton<IConnectionMultiplexer>(sp =>
-        //{
-        //    var redisConfigString = configuration.GetValue<string>(AIConstants.RedisConfig);
-        //    var redisConfig = ConfigurationOptions.Parse(redisConfigString ?? string.Empty);
-
-        //    redisConfig.User = "default";               // User Redis
-        //    redisConfig.Password = "asd@123";     // Password Redis
-        //    redisConfig.SyncTimeout = 30000;      // Timeout đồng bộ (ms), mặc định 5000 (5s)
-        //    redisConfig.AsyncTimeout = 30000;     // Timeout bất đồng bộ (ms)
-        //    redisConfig.ConnectTimeout = 30000;   // Timeout kết nối ban đầu
-        //    redisConfig.AbortOnConnectFail = false;
-
-        //    return ConnectionMultiplexer.Connect(redisConfig);
-        //});
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
