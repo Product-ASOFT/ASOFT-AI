@@ -39,9 +39,6 @@
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.DataAccess\ASOFT.Core.Business.Common.DataAccess.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Entities\ASOFT.Core.Business.Common.Entities.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Notification\ASOFT.Notification.Firebase\ASOFT.Notification.Firebase.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Users\ASOFT.Core.Business.Users.Business\ASOFT.Core.Business.Users.Business.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Users\ASOFT.Core.Business.Users.Entities\ASOFT.Core.Business.Users.Entities.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Common\ASOFT.Core.Common.Security\ASOFT.Core.Common.Security.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Abstractions\ASOFT.Core.DataAccess.Abstractions.csproj" />

@@ -1,9 +1,6 @@
 ﻿using ASOFT.A00.API;
 using ASOFT.Core.API.Extensions;
 using ASOFT.Core.Business.Common.API;
-using ASOFT.Core.Business.Devices.API;
-using ASOFT.Core.Business.Files.API;
-using ASOFT.Core.Business.Users.API;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -51,10 +48,7 @@ namespace ASOFT.TaskManagement.API
                   foreach (var hostingStartup in new IHostingStartup[]
                   {
                         new CommonHostingStartUp(),
-                        new UserBusinessAPIHostingStartup(),
                         new AIHostingStartup(),
-                        new DeviceInfoHostingStartup(),
-                        new FileManagementHostingStartup(),
                         new A00APIHostingStartup(),
                   })
                   {
