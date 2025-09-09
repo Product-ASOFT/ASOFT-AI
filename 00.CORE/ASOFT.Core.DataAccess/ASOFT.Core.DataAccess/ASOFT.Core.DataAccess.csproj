@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.DataAccess</PackageId>
+    <Product>ASOFT.Core.DataAccess</Product>
+    <VersionPrefix>4.0.1</VersionPrefix>
+    <FileVersion>4.0.1</FileVersion>
+    <AssemblyVersion>4.0.0.1</AssemblyVersion>
+    <AssemblyTitle>ASOFT Core Data</AssemblyTitle>
+    <Description>Core data project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Data.Core</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;Data;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>Bổ sung service lifetime cho Extensions AddASOFTDbConnections</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.Core.Common.InjectionChecker" Version="1.0.1" />
+    <PackageReference Include="ASOFT.Core.Common.Linq" Version="1.0.1" />-->
+    <PackageReference Include="Dapper" Version="2.0.35" />
+    <PackageReference Include="Dapper.SqlBuilder" Version="2.0.30" />
+    <PackageReference Include="EFCore.BulkExtensions" Version="6.0.1" />
+    <PackageReference Include="LinqKit.Microsoft.EntityFrameworkCore" Version="6.1.2" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.16" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.16" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.16" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.Linq\ASOFT.Core.Common.Linq.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.DataAccess.Abstractions\ASOFT.Core.DataAccess.Abstractions.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.DataAccess.Entity\ASOFT.Core.DataAccess.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

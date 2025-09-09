@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.Business.Users.API</PackageId>
+    <Product>ASOFT.Core.Business.Users.API</Product>
+    <VersionPrefix>4.0.2</VersionPrefix>
+    <FileVersion>4.0.2</FileVersion>
+    <AssemblyVersion>4.0.0.2</AssemblyVersion>
+    <AssemblyTitle>ASOFT Api Core Users Project.</AssemblyTitle>
+    <Description>The core api users of ASOFT.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.API.Core</RootNamespace>
+    <PackageTags>ASOFT;API;AspNet;AspNetCore;Core;ASOFT Api Core;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="OAuthentication2\**" />
+    <EmbeddedResource Remove="OAuthentication2\**" />
+    <None Remove="OAuthentication2\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IdentityServer4" Version="2.5.4" />
+    <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="2.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Users.Business\ASOFT.Core.Business.Users.Business.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Users.DataAccess\ASOFT.Core.Business.Users.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Users.Entities\ASOFT.Core.Business.Users.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

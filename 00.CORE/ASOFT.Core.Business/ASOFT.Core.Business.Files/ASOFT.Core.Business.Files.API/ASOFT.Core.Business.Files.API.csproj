@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.Business.Files.API</PackageId>
+    <Product>ASOFT.Core.Business.Files.API</Product>
+    <VersionPrefix>4.0.1</VersionPrefix>
+    <FileVersion>4.0.1</FileVersion>
+    <AssemblyVersion>4.0.0.1</AssemblyVersion>
+    <AssemblyTitle>ASOFT Api Core Files Project.</AssemblyTitle>
+    <Description>The core api files of ASOFT.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.API.Core</RootNamespace>
+    <PackageTags>ASOFT;API;AspNet;AspNetCore;Core;ASOFT Api Core;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Language.V1" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\00.A00\ASOFT.A00.Entities\ASOFT.A00.Entities.csproj" />
+    <ProjectReference Include="..\..\..\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Files.Business\ASOFT.Core.Business.Files.Business.csproj" />
+  </ItemGroup>
+
+</Project>

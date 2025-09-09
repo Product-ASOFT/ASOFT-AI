@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.API.Validation</PackageId>
+    <Product>ASOFT.Core.API.Validation</Product>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <FileVersion>4.0.0</FileVersion>
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Api Core Validation.</AssemblyTitle>
+    <Description>The core validation project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.API.Core.Validation</RootNamespace>
+    <PackageTags>ASOFT;API;AspNet;AspNetCore;Validation;Validate;Valid</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.Core.Common.InjectionChecker" Version="1.0.1" />-->
+    <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="VSR.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VSR.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="VSR.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>VSR.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

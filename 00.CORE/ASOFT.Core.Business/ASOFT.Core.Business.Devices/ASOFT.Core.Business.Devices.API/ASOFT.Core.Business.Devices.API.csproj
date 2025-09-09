@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.Business.Devices.API</PackageId>
+    <Product>ASOFT.Core.Business.Devices.API</Product>
+    <VersionPrefix>4.0.1</VersionPrefix>
+    <FileVersion>4.0.1</FileVersion>
+    <AssemblyVersion>4.0.0.1</AssemblyVersion>
+    <AssemblyTitle>ASOFT Api Core Devices Project.</AssemblyTitle>
+    <Description>The core api devices of ASOFT.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.API.Core</RootNamespace>
+    <PackageTags>ASOFT;API;AspNet;AspNetCore;Core;ASOFT Api Core;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.Notification.Firebase" Version="3.1.14" />-->
+    <PackageReference Include="MediatR" Version="8.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\00.A00\ASOFT.A00.Entities\ASOFT.A00.Entities.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Devices.Business\ASOFT.Core.Business.Devices.Business.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Business.Users.DataAccess</PackageId>
+    <Product>ASOFT.Core.Business.Users.DataAccess</Product>
+    <VersionPrefix>4.0.2</VersionPrefix>
+    <FileVersion>4.0.2</FileVersion>
+    <AssemblyVersion>4.0.0.2</AssemblyVersion>
+    <AssemblyTitle>ASOFT A00 Infrastructure</AssemblyTitle>
+    <Description>A Infrastructure Project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Core.Business.Users.DataAccess</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;A;Infrastructure;A.Infrastructure</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.35" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Abstractions\ASOFT.Core.DataAccess.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Users.Entities\ASOFT.Core.Business.Users.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

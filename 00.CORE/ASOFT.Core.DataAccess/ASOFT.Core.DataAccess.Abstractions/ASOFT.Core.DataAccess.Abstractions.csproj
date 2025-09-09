@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.DataAccess.Abstractions</PackageId>
+    <Product>ASOFT.Core.DataAccess.Abstractions</Product>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <FileVersion>4.0.0</FileVersion>
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Core Data Abstractions</AssemblyTitle>
+    <Description>Core data abstractions project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Data.Core</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;Data;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>Bổ sung service lifetime cho Extensions AddASOFTDbConnections</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.Core.Common.Linq" Version="1.0.1" />-->
+    <PackageReference Include="LINQKit.Core" Version="1.1.17" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.Linq\ASOFT.Core.Common.Linq.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.DataAccess.Entity\ASOFT.Core.DataAccess.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

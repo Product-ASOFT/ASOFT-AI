@@ -1,0 +1,5 @@
+1. First release.
+2. Add property BasePath to ConfigurationSettings.
+3. If BasePath of ConfigurationSettings is not null then have 2 case. Case 1: BasePath of ConfigurationSettings is relative path then it will be combine with BasePath of IConfigurationFileLoader.
+Case 2: BasePath of ConfigurationSettings is absulute path then it will be use.
+4. Add default environment variable name for ConfigurationSettings.

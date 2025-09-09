@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="8.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.57.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Entity\ASOFT.Core.DataAccess.Entities.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Common\ASOFT.CoreAI.Common.csproj" />
+  </ItemGroup>
+
+</Project>

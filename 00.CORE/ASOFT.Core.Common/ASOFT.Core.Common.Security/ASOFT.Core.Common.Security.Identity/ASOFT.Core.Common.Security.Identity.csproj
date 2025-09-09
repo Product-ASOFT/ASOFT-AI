@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Common.Security.Identity</PackageId>
+    <Product>ASOFT.Core.Common.Security.Identity</Product>
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <FileVersion>3.0.0</FileVersion>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Core Security Identity</AssemblyTitle>
+    <Description>Core Security Identity project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Security.Core.Identity</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;Security;Identity</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	<LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!--<PackageReference Include="ASOFT.Core.Common.InjectionChecker" Version="1.0.1" />-->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.6.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.16" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
+  </ItemGroup>
+
+</Project>

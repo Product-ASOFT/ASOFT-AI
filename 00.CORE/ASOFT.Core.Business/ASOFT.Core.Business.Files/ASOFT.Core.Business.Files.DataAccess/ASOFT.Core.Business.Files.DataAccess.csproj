@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Business.Files.DataAccess</PackageId>
+    <Product>ASOFT.Core.Business.Files.DataAccess</Product>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <FileVersion>4.0.0</FileVersion>
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT A00 Infrastructure</AssemblyTitle>
+    <Description>A Infrastructure Project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.A.Infrastructure</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;A;Infrastructure;A.Infrastructure</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Files.Entities\ASOFT.Core.Business.Files.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

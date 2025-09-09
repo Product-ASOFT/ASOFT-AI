@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspose.Words" Version="25.8.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="DocX" Version="4.0.25105.5786" />
+    <PackageReference Include="Google.Cloud.Vision.V1" Version="3.7.0" />
+    <PackageReference Include="Handlebars.Net" Version="2.1.6" />
+    <PackageReference Include="Handlebars.Net.Helpers" Version="2.5.2" />
+    <PackageReference Include="IronOcr" Version="2025.7.19" />
+    <PackageReference Include="MediaTypeMap.Core" Version="2.3.3" />
+    <PackageReference Include="Mime-Detective" Version="25.4.25" />
+    <PackageReference Include="MimeTypesMap" Version="1.0.9" />
+    <PackageReference Include="OpenAI" Version="2.2.0-beta.4" />
+    <PackageReference Include="PdfiumViewer" Version="2.13.0" />
+    <PackageReference Include="PdfiumViewer.Native.x86_64.v8-xfa" Version="2018.4.8.256" />
+    <PackageReference Include="PdfPig" Version="0.1.10" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.7" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.6" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\00.A00\ASOFT.A00.DataAccess\ASOFT.A00.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Abstractions\ASOFT.CoreAI.Abstractions.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Common\ASOFT.CoreAI.Common.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Entities\ASOFT.CoreAI.Entities.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Infrastructure\ASOFT.CoreAI.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

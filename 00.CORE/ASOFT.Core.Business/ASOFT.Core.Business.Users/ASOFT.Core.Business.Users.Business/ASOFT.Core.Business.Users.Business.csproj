@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Business.Users.Business</PackageId>
+    <Product>ASOFT.Core.Business.Users.Business</Product>
+    <VersionPrefix>4.0.4</VersionPrefix>
+    <FileVersion>4.0.4</FileVersion>
+    <AssemblyVersion>4.0.0.4</AssemblyVersion>
+    <AssemblyTitle>ASOFT A00 Infrastructure</AssemblyTitle>
+    <Description>A Infrastructure Project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Core.Business.Users.Business</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;A;Infrastructure;A.Infrastructure</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.Core.Common.Security" Version="2.1.0" />
+    <PackageReference Include="ASOFT.Core.Common.Security.Identity" Version="2.2.2" />-->
+    <PackageReference Include="Dapper" Version="2.0.35" />
+    <PackageReference Include="MediatR" Version="8.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="16.6.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
+    <ProjectReference Include="..\..\..\ASOFT.Core.Common\ASOFT.Core.Common.Security\ASOFT.Core.Common.Security.csproj" />
+    <ProjectReference Include="..\..\..\ASOFT.Core.Common\ASOFT.Core.Common.Security\ASOFT.Core.Common.Security.Identity\ASOFT.Core.Common.Security.Identity.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Entities\ASOFT.Core.Business.Common.Entities.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Users.DataAccess\ASOFT.Core.Business.Users.DataAccess.csproj" />
+  </ItemGroup>
+</Project>

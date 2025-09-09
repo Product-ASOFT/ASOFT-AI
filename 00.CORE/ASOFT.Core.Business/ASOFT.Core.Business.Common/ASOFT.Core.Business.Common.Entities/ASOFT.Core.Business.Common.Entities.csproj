@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Business.Common.Entities</PackageId>
+    <Product>ASOFT.Core.Business.Common.Entities</Product>
+    <VersionPrefix>4.0.1</VersionPrefix>
+    <FileVersion>4.0.1</FileVersion>
+    <AssemblyVersion>4.0.0.1</AssemblyVersion>
+    <AssemblyTitle>ASOFT A00 Infrastructure</AssemblyTitle>
+    <Description>A Infrastructure Project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Core.Business.Common.Entities</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;A;Infrastructure;A.Infrastructure</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="AuthenticatedModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Entity\ASOFT.Core.DataAccess.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

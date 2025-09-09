@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Notification.Firebase</PackageId>
+    <Product>ASOFT.Notification.Firebase</Product>
+    <VersionPrefix>4.0.1</VersionPrefix>
+    <FileVersion>4.0.1</FileVersion>
+    <AssemblyVersion>4.0.0.1</AssemblyVersion>
+    <AssemblyTitle>ASOFT Notification Firebase</AssemblyTitle>
+    <Description>Contain notification Firebase</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Notification.Firebase</RootNamespace>
+    <PackageTags>ASOFT;Notification;Firebase</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish notification Firebase</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	<LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.A00.Entities" Version="3.0.0" />-->
+    <PackageReference Include="Dapper" Version="1.50.2" />
+    <PackageReference Include="FirebaseAdmin" Version="2.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <ProjectReference Include="..\..\..\..\00.A00\ASOFT.A00.Entities\ASOFT.A00.Entities.csproj" />
+	  <ProjectReference Include="..\ASOFT.Core.Business.Notification.Entities\ASOFT.Core.Business.Notification.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

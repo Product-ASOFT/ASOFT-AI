@@ -1,0 +1,36 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iis": {
+      "applicationUrl": "http://localhost:5041",
+      "sslPort": 0
+    },
+    "iisExpress": {
+      "applicationUrl": "http://localhost:55486",
+      "sslPort": 0
+    }
+  },
+  "profiles": {
+    "IIS Express": {
+      "commandName": "Executable",
+      "executablePath": "D:\\publish\\hieu-hao\\APIService\\Debug\\netcoreapp2.2\\ASOFT.Entry.WebService.exe",
+      "workingDirectory": "D:\\publish\\hieu-hao\\APIService\\Debug\\netcoreapp2.2",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASOFT_CONFIGURATION_FILE_PATH": "Info.Configurations.json",
+        "PLUGIN_CONFIGS_FILE_PATH": "HieuHao.Plugin.Configurations.json",
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "ASOFT.Core.Business.Users.API": {
+      "commandName": "IIS",
+      "workingDirectory": "D:\\publish\\hieu-hao\\APIService\\Debug\\netcoreapp2.2",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:5000"
+    }
+  }
+}

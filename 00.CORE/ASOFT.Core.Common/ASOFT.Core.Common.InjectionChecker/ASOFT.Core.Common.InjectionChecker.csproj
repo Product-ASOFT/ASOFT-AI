@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Common.InjectionChecker</PackageId>
+    <Product>ASOFT.Core.Common.InjectionChecker</Product>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Contract.</AssemblyTitle>
+    <Description>A project used to check and condition, logic error.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Contract</RootNamespace>
+    <PackageTags>ASOFT;Shared;AspNet;AspNetCore;Checker;Contract</PackageTags>
+    <PackageIcon>icon.png</PackageIcon>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	<LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="release-notes\**" />
+    <EmbeddedResource Remove="release-notes\**" />
+    <None Remove="release-notes\**" />
+    <None Include="icon.png">
+      <Pack>true</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

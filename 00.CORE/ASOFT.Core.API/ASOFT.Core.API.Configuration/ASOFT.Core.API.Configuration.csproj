@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.API.Configuration</PackageId>
+    <Product>ASOFT.Core.API.Configuration</Product>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <FileVersion>4.0.0</FileVersion>
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Api Core Configuration Project.</AssemblyTitle>
+    <Description>The core api of ASOFT Configuration.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.API.Core.Configuration</RootNamespace>
+    <PackageTags>ASOFT;API;AspNet;AspNetCore;Core;Configuration;ASOFT Api Core Configuration;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="UpdateNotes\**" />
+    <EmbeddedResource Remove="UpdateNotes\**" />
+    <None Remove="UpdateNotes\**" />
+  </ItemGroup>
+  <ItemGroup>
+	<FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!--<PackageReference Include="ASOFT.Core.Common.InjectionChecker" Version="1.0.1" />-->
+    <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
+	<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" /> 
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="8.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Databases\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
+  </ItemGroup>
+</Project>

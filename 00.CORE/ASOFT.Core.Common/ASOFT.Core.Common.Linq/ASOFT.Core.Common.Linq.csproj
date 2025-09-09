@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.Common.Linq</PackageId>
+    <Product>ASOFT.Core.Common.Linq</Product>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Linq.</AssemblyTitle>
+    <Description>A linq project and extensions.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Linq</RootNamespace>
+    <PackageTags>ASOFT;Shared;AspNet;AspNetCore;Linq;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	<LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="release-notes\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="ASOFT.Core.Common.InjectionChecker" Version="1.0.1" />-->
+    <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>ASOFT.Core.Business.Common.API</PackageId>
+    <Product>ASOFT.Core.Business.Common.API</Product>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <FileVersion>4.0.0</FileVersion>
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Api Core Users Project.</AssemblyTitle>
+    <Description>The core api users of ASOFT.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Core.Business.Common.API</RootNamespace>
+    <PackageTags>ASOFT;API;AspNet;AspNetCore;Core;ASOFT Api Core;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="OAuthentication2\**" />
+    <EmbeddedResource Remove="OAuthentication2\**" />
+    <None Remove="OAuthentication2\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Common.DataAccess\ASOFT.Core.Business.Common.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Common.Entities\ASOFT.Core.Business.Common.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

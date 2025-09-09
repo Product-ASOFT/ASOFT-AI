@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\AgentDefinition.yaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\AgentDefinition.yaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\00.A00\ASOFT.A00.Business\ASOFT.A00.Business.csproj" />
+    <ProjectReference Include="..\..\..\00.A00\ASOFT.A00.DataAccess\ASOFT.A00.DataAccess.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Business\ASOFT.CoreAI.Business.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Entities\ASOFT.CoreAI.Entities.csproj" />
+    <ProjectReference Include="..\ASOFT.CoreAI.Infrastructure\ASOFT.CoreAI.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

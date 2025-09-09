@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Common.Security</PackageId>
+    <Product>ASOFT.Core.Common.Security</Product>
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <FileVersion>3.0.0</FileVersion>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Core Security</AssemblyTitle>
+    <Description>Core Security project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Security.Core</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;Security;</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	<LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ASOFT.Core.Common.Security.Identity\**" />
+    <EmbeddedResource Remove="ASOFT.Core.Common.Security.Identity\**" />
+    <None Remove="ASOFT.Core.Common.Security.Identity\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.16" />
+  </ItemGroup>
+
+</Project>

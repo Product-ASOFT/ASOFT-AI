@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+	<LangVersion>10</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Common.Localization</PackageId>
+    <Product>ASOFT.Core.Common.Localization</Product>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <FileVersion>2.0.0</FileVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <AssemblyTitle>ASOFT Localization core</AssemblyTitle>
+    <Description>Core localization</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Localization.Core</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;Localization;Core</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First release.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ASOFT.Core.Common.Localization.DependencyInjection\**" />
+    <EmbeddedResource Remove="ASOFT.Core.Common.Localization.DependencyInjection\**" />
+    <None Remove="ASOFT.Core.Common.Localization.DependencyInjection\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

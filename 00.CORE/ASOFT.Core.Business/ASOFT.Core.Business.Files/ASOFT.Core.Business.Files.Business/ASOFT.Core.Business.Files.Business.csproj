@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>ASOFT.Core.Business.Files.Business</PackageId>
+    <Product>ASOFT.Core.Business.Files.Business</Product>
+    <VersionPrefix>4.0.1</VersionPrefix>
+    <FileVersion>4.0.1</FileVersion>
+    <AssemblyVersion>4.0.0.1</AssemblyVersion>
+    <AssemblyTitle>ASOFT A00 Infrastructure</AssemblyTitle>
+    <Description>A Infrastructure Project.</Description>
+    <Authors>ASOFT</Authors>
+    <Company>ASOFT</Company>
+    <RootNamespace>ASOFT.Core.Business.Files</RootNamespace>
+    <PackageTags>ASOFT;AspNet;AspNetCore;A;Infrastructure;A.Infrastructure</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes>First publish package.</PackageReleaseNotes>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Asp.Versioning.Mvc" Version="6.0.0" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="8.0.1" />
+    <PackageReference Include="MediatR" Version="8.0.2" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\00.A00\ASOFT.A00.DataAccess\ASOFT.A00.DataAccess.csproj" />
+    <ProjectReference Include="..\..\..\..\00.A00\ASOFT.A00.Entities\ASOFT.A00.Entities.csproj" />
+    <ProjectReference Include="..\..\..\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.DataAccess\ASOFT.Core.Business.Common.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Files.DataAccess\ASOFT.Core.Business.Files.DataAccess.csproj" />
+    <ProjectReference Include="..\ASOFT.Core.Business.Files.Entities\ASOFT.Core.Business.Files.Entities.csproj" />
+  </ItemGroup>
+
+</Project>
