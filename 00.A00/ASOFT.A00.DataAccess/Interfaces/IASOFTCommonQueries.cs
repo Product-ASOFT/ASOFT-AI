@@ -6,10 +6,6 @@
 // #    11/01/2021      Tấn Thành       Tạo mới
 // #################################################################
 using ASOFT.A00.Entities;
-using ASOFT.A00.Entities.ViewModels;
-using ASOFT.Core.Business.Common.Entities;
-using Dapper;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 

@@ -12,14 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Common\ASOFT.Core.Common.Localization\ASOFT.Core.Common.Localization.DependencyInjection\ASOFT.Core.Common.Localization.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Common\ASOFT.Core.Common.Security\ASOFT.Core.Common.Security.Identity\ASOFT.Core.Common.Security.Identity.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Abstractions\ASOFT.Core.DataAccess.Abstractions.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Entity\ASOFT.Core.DataAccess.Entities.csproj" />
-    <ProjectReference Include="..\ASOFT.A00.Business\ASOFT.A00.Business.csproj" />
     <ProjectReference Include="..\ASOFT.A00.DataAccess\ASOFT.A00.DataAccess.csproj" />
-    <ProjectReference Include="..\ASOFT.A00.Entities\ASOFT.A00.Entities.csproj" />
   </ItemGroup>
 
 </Project>

@@ -29,21 +29,6 @@ namespace ASOFT.Core.DataAccess.Extensions
 
             return source.TagWith(tag);
         }
-
-        public static IQueryable<TEntity> TagWithNull<TEntity>([NotNull] this IQueryable<TEntity> source,
-            [CanBeNull] string tag,
-            [NotNull] string defaultValue) where TEntity : class
-        {
-            Checker.NotNull(source, nameof(source));
-            Checker.NotNull(defaultValue, nameof(defaultValue));
-            if (tag == null)
-            {
-                return source.TagWith(defaultValue);
-            }
-
-            return source.TagWith(tag);
-        }
-
         public static IQueryable<TEntity> IgnoreQueryFilters<TEntity>([NotNull] this IQueryable<TEntity> source,
             bool ignore) where TEntity : class
         {

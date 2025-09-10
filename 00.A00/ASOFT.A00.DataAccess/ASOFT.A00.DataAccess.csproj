@@ -27,9 +27,6 @@
   
 
   <ItemGroup>
-   
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.API\ASOFT.Core.API\ASOFT.Core.API.csproj" />
-    <ProjectReference Include="..\..\00.CORE\ASOFT.Core.Business\ASOFT.Core.Business.Common\ASOFT.Core.Business.Common.Business\ASOFT.Core.Business.Common.Business.csproj" />
     <ProjectReference Include="..\..\00.CORE\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.csproj" />
     <ProjectReference Include="..\ASOFT.A00.Entities\ASOFT.A00.Entities.csproj" />
   </ItemGroup>

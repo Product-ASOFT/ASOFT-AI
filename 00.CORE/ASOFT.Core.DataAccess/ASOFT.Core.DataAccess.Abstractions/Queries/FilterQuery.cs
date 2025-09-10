@@ -1,4 +1,4 @@
-﻿using ASOFT.Core.Common.Linq;
+﻿using ASOFT.Core.Common.InjectionChecker;
 using LinqKit;
 using System;
 using System.Linq;

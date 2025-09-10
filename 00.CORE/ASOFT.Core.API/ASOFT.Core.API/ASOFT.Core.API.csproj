@@ -61,9 +61,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
-    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.Localization\ASOFT.Core.Common.Localization.DependencyInjection\ASOFT.Core.Common.Localization.DependencyInjection.csproj" />
-    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.Security\ASOFT.Core.Common.Security.Identity\ASOFT.Core.Common.Security.Identity.csproj" />
     <ProjectReference Include="..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.csproj" />
   </ItemGroup>
 

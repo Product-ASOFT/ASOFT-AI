@@ -8,7 +8,6 @@
 
 using ASOFT.A00.DataAccess.Interfaces;
 using ASOFT.A00.Entities;
-using ASOFT.A00.Entities.Enums;
 using ASOFT.Core.Common.InjectionChecker;
 using ASOFT.Core.DataAccess.Enums;
 using Dapper;

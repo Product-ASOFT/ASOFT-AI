@@ -32,7 +32,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.Abstractions\ASOFT.Core.DataAccess.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess\ASOFT.Core.DataAccess.csproj" />
-    <ProjectReference Include="..\ASOFT.Core.Business.Common.Entities\ASOFT.Core.Business.Common.Entities.csproj" />
   </ItemGroup>
 
 </Project>
