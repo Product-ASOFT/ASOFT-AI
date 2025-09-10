@@ -1,15 +1,11 @@
-﻿using ASOFT.A00.DataAccess.Interfaces;
-using ASOFT.A00.Entity;
-using ASOFT.Core.Common.InjectionChecker;
+﻿using ASOFT.Core.Common.InjectionChecker;
 using ASOFT.Core.DataAccess;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 

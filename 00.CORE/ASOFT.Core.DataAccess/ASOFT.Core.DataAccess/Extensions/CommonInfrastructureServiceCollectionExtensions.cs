@@ -87,7 +87,6 @@ namespace ASOFT.Core.DataAccess.Extensions
         private static void AddCommonServices(IServiceCollection services)
         {
             services.TryAddScoped<IMessageContext, MessageContext>();
-            services.TryAddScoped<ILanguageContext, LanguageContext>();
             services.TryAddScoped<IBusinessUnitOfWork>(sp => sp.GetRequiredService<BusinessDbContext>());
             services.TryAddScoped(typeof(IBusinessContext<>), typeof(BusinessContext<>));
             services.TryAddScoped<IConfigQueries, ConfigQueries>();

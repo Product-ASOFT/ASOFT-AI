@@ -1,13 +1,10 @@
-﻿using ASOFT.A00.API.BaseQuartz;
-using ASOFT.A00.Business;
-using ASOFT.A00.DataAccess.Interfaces;
+﻿using ASOFT.A00.DataAccess.Interfaces;
 using ASOFT.A00.DataAccess.Queries;
 using ASOFT.A00.DataAccess.Utilities;
 using ASOFT.API.Core.Middleware;
 using ASOFT.Core.API.Extensions;
 using ASOFT.Core.API.Logging;
 using ASOFT.Core.API.Versions;
-using ASOFT.Core.Common.Localization.DependencyInjection.Extensions;
 using ASOFT.Core.Common.Security.Identity.Extensions;
 using ASOFT.Core.DataAccess.Extensions;
 using ASOFT.Core.DataAccess;
@@ -76,12 +73,8 @@ namespace ASOFT.A00.API
             services.AddApiHttps(_configuration);
             services.AddIdentity();
 
-            // Add custom localization for ASOFT
-            services.AddLocalizationRequestCultures(new CommonRequestCultureOptionsProvider()
-                .ProvideOptionsConfiguration());
 
             // Page number page size helper
-            services.AddNumberSizePaging();
             services.ConfigureApiBehaviorOptions();
             services.Configure<GzipCompressionProviderOptions>(options =>
             {
@@ -175,8 +168,6 @@ namespace ASOFT.A00.API
             });
             app.UseMiddleware<APIKeyMiddleware>();
 
-            // Use localization per request
-            app.UseRequestCultureLocalization();
 
             // Use https
             app.UseApiHttps();

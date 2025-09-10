@@ -6,8 +6,6 @@
 // #    12/08/2020      Tấn Thành       Tạo mới
 // #################################################################
 
-using ASOFT.A00.Entities;
-using ASOFT.A00.Entities.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Data;

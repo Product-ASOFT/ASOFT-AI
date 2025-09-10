@@ -1,6 +1,5 @@
 ﻿using ASOFT.A00.API;
 using ASOFT.Core.API.Extensions;
-using ASOFT.Core.Business.Common.API;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +19,8 @@ namespace ASOFT.TaskManagement.API
             Host.CreateDefaultBuilder(args)
               .ConfigureWebHostDefaults(webBuilder =>
               {
-                  webBuilder.ConfigureKestrel(options => {
+                  webBuilder.ConfigureKestrel(options =>
+                  {
                       options.AddServerHeader = false;
                       options.Limits.MinRequestBodyDataRate = null;
                   });
@@ -47,7 +47,6 @@ namespace ASOFT.TaskManagement.API
                   });
                   foreach (var hostingStartup in new IHostingStartup[]
                   {
-                        new CommonHostingStartUp(),
                         new AIHostingStartup(),
                         new A00APIHostingStartup(),
                   })
@@ -55,7 +54,6 @@ namespace ASOFT.TaskManagement.API
                       hostingStartup.Configure(webBuilder);
                   }
               });
-
     }
 }
 

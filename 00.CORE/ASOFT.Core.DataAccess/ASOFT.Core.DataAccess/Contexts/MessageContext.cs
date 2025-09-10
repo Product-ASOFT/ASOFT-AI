@@ -1,5 +1,4 @@
 ﻿using ASOFT.Core.Common.InjectionChecker;
-using ASOFT.Core.DataAccess.Cache;
 using ASOFT.Core.DataAccess.Entites;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

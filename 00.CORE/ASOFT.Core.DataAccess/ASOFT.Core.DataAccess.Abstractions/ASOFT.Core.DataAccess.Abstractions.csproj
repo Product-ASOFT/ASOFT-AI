@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.Linq\ASOFT.Core.Common.Linq.csproj" />
+    <ProjectReference Include="..\..\ASOFT.Core.Common\ASOFT.Core.Common.InjectionChecker\ASOFT.Core.Common.InjectionChecker.csproj" />
     <ProjectReference Include="..\ASOFT.Core.DataAccess.Entity\ASOFT.Core.DataAccess.Entities.csproj" />
   </ItemGroup>
 
