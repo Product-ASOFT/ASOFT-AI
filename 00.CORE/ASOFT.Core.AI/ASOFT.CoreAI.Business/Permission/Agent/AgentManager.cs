@@ -73,13 +73,12 @@ public class AgentManager
             if (handlers.TryGetValue(pluginCode, out var handler))
             {
                 var response = await handler();
-                if (response != null
-                    && !string.IsNullOrEmpty(response.Result)
-                    && !IsNoDataMessage(response.Result)
-                    && response.ChatSessionID == Guid.Empty
-                    && request.ChatSessionID != Guid.Empty)
+                if (response != null && !string.IsNullOrEmpty(response.Result) && !IsNoDataMessage(response.Result))
                 {
-                    response.ChatSessionID = request.ChatSessionID;
+                    if ((response.ChatSessionID == Guid.Empty || response.ChatSessionID == null) && request.ChatSessionID != null && request.ChatSessionID != Guid.Empty)
+                    {
+                        response.ChatSessionID = request.ChatSessionID;
+                    }
                     return response;
                 }
             }

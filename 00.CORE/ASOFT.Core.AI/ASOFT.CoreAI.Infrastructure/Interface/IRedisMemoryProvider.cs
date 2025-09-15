@@ -5,10 +5,10 @@ namespace ASOFT.CoreAI.Infrastructure
 {
     public interface IRedisMemoryProvider
     {
-        /// Lưu dữ liệu người dùng vào Vector Database (Redis Vector Store).
+        // Lưu dữ liệu người dùng vào Vector Database (Redis Vector Store).
         Task<bool> SaveUserChatToVectorDbAsync(CustomMemoryRecord record, CancellationToken cancellationToken = default);
 
-        /// Lấy dữ liệu người dùng từ Vector Database (Redis Vector Store).
+        // Lấy dữ liệu người dùng từ Vector Database (Redis Vector Store).
         Task<IEnumerable<CustomMemoryRecord>> GetByUserIdAsync(string collectionName, string agentCode, string userId, CancellationToken cancellationToken = default);
 
         // Lấy thông tin API Key từ Redis.

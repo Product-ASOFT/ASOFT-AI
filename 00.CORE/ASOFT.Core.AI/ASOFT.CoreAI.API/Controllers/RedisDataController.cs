@@ -71,10 +71,7 @@ namespace ASOFT.CoreAI.API.Controllers
                     string apiKey = await _vectorDatabase.SaveAPIKeyAsync(cacheKey, modelAIConfig, day);
                     return ChatHandlerHelper.CreateResponse(Guid.Empty, apiKey);
                 }
-                else
-                {
-                    return ChatHandlerHelper.CreateResponse(Guid.Empty, string.Empty);
-                }
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin cấu hình Model AI");
             }
             return ChatHandlerHelper.CreateResponse(Guid.Empty, cachedKey.ToString());
         }
