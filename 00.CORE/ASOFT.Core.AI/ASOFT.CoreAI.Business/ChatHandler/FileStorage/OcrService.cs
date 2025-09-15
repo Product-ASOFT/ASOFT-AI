@@ -185,7 +185,7 @@ namespace ASOFT.CoreAI.Business
                 }
                 catch (Exception ex)
                 {
-                    result.TextContent = $"Lỗi khi đọc file: {ex.Message}";
+                    throw new Exception(ex.Message);
                 }
 
                 return result;
