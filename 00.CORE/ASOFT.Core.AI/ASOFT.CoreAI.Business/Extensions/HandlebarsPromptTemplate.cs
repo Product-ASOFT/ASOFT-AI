@@ -2,7 +2,6 @@
 
 using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Abstractions.PromptTemplate;
-using ASOFT.CoreAI.Business.KernelHelpers;
 using ASOFT.CoreAI.Common.Diagnostics;
 using HandlebarsDotNet;
 using HandlebarsDotNet.Helpers;

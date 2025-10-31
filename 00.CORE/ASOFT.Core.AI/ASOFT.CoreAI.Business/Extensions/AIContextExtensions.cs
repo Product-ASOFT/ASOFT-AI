@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using ASOFT.CoreAI.Abstractions;
+using ASOFT.CoreAI.Business.LibraryKernel;
 using Microsoft.Extensions.AI;
 using System.Diagnostics.CodeAnalysis;
 

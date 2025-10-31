@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using ASOFT.CoreAI.Abstractions;
-using ASOFT.CoreAI.Business.Contents;
+using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Common.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -1,0 +1,97 @@
+﻿// Copyright (c) Microsoft. All rights reserved.
+
+using ASOFT.CoreAI.Abstractions;
+using ASOFT.CoreAI.Common.Diagnostics;
+using System.Runtime.CompilerServices;
+
+namespace ASOFT.CoreAI.Business.LibraryKernel;
+
+/// <summary>
+/// Represents a conversation thread based on an instance of <see cref="ChatHistory"/> that is managed inside this class.
+/// </summary>
+public sealed class ChatHistoryAgentThread : AgentThread
+{
+    private readonly ChatHistory _chatHistory = new();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ChatHistoryAgentThread"/> class.
+    /// </summary>
+    public ChatHistoryAgentThread()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ChatHistoryAgentThread"/> class that resumes an existing thread.
+    /// </summary>
+    /// <param name="chatHistory">An existing chat history to base this thread on.</param>
+    /// <param name="id">The id of the existing thread. If not provided, a new one will be generated.</param>
+    public ChatHistoryAgentThread(ChatHistory chatHistory, string? id = null)
+    {
+        Verify.NotNull(chatHistory);
+        _chatHistory = chatHistory;
+        Id = id ?? Guid.NewGuid().ToString("N");
+    }
+
+    /// <summary>
+    /// Gets the underlying <see cref="Microsoft.SemanticKernel.ChatCompletion.ChatHistory"/> object that stores the chat history for this thread.
+    /// </summary>
+    public ChatHistory ChatHistory => _chatHistory;
+
+    /// <summary>
+    /// Creates the thread and returns the thread id.
+    /// </summary>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
+    /// <returns>A task that completes when the thread has been created.</returns>
+    public new Task CreateAsync(CancellationToken cancellationToken = default)
+    {
+        return base.CreateAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    protected override Task<string?> CreateInternalAsync(CancellationToken cancellationToken)
+    {
+        return Task.FromResult<string?>(Guid.NewGuid().ToString("N"));
+    }
+
+    /// <inheritdoc />
+    protected override Task DeleteInternalAsync(CancellationToken cancellationToken)
+    {
+        _chatHistory.Clear();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    protected override Task OnNewMessageInternalAsync(ChatMessageContent newMessage, CancellationToken cancellationToken = default)
+    {
+        _chatHistory.Add(newMessage);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Asynchronously retrieves all messages in the thread.
+    /// </summary>
+    /// <remarks>
+    /// Messages will be returned in ascending chronological order.
+    /// </remarks>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
+    /// <returns>The messages in the thread.</returns>
+    /// <exception cref="InvalidOperationException">The thread has been deleted.</exception>
+
+    public async IAsyncEnumerable<ChatMessageContent> GetMessagesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (IsDeleted)
+        {
+            throw new InvalidOperationException("This thread has been deleted and cannot be used anymore.");
+        }
+
+        if (Id is null)
+        {
+            await CreateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (var message in _chatHistory)
+        {
+            yield return message;
+        }
+    }
+}

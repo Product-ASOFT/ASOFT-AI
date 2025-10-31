@@ -173,7 +173,7 @@ public partial class ClientCore
 
                     this.LogUsage(chatCompletion.Usage);
                 }
-                catch (Exception ex) when (activity is not null)
+                catch (Exception) when (activity is not null)
                 {
                     throw;
                 }

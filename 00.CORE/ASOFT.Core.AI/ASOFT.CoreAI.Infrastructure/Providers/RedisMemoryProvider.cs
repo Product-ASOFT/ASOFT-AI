@@ -211,7 +211,7 @@ public class RedisMemoryProvider : IRedisMemoryProvider
     /// <param name="queryEmbedding"></param>
     /// <param name="k"></param>
     /// <returns></returns>
-    public async Task<RedisResult?> SearchByVectorAsync(string indexName, string vectorField, float[] queryEmbedding, int k)
+    public async Task<RedisResult> SearchByVectorAsync(string indexName, string vectorField, float[] queryEmbedding, int k)
     {
         if (queryEmbedding == null || queryEmbedding.Length == 0)
             throw new ArgumentException("queryEmbedding cannot be null or empty", nameof(queryEmbedding));
@@ -238,10 +238,10 @@ public class RedisMemoryProvider : IRedisMemoryProvider
 
             return result;
         }
-        catch (RedisServerException ex)
+        catch (RedisServerException)
         {
             // Index không tồn tại, trả về null
-            return null;
+            throw;
         }
     }
 
