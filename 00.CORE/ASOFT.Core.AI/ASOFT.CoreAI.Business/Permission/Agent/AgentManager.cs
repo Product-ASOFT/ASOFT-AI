@@ -16,19 +16,17 @@ public class AgentManager
     private readonly IChatHistoryHandler _chatHistoryHandler;
     private readonly IRedisHandler _redisHandler;
     private readonly SettingsManager _settingsManager;
-    private readonly IRedisMemoryProvider _redisMemoryProvider;
-    private readonly IST2111Queries _agentPromptQueries;
+    private readonly IST2130Queries _agentPromptQueries;
     private readonly OcrService _ocrService;
 
     public AgentManager(Kernel kernel, IChatHistoryHandler chatHistoryHandler,
         SettingsManager settingsManager,
-        IRedisHandler redisHandler, IRedisMemoryProvider redisMemoryProvider, IST2111Queries agentPromptQueries, OcrService ocrService)
+        IRedisHandler redisHandler, IRedisMemoryProvider redisMemoryProvider, IST2130Queries agentPromptQueries, OcrService ocrService)
     {
         _kernel = kernel;
         _chatHistoryHandler = chatHistoryHandler;
         _settingsManager = settingsManager;
         _redisHandler = redisHandler;
-        _redisMemoryProvider = redisMemoryProvider;
         _agentPromptQueries = agentPromptQueries;
         Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", _settingsManager.GetKeyReadOCR());
         _ocrService = ocrService;
@@ -436,6 +434,54 @@ public class AgentManager
                 ["CurrentTime"] = DateTime.Now,
                 ["question"] = request.Question,
                 ["ocrFiles"] = awnserOCRs,
+                ["datas"] = datas,
+                ["details"] = !details.Any() ? null : details.Select(x => new
+                {
+                    x.Description, // Mô tả
+                    x.InvoiceNo, // Số hóa đơn
+                    x.RequestAmount, // số tiền yêu cầu
+                    x.InvoiceDate, // Ngày hóa đơn (định dạng)
+                    x.RingiNo, // Số Ringi
+                }),
+                ["evaluationText"] = resultCreateFile,
+                ["trainingData"] = trainingData.Where(x => !string.IsNullOrEmpty(x.Text)).Select(x => new
+                {
+                    x.Text,
+                }),
+                ["chatHistory"] = chatHistory.Select(x => new
+                {
+                    x.ResponseText,
+                    x.Message,
+                    x.CreateDate,
+                    x.UserID
+                })
+            };
+            return await HandleChatWithModelAI(arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<string> SendPromptWithLocalsAsync<T>(
+    ReadFileRequest request,
+    string promptTemplate,
+    string awnserOCRs,
+    IEnumerable<ChatHistoryResponseModel> chatHistory,
+    IEnumerable<RedisearchResultItem> trainingData,
+    List<T> datas,
+    List<BEMT2001Model> details, string? resultCreateFile = null)
+    {
+        try
+        {
+            var arguments = new KernelArguments
+            {
+                ["UserId"] = request.UserId,
+                ["UserName"] = request.UserName,
+                ["CurrentTime"] = DateTime.Now,
+                ["question"] = request.Question,
+                ["content"] = awnserOCRs,
                 ["datas"] = datas,
                 ["details"] = !details.Any() ? null : details.Select(x => new
                 {

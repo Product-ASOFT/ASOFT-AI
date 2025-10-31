@@ -2,7 +2,7 @@
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public interface IST2121Queries
+    public interface IST2131Queries
     {
         /// <summary>
         /// Thêm mới một prompt cho agent
@@ -10,8 +10,8 @@ namespace ASOFT.CoreAI.Infrastructure
         /// <param name="agent"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> CreateFileResult(ST2121 result, CancellationToken cancellationToken = default);
+        Task<bool> CreateFileResult(ST2131 result, CancellationToken cancellationToken = default);
 
-        Task<bool> CreateFileResult(IEnumerable<ST2121> readFileResults, CancellationToken cancellationToken = default);
+        Task<bool> CreateFileResult(IEnumerable<ST2131> readFileResults, CancellationToken cancellationToken = default);
     }
 }

@@ -10,6 +10,7 @@ using ASOFT.Core.DataAccess;
 using ASOFT.Core.DataAccess.ModelBuilderConfiguration;
 using ASOFT.CoreAI.API.Resources;
 using ASOFT.CoreAI.Business;
+using ASOFT.CoreAI.Business.ChatHandler.FileStorage;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -57,8 +58,8 @@ public class AIHostingStartup : IHostingStartup
         services.AddTransient<ChatCompletionAgent>();
 
         services.AddScoped<IPermissionHandler, PermissionHandler>();
-        services.AddScoped<IST2111Queries, ST2111Queries>();
-        services.AddScoped<IST2121Queries, ST2121Queries>();
+        services.AddScoped<IST2130Queries, ST2111Queries>();
+        services.AddScoped<IST2131Queries, ST2121Queries>();
         services.AddScoped<IDataLoader, DataLoader>();
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
         services.AddScoped<IRedisHandler, RedisHandler>();
@@ -66,6 +67,7 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<OcrService>();
         services.AddScoped<ICIF1640DAL, CIF1640DAL>();
         services.AddScoped<AgentManager>();
+        services.AddScoped<HandlerOCRLocalService>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {

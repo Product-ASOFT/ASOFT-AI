@@ -2,8 +2,8 @@
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public interface IChatResponseRepository : IRepository<ST2151>
+    public interface IChatResponseRepository : IRepository<ST2134>
     {
-        Task<IEnumerable<ST2151>> GetByChatMessageIdAsync(Guid chatMessageId);
+        Task<IEnumerable<ST2134>> GetByChatMessageIdAsync(Guid chatMessageId);
     }
 }

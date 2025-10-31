@@ -4,22 +4,31 @@ using ASOFT.CoreAI.Entities;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public class ST2111Queries : IST2111Queries
+    public class ST2111Queries : IST2130Queries
     {
-        private readonly IBusinessContext<ST2111> _agentPromptContext;
+        private readonly IBusinessContext<ST2130> _agentPromptContext;
 
-        public ST2111Queries(IBusinessContext<ST2111> agentPromptContext)
+        public ST2111Queries(IBusinessContext<ST2130> agentPromptContext)
         {
             _agentPromptContext = Checker.NotNull(agentPromptContext, nameof(agentPromptContext));
         }
 
-        public async Task<ST2111> QueryPromptsByAgentCode(string agentCode, CancellationToken cancellationToken = default)
+        public async Task<ST2130> QueryPromptsByAgentCode(string agentCode, CancellationToken cancellationToken = default)
         {
-            var prompt = await _agentPromptContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2111>(m => m.AgentCode == agentCode));
-            return prompt;
+            try
+            {
+                var prompt = await _agentPromptContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2130>(m => m.AgentCode == agentCode));
+                return prompt;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
-        public async Task<bool> CreateAgentPrompt(ST2111 agent, CancellationToken cancellationToken = default)
+        public async Task<bool> CreateAgentPrompt(ST2130 agent, CancellationToken cancellationToken = default)
         {
             try
             {

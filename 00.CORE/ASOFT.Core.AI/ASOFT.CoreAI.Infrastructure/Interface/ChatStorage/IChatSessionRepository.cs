@@ -2,8 +2,8 @@
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public interface IChatSessionRepository : IRepository<ST2131>
+    public interface IChatSessionRepository : IRepository<ST2132>
     {
-        Task<ST2131> GetByUserIdAsync(Guid ID, string userId);
+        Task<ST2132> GetByUserIdAsync(Guid ID, string userId);
     }
 }

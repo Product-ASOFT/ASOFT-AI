@@ -46,5 +46,20 @@ namespace ASOFT.CoreAI.Business
             var apiConfig = _configuration.GetValue<string>("ReadConfigOCR:key-ocr");
             return apiConfig ?? string.Empty;
         }
+        public string GetUrlReadOCR()
+        {
+            var apiConfig = _configuration.GetValue<string>("APIOCR:URL");
+            return apiConfig ?? string.Empty;
+        }
+        public bool GetIsUseServiceReadOCR()
+        {
+            bool IsUseServiceLocal = false;
+            var configUse = _configuration.GetValue<bool>("IsUseServiceReadOCR:true").ToString();
+            if (!string.IsNullOrEmpty(configUse))
+            {
+                IsUseServiceLocal = bool.Parse(configUse);
+            }
+            return IsUseServiceLocal;
+        }
     }
 }

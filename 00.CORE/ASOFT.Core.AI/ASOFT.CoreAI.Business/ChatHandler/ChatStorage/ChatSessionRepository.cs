@@ -7,14 +7,14 @@ namespace ASOFT.CoreAI.Business
 {
     public class ChatSessionRepository : IChatSessionRepository
     {
-        private readonly IBusinessContext<ST2131> _chatSessionContext;
+        private readonly IBusinessContext<ST2132> _chatSessionContext;
 
-        public ChatSessionRepository(IBusinessContext<ST2131> chatSessionContext)
+        public ChatSessionRepository(IBusinessContext<ST2132> chatSessionContext)
         {
             _chatSessionContext = Checker.NotNull(chatSessionContext, nameof(chatSessionContext));
         }
 
-        public async Task<bool> AddAsync(ST2131 chatSession, CancellationToken cancellationToken = default)
+        public async Task<bool> AddAsync(ST2132 chatSession, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -31,9 +31,9 @@ namespace ASOFT.CoreAI.Business
             }
         }
 
-        public async Task<ST2131> GetByUserIdAsync(Guid ID, string userId)
+        public async Task<ST2132> GetByUserIdAsync(Guid ID, string userId)
         {
-            var result = await _chatSessionContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.APK == ID && m.CreateUserID == userId));
+            var result = await _chatSessionContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2132>(m => m.APK == ID && m.CreateUserID == userId));
             return result;
         }
 
@@ -42,17 +42,17 @@ namespace ASOFT.CoreAI.Business
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<ST2131>> GetAllAsync()
+        public Task<IEnumerable<ST2132>> GetAllAsync()
         {
             throw new NotImplementedException();
         }
 
-        public Task<ST2131> GetByIdAsync(Guid id)
+        public Task<ST2132> GetByIdAsync(Guid id)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<bool> UpdateAsync(ST2131 chatSession, CancellationToken cancellationToken)
+        public async Task<bool> UpdateAsync(ST2132 chatSession, CancellationToken cancellationToken)
         {
             try
             {

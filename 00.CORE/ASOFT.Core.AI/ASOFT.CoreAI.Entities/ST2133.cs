@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2141 : BaseEntity
+    public class ST2133 : BaseEntity
     {
         [Required]
         [StringLength(100)]
@@ -27,10 +27,10 @@ namespace ASOFT.CoreAI.Entities
 
         // Navigation properties
         [ForeignKey(nameof(ChatSessionID))]
-        public virtual ST2131 ChatSession { get; set; } = null!;
+        public virtual ST2132 ChatSession { get; set; } = null!;
 
-        public virtual ICollection<ST2151> ChatResponses { get; set; } = new List<ST2151>();
+        public virtual ICollection<ST2134> ChatResponses { get; set; } = new List<ST2134>();
 
-        public virtual ICollection<ST2161> ChatFiles { get; set; } = new List<ST2161>();
+        public virtual ICollection<ST2135> ChatFiles { get; set; } = new List<ST2135>();
     }
 }
