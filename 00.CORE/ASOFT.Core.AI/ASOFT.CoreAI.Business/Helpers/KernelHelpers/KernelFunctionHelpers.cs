@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Web;
 
-namespace ASOFT.CoreAI.Business.KernelHelpers;
+namespace ASOFT.CoreAI.Business;
 
 /// <summary>
 /// Utility class for registering kernel functions as helpers in Handlebars.

@@ -5,7 +5,7 @@ using HandlebarsDotNet;
 using HandlebarsDotNet.Compiler;
 using System.Text.Json;
 
-namespace ASOFT.CoreAI.Business.KernelHelpers;
+namespace ASOFT.CoreAI.Business;
 
 /// <summary>
 /// Extension class to register additional helpers as Kernel System helpers.

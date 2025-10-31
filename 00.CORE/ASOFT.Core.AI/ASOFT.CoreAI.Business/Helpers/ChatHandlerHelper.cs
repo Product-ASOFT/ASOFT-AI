@@ -1,5 +1,6 @@
 ﻿using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
+using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
 
 namespace ASOFT.CoreAI.Business
@@ -859,6 +860,69 @@ namespace ASOFT.CoreAI.Business
                 throw new ArgumentException("agentKey không được rỗng");
 
             return $"{agentKey}{Suffix}";
+        }
+    }
+    public static class ExtractMatchInfo
+    {
+        public static (string? MatchRate, string? Conclusion) Extract(string aiText)
+        {
+            // Tỷ lệ hợp lệ: - **Tỷ lệ hợp lệ:** 87.5%
+            string matchRate = string.Empty;
+            string conclusion = string.Empty;
+            var keywordRate = "Tỷ lệ hợp lệ";
+            var indexRate = aiText.IndexOf(keywordRate, StringComparison.OrdinalIgnoreCase);
+
+            if (indexRate >= 0)
+            {
+                var remaining = aiText.Substring(indexRate);
+                var lines = remaining.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var line in lines)
+                {
+                    // Dòng chứa % là dòng kết quả
+                    if (line.Contains("%"))
+                    {
+                        // Tìm phần có số %, ví dụ: "87.5%"
+                        var percentMatch = Regex.Match(line, @"([\d.,]+)%");
+                        if (percentMatch.Success)
+                        {
+                            matchRate = percentMatch.Groups[1].Value + "%";
+                            break;
+                        }
+                    }
+                }
+            }
+
+            var keyword = "Kết luận tổng thể";
+            var index = aiText.IndexOf(keyword, StringComparison.OrdinalIgnoreCase);
+
+            if (index >= 0)
+            {
+                // Cắt phần còn lại sau "Kết luận tổng thể"
+                var remaining = aiText.Substring(index);
+
+                // Tìm dòng có dấu kết luận
+                var lines = remaining.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    if (line.Contains("OK"))
+                    {
+                        conclusion = "✅OK";
+                        break;
+                    }
+                    if (line.Contains("NG"))
+                    {
+                        conclusion = "❌NG";
+                        break;
+                    }
+                    if (line.Contains("BLANK"))
+                    {
+                        conclusion = "⚠️BLANK";
+                        break;
+                    }
+                }
+            }
+            return (matchRate, conclusion);
         }
     }
 }

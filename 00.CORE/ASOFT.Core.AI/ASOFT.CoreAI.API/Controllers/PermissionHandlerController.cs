@@ -11,9 +11,9 @@ namespace ASOFT.OO.API.Controllers
     public class PermissionHandlerController : AgentBaseController
     {
         private IPermissionHandler _permissionHandler;
-        private readonly AgentManager _agentService;
+        private readonly AgentManagerService _agentService;
 
-        public PermissionHandlerController(IPermissionHandler permissionHandler, AgentManager agentService)
+        public PermissionHandlerController(IPermissionHandler permissionHandler, AgentManagerService agentService)
         {
             _permissionHandler = permissionHandler;
             _agentService = agentService;

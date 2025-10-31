@@ -1,0 +1,47 @@
+﻿// Copyright (c) Microsoft. All rights reserved.
+
+using ASOFT.CoreAI.Abstractions;
+using System.Text;
+
+namespace ASOFT.CoreAI.Business.LibraryKernel;
+
+/// <summary>
+/// Represents a manufactured streaming content from a single function result.
+/// </summary>
+public sealed class StreamingMethodContent : StreamingKernelContent
+{
+    /// <summary>
+    /// Gets the result of the function invocation.
+    /// </summary>
+    public object Content { get; }
+
+    /// <inheritdoc/>
+    public override byte[] ToByteArray()
+    {
+        if (Content is byte[] bytes)
+        {
+            return bytes;
+        }
+
+        // By default if a native value is not Byte[] we output the UTF8 string representation of the value
+        return Content?.ToString() is string s ?
+            Encoding.UTF8.GetBytes(s) :
+            [];
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return Content.ToString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StreamingMethodContent"/> class.
+    /// </summary>
+    /// <param name="innerContent">Underlying object that represents the chunk content.</param>
+    /// <param name="metadata">Additional metadata associated with the content.</param>
+    public StreamingMethodContent(object innerContent, IReadOnlyDictionary<string, object?>? metadata = null) : base(innerContent, metadata: metadata)
+    {
+        Content = innerContent;
+    }
+}

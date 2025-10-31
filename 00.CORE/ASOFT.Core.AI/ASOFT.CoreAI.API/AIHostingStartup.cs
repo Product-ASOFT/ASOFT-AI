@@ -10,14 +10,18 @@ using ASOFT.Core.DataAccess;
 using ASOFT.Core.DataAccess.ModelBuilderConfiguration;
 using ASOFT.CoreAI.API.Resources;
 using ASOFT.CoreAI.Business;
-using ASOFT.CoreAI.Business.ChatHandler.FileStorage;
+using ASOFT.CoreAI.Business.LibraryKernel;
+using ASOFT.CoreAI.Business.Services.ChatHandler;
+using ASOFT.CoreAI.Business.Services.ChatHandler.ChatStorage;
+using ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage;
+using ASOFT.CoreAI.Business.Services.RedisHandler;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Infrastructure;
+using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Kernel = ASOFT.CoreAI.Abstractions.Kernel;
 
@@ -57,17 +61,20 @@ public class AIHostingStartup : IHostingStartup
 
         services.AddTransient<ChatCompletionAgent>();
 
-        services.AddScoped<IPermissionHandler, PermissionHandler>();
-        services.AddScoped<IST2130Queries, ST2111Queries>();
-        services.AddScoped<IST2131Queries, ST2121Queries>();
-        services.AddScoped<IDataLoader, DataLoader>();
+        services.AddScoped<IPermissionHandler, PermissionService>();
+        services.AddScoped<IST2130Queries, ST2130Queries>();
+        services.AddScoped<IST2131Queries, ST2131Queries>();
+        services.AddScoped<IDataLoader, DataLoaderService>();
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
-        services.AddScoped<IRedisHandler, RedisHandler>();
-        services.AddScoped<SettingsManager>();
-        services.AddScoped<OcrService>();
+        services.AddScoped<IRedisHandler, RedisService>();
+        services.AddScoped<SettingsManagerService>();
         services.AddScoped<ICIF1640DAL, CIF1640DAL>();
-        services.AddScoped<AgentManager>();
-        services.AddScoped<HandlerOCRLocalService>();
+        services.AddScoped<AgentManagerService>();
+        services.AddScoped<IOCRService, OcrService>();
+        services.AddScoped<ITrainingDataService, TrainingDataService>();
+        services.AddScoped<FilePathService>();
+        services.AddScoped<AgentCompareService>();
+        services.AddScoped<ReadFileOrchestratorService>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
@@ -90,7 +97,7 @@ public class AIHostingStartup : IHostingStartup
             redisConfig.ConnectTimeout = 30000;
             redisConfig.AbortOnConnectFail = false;
             redisConfig.DefaultDatabase = 0; // Chọn database 0 làm mặc định
-            // hàm 
+            // hàm
             try
             {
                 var connection = ConnectionMultiplexer.Connect(redisConfig);
@@ -175,63 +182,4 @@ public class AIHostingStartup : IHostingStartup
             };
         });
     }
-
-    // Dùng khi có tích hợp RAG
-    //    public static void AddAgentWithRag<TKey>(WebApplicationBuilder builder, PromptTemplateConfig templateConfig)
-    //    {
-    //        builder.Services.AddTransient<ChatCompletionAgent>(sp =>
-    //        {
-    //            // Lấy các service cần thiết từ DI container
-    //            Kernel kernel = sp.GetRequiredService<Kernel>();
-    //#pragma warning disable SKEXP0001
-    //            // code sử dụng VectorStoreTextSearch
-    //            ASOFT.CoreAI.Infrastructure.VectorStoreTextSearch<TextSnippet<TKey>> vectorStoreTextSearch = sp.GetRequiredService<ASOFT.CoreAI.Infrastructure.VectorStoreTextSearch<TextSnippet<TKey>>>();
-
-    //            // Tạo plugin vector search và thêm vào kernel với tên "SearchPlugin"
-    //            kernel.Plugins.Add(vectorStoreTextSearch.CreateWithGetTextSearchResults("SearchPlugin"));
-    //#pragma warning restore SKEXP0001
-
-    //            // Tạo instance agent, gán Kernel và template prompt factory
-    //            return new ChatCompletionAgent(templateConfig, new HandlebarsPromptTemplateFactory())
-    //            {
-    //                Kernel = kernel,
-    //            };
-    //        });
-    //    }
 }
-
-//public static class KernelFunctionYaml
-//{
-//    public static KernelFunction FromPromptYaml(
-//        string text,
-//        IPromptTemplateFactory? promptTemplateFactory = null,
-//        ILoggerFactory? loggerFactory = null)
-//    {
-//        PromptTemplateConfig promptTemplateConfig = ToPromptTemplateConfig(text);
-
-//        foreach (var inputVariable in promptTemplateConfig.InputVariables)
-//        {
-//            if (inputVariable.Default is not null and not string)
-//            {
-//                throw new NotSupportedException($"Default value for input variable '{inputVariable.Name}' must be a string. " +
-//                        $"This is a temporary limitation; future updates are expected to remove this constraint. Prompt function - '{promptTemplateConfig.Name ?? promptTemplateConfig.Description}'.");
-//            }
-//        }
-
-//        return KernelFunctionFactory.CreateFromPrompt(promptTemplateConfig, promptTemplateFactory, loggerFactory);
-//    }
-
-//    /// <summary>
-//    /// Convert the given YAML text to a <see cref="PromptTemplateConfig"/> model.
-//    /// </summary>
-//    /// <param name="text">YAML representation of the <see cref="PromptTemplateConfig"/> to use to create the prompt function.</param>
-//    public static PromptTemplateConfig ToPromptTemplateConfig(string text)
-//    {
-//        var deserializer = new DeserializerBuilder()
-//            .WithNamingConvention(UnderscoredNamingConvention.Instance)
-//            .WithTypeConverter(new PromptExecutionSettingsTypeConverter())
-//            .Build();
-
-//        return deserializer.Deserialize<PromptTemplateConfig>(text);
-//    }
-//}

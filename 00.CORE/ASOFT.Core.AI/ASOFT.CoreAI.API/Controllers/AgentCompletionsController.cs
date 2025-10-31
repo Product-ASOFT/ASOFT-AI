@@ -2,6 +2,7 @@
 using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.API.Resources;
 using ASOFT.CoreAI.Business;
+using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
@@ -22,11 +23,11 @@ namespace ASOFT.CoreAI.API.Controllers
         private readonly Kernel _kernel;
         private IST2130Queries _agentPromptQueries;
         private IChatHistoryHandler _chatHistoryHandler;
-        private AgentManager _agentManager;
+        private AgentManagerService _agentManager;
 
         public AgentCompletionsController(ChatCompletionAgent agent, Kernel kernel,
             IST2130Queries agentPromptQueries,
-            IChatHistoryHandler chatHistoryHandler, AgentManager agentManager)
+            IChatHistoryHandler chatHistoryHandler, AgentManagerService agentManager)
         {
             this._agent = agent;
             this._chatHistory = [];
