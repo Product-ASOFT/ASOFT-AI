@@ -20,12 +20,12 @@ namespace ASOFT.CoreAI.API.Controllers
         private readonly ChatCompletionAgent _agent;
         private readonly ChatHistory _chatHistory;
         private readonly Kernel _kernel;
-        private IST2111Queries _agentPromptQueries;
+        private IST2130Queries _agentPromptQueries;
         private IChatHistoryHandler _chatHistoryHandler;
         private AgentManager _agentManager;
 
         public AgentCompletionsController(ChatCompletionAgent agent, Kernel kernel,
-            IST2111Queries agentPromptQueries,
+            IST2130Queries agentPromptQueries,
             IChatHistoryHandler chatHistoryHandler, AgentManager agentManager)
         {
             this._agent = agent;

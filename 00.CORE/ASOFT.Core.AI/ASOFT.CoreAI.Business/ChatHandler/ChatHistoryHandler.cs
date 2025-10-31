@@ -29,7 +29,7 @@ namespace ASOFT.CoreAI.Business
 
         #region Xử lý lưu trữ lịch sử chat
 
-        public async Task<ST2141> SaveChatMessageAsync(ChatHistoryModel chatHistory, CancellationToken cancellationToken = default)
+        public async Task<ST2133> SaveChatMessageAsync(ChatHistoryModel chatHistory, CancellationToken cancellationToken = default)
         {
             var chatSession = await CreateChatSessionAsync(chatHistory);
             if (chatSession == null)
@@ -39,7 +39,7 @@ namespace ASOFT.CoreAI.Business
             return chatMessage;
         }
 
-        public async Task<bool> SaveChatResponseAsync(string answer, ST2141 chatMessage)
+        public async Task<bool> SaveChatResponseAsync(string answer, ST2133 chatMessage)
         {
             if (string.IsNullOrEmpty(answer))
                 throw new ArgumentNullException(nameof(answer));
@@ -50,16 +50,16 @@ namespace ASOFT.CoreAI.Business
             return true;
         }
 
-        private async Task<ST2131?> CreateChatSessionAsync(ChatHistoryModel chatHistory)
+        private async Task<ST2132?> CreateChatSessionAsync(ChatHistoryModel chatHistory)
         {
-            ST2131? chatSession = null;
+            ST2132? chatSession = null;
             if (chatHistory.ChatSessionID != Guid.Empty && chatHistory.ChatSessionID.HasValue)
             {
                 chatSession = await _chatSessionRepository.GetByUserIdAsync(chatHistory.ChatSessionID.Value, chatHistory.UserID);
             }
             if (chatSession == null)
             {
-                chatSession = new ST2131
+                chatSession = new ST2132
                 {
                     APK = Guid.NewGuid(),
                     CreateUserID = chatHistory.UserID,
@@ -82,9 +82,9 @@ namespace ASOFT.CoreAI.Business
             return chatSession;
         }
 
-        private async Task<ST2141> CreateChatMessageAsync(ChatHistoryModel chatHistory, Guid chatSessionId)
+        private async Task<ST2133> CreateChatMessageAsync(ChatHistoryModel chatHistory, Guid chatSessionId)
         {
-            var chatMessage = new ST2141
+            var chatMessage = new ST2133
             {
                 APK = Guid.NewGuid(),
                 ChatSessionID = chatSessionId,
@@ -102,9 +102,9 @@ namespace ASOFT.CoreAI.Business
             return chatMessage;
         }
 
-        private async Task<ST2151> CreateChatResponseAsync(string userId, string answer, Guid chatMessageId)
+        private async Task<ST2134> CreateChatResponseAsync(string userId, string answer, Guid chatMessageId)
         {
-            var chatResponse = new ST2151
+            var chatResponse = new ST2134
             {
                 APK = Guid.NewGuid(),
                 ChatMessageID = chatMessageId,
@@ -119,9 +119,9 @@ namespace ASOFT.CoreAI.Business
             return chatResponse;
         }
 
-        public async Task<ST2161> CreateChatFileAsync(ChatHistoryModel chatHistory, Guid chatMessageId)
+        public async Task<ST2135> CreateChatFileAsync(ChatHistoryModel chatHistory, Guid chatMessageId)
         {
-            var chatFile = new ST2161
+            var chatFile = new ST2135
             {
                 APK = Guid.NewGuid(),
                 CreateUserID = chatHistory.UserID,
@@ -154,8 +154,9 @@ namespace ASOFT.CoreAI.Business
             parameters.Add("@PageSize", chatHistory.PageSize, DbType.Int32, ParameterDirection.Input);
 
             return await UseConnectionAsync(
-                async connection => await connection.QueryAsync<ChatHistoryResponseModel>(
-                    "SP2151", parameters, commandType: CommandType.StoredProcedure), cancellationToken);
+                async connection
+                => await connection.QueryAsync<ChatHistoryResponseModel>
+                ("SP2130", parameters, commandType: CommandType.StoredProcedure), cancellationToken);
         }
 
         #endregion Lấy thông tin lịch sử chat

@@ -7,14 +7,14 @@ namespace ASOFT.CoreAI.Business
 {
     public class ChatResponseRepository : IChatResponseRepository
     {
-        private readonly IBusinessContext<ST2151> _chatResponseContext;
+        private readonly IBusinessContext<ST2134> _chatResponseContext;
 
-        public ChatResponseRepository(IBusinessContext<ST2151> chatResponseContext)
+        public ChatResponseRepository(IBusinessContext<ST2134> chatResponseContext)
         {
             _chatResponseContext = Checker.NotNull(chatResponseContext, nameof(chatResponseContext));
         }
 
-        public async Task<bool> AddAsync(ST2151 chatResponse, CancellationToken cancellationToken = default)
+        public async Task<bool> AddAsync(ST2134 chatResponse, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -36,22 +36,22 @@ namespace ASOFT.CoreAI.Business
             throw new NotImplementedException();
         }
 
-        public async Task<bool> UpdateAsync(ST2151 entity, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateAsync(ST2134 entity, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        Task<IEnumerable<ST2151>> IRepository<ST2151>.GetAllAsync()
+        Task<IEnumerable<ST2134>> IRepository<ST2134>.GetAllAsync()
         {
             throw new NotImplementedException();
         }
 
-        Task<IEnumerable<ST2151>> IChatResponseRepository.GetByChatMessageIdAsync(Guid chatMessageId)
+        Task<IEnumerable<ST2134>> IChatResponseRepository.GetByChatMessageIdAsync(Guid chatMessageId)
         {
             throw new NotImplementedException();
         }
 
-        Task<ST2151> IRepository<ST2151>.GetByIdAsync(Guid id)
+        Task<ST2134> IRepository<ST2134>.GetByIdAsync(Guid id)
         {
             throw new NotImplementedException();
         }

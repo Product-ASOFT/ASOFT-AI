@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2151 : BaseEntity
+    public class ST2134 : BaseEntity
     {
         [Required]
         public Guid ChatMessageID { get; set; }
@@ -17,6 +17,6 @@ namespace ASOFT.CoreAI.Entities
         public DateTime? ResponseTime { get; set; }
 
         [ForeignKey(nameof(ChatMessageID))]
-        public virtual ST2141 ChatMessage { get; set; } = null!;
+        public virtual ST2133 ChatMessage { get; set; } = null!;
     }
 }

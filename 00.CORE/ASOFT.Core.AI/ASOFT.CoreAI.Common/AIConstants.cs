@@ -5,6 +5,7 @@
         public const string FIELD_EMBEDDING = "EmbeddingVector";
         public const string ModelAIKey = "ModelAIKey";
         public const string RedisConfig = "Redis:Configuration";
+        public const string APIOCRConfig = "APIOCR:URL";
 
         #region tạo các lệnh Redis
 

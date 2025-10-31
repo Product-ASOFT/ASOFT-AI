@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 namespace ASOFT.CoreAI.Infrastructure.EntityConfigurations
 {
-    public class ST2121Configuration : IEntityTypeConfiguration<ST2121>
+    public class ST2130Configuration : IEntityTypeConfiguration<ST2130>
     {
-        public void Configure(EntityTypeBuilder<ST2121> builder)
+        public void Configure(EntityTypeBuilder<ST2130> builder)
         {
             builder.HasKey(m => m.APK);
             builder.Property(m => m.APK)

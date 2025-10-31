@@ -1,5 +1,6 @@
 ﻿using ASOFT.Core.API.Versions;
 using ASOFT.CoreAI.Business;
+using ASOFT.CoreAI.Business.ChatHandler.FileStorage;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.OO.API.Controllers;
@@ -7,10 +8,15 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
 using static ASOFT.CoreAI.Common.EnumConstants;
+using IOFile = System.IO.File;
 
 namespace ASOFT.CoreAI.API.Controllers
 {
@@ -21,15 +27,17 @@ namespace ASOFT.CoreAI.API.Controllers
     {
         private readonly IRedisHandler _redisHandler;
         private readonly SettingsManager _settingsManager;
-        private readonly IST2121Queries _readFileResultQueries;
+        private readonly IST2131Queries _readFileResultQueries;
         private readonly AgentManager _agentManager;
-        private readonly IST2111Queries _agentPromptQueries;
+        private readonly IST2130Queries _agentPromptQueries;
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IChatHistoryHandler _chatHistoryHandler;
+        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly HandlerOCRLocalService _handlerOCRLocalService;
 
         public FileDataHandlerController(IRedisHandler redisHandler, SettingsManager settingsManager,
-            IST2121Queries readFileResultQueries, AgentManager agentManager, IST2111Queries agentPromptQueries, IWebHostEnvironment hostEnvironment,
-            IChatHistoryHandler chatHistoryHandler)
+            IST2131Queries readFileResultQueries, AgentManager agentManager, IST2130Queries agentPromptQueries, IWebHostEnvironment hostEnvironment,
+            IChatHistoryHandler chatHistoryHandler, HandlerOCRLocalService handlerOCRLocalService)
         {
             _redisHandler = redisHandler;
             _settingsManager = settingsManager;
@@ -38,6 +46,7 @@ namespace ASOFT.CoreAI.API.Controllers
             _agentPromptQueries = agentPromptQueries;
             _hostingEnvironment = hostEnvironment;
             _chatHistoryHandler = chatHistoryHandler;
+            _handlerOCRLocalService = handlerOCRLocalService;
         }
 
         [HttpPost]
@@ -79,28 +88,41 @@ namespace ASOFT.CoreAI.API.Controllers
                     file.AttachURL = Path.Combine(webRootPath, relativePath).Replace("/", "\\");
                 });
 
-                // 3. OCR
-                var ocrResults = await _agentManager.ReadAttacheFileOCR(request.AttachFiles);
-                if (ocrResults == null || !ocrResults.Any(x => !string.IsNullOrWhiteSpace(x.TextContent)))
-                    return ChatHandlerHelper.CreateResponseReadFile("No text extracted from the file.", false);
+                // kiểm tra cấu hình sử dụng OCR local hay dịch vụ OCR
+                bool IsHandeleOCRLocal = _settingsManager.GetIsUseServiceReadOCR();
 
-                // 4. Load training data
+                // 3. OCR
+                string ocrTextContent = string.Empty;
+                List<ResultReadFileModel> ocrResults = new List<ResultReadFileModel>();
+                if (IsHandeleOCRLocal)
+                {
+                    var filePaths = request.AttachFiles.Where(x => !string.IsNullOrEmpty(x.AttachURL)).Select(x => x.AttachURL).ToList();
+                    if (filePaths == null || filePaths.Count == 0)
+                        return ChatHandlerHelper.CreateResponseReadFile("No valid file paths for OCR.", false);
+                    ocrTextContent = _handlerOCRLocalService.ReadFileOCRWithLocal(filePaths).Result;
+                }
+                else
+                {
+                    ocrResults = await _agentManager.ReadAttacheFileOCR(request.AttachFiles);
+                    if (ocrResults == null || !ocrResults.Any(x => !string.IsNullOrWhiteSpace(x.TextContent)))
+                        return ChatHandlerHelper.CreateResponseReadFile("No text extracted from the file.", false);
+
+                    // 4. Tổng hợp nội dung OCR
+                    var sb = new StringBuilder();
+                    int i = 0;
+                    foreach (var item in ocrResults)
+                    {
+                        sb.AppendLine($"📄 File {++i}: **{item.FileName}**");
+                        sb.AppendLine(item.TextContent);
+                        sb.AppendLine();
+                    }
+                    ocrTextContent = sb.ToString();
+                }
+                // 5. Load training data
                 var indexName = AgentKeyHelper.GetIndexKey(AgentKeys.BEM_AGENT_BEMF2000);
                 var maxRecords = _settingsManager.GetNumberRecords().maxTraining;
                 var trainingData = await _redisHandler.GetDataByReadFileAsync(request, indexName, maxRecords);
-
-                // 5. Tổng hợp nội dung OCR
-                var sb = new StringBuilder();
-                int i = 0;
-                foreach (var item in ocrResults)
-                {
-                    sb.AppendLine($"📄 File {++i}: **{item.FileName}**");
-                    sb.AppendLine(item.TextContent);
-                    sb.AppendLine();
-                }
-
-                string ocrTextContent = sb.ToString();
-                var resultReadFile = new ST2121
+                var resultReadFile = new ST2131
                 {
                     APK = Guid.NewGuid(),
                     APKMaster = request.BEMF2002Detail.APK,
@@ -115,16 +137,32 @@ namespace ASOFT.CoreAI.API.Controllers
                 if (!string.IsNullOrWhiteSpace(ocrTextContent))
                 {
                     request.Question = "Hãy đối chiếu dữ liệu đọc được từ OCR với dữ liệu ở người dùng cung cấp (datas) cho tôi";
-
-                    var result = await _agentManager.SendPromptWithReadFile(
-                        request,
-                        prompt.PromptContent,
-                        ocrResults,
-                        Enumerable.Empty<ChatHistoryResponseModel>(),
-                        trainingData,
-                        new List<BEMF2002DetailModel> { request.BEMF2002Detail },
-                        request.BEMT2001Models ?? new List<BEMT2001Model>()
-                    );
+                    string result = string.Empty;
+                    if (IsHandeleOCRLocal)
+                    {
+                        // Tạo kết quả OCR từ nội dung text
+                        result = await _agentManager.SendPromptWithLocalsAsync(
+                                              request,
+                                              prompt.PromptContent,
+                                              ocrTextContent,
+                                              Enumerable.Empty<ChatHistoryResponseModel>(),
+                                              trainingData,
+                                              new List<BEMF2002DetailModel> { request.BEMF2002Detail },
+                                              request.BEMT2001Models ?? new List<BEMT2001Model>()
+                                          );
+                    }
+                    else
+                    {
+                        result = await _agentManager.SendPromptWithReadFile(
+                                               request,
+                                               prompt.PromptContent,
+                                               ocrResults,
+                                               Enumerable.Empty<ChatHistoryResponseModel>(),
+                                               trainingData,
+                                               new List<BEMF2002DetailModel> { request.BEMF2002Detail },
+                                               request.BEMT2001Models ?? new List<BEMT2001Model>()
+                                           );
+                    }
 
                     resultReadFile.TextContentAI = !string.IsNullOrWhiteSpace(result) ? result : "Không có kết quả đối chiếu";
                     var matchResult = ExtractMatchInfo(result);
@@ -349,6 +387,54 @@ namespace ASOFT.CoreAI.API.Controllers
             string baseUrl = await GetBaseUrlAsync();
             var downloadUrl = $"http://192.168.0.201:9980/downloads/{fileName}";
             return downloadUrl;
+        }
+
+        [HttpPost]
+        [ActionName("ReadFileOCR")]
+        public async Task<ChatResponseReadFileModel> ReadFileOCR(ReadFileRequest request)
+        {
+            if (request == null)
+            {
+                return ChatHandlerHelper.CreateResponseReadFile("Không có dữ liệu", true);
+            }
+            if (request.FilePaths == null || request.FilePaths.Count == 0)
+            {
+                return ChatHandlerHelper.CreateResponseReadFile("Không có thông tin về file cần đọc", true);
+            }
+            var url = "http://192.168.2.125:4444/ocr";
+
+            using var form = new MultipartFormDataContent();
+
+            var provider = new FileExtensionContentTypeProvider();
+
+            foreach (var filePath in request.FilePaths)
+            {
+                if (!System.IO.File.Exists(filePath))
+                    throw new FileNotFoundException($"Không tìm thấy file: {filePath}");
+
+                var fileStream = System.IO.File.OpenRead(filePath);
+                var fileContent = new StreamContent(fileStream);
+
+                // Lấy content-type dựa theo phần mở rộng
+                if (!provider.TryGetContentType(filePath, out var contentType))
+                    contentType = "application/octet-stream"; // fallback
+
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+
+                form.Add(fileContent, "files", Path.GetFileName(filePath));
+            }
+            using var response = await _httpClient.PostAsync(url, form);
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadAsStringAsync();
+            string outputPath = @"C:\Users\ducmanh\Desktop\ResultOCR.txt";
+            if (!string.IsNullOrEmpty(outputPath))
+            {
+                await IOFile.WriteAllTextAsync(outputPath, result);
+            }
+
+            return ChatHandlerHelper.CreateResponseReadFile(result, true);
         }
     }
 }

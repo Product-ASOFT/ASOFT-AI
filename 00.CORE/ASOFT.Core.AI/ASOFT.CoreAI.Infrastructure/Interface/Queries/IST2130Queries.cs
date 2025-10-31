@@ -2,7 +2,7 @@
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public interface IST2111Queries
+    public interface IST2130Queries
     {
         /// <summary>
         /// Lấy danh sách các prompt của agent
@@ -11,7 +11,7 @@ namespace ASOFT.CoreAI.Infrastructure
         /// <param name="moduleCode">Mã module (nếu có)</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Danh sách các prompt</returns>
-        Task<ST2111> QueryPromptsByAgentCode(string agentCode, CancellationToken cancellationToken = default);
+        Task<ST2130> QueryPromptsByAgentCode(string agentCode, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Thêm mới một prompt cho agent
@@ -19,6 +19,6 @@ namespace ASOFT.CoreAI.Infrastructure
         /// <param name="agent"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> CreateAgentPrompt(ST2111 agent, CancellationToken cancellationToken = default);
+        Task<bool> CreateAgentPrompt(ST2130 agent, CancellationToken cancellationToken = default);
     }
 }

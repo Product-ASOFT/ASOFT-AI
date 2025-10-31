@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2111 : BaseEntity
+    public class ST2130 : BaseEntity
     {
         [Required, MaxLength(100)]
         public string AgentCode { get; set; } = null!;

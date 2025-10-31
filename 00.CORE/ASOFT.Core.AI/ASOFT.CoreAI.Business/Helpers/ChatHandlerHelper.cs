@@ -16,7 +16,7 @@ namespace ASOFT.CoreAI.Business
             };
         }
 
-        public static ChatResponseReadFileModel CreateResponseReadFile(string message, bool status, List<ST2121>? readFileResults = null)
+        public static ChatResponseReadFileModel CreateResponseReadFile(string message, bool status, List<ST2131>? readFileResults = null)
         {
             return new ChatResponseReadFileModel
             {
