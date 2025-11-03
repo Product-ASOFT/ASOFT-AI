@@ -37,9 +37,9 @@ namespace ASOFT.CoreAI.Business.Services.RedisHandler
                 // Map từ dictionary sang đối tượng FieldsData
                 var fieldsData = new FieldsData
                 {
-                    Text = fieldsDict.ContainsKey("Text") ? fieldsDict["Text"] : null,
-                    ReferenceDescription = fieldsDict.ContainsKey("ReferenceDescription") ? fieldsDict["ReferenceDescription"] : null,
-                    ReferenceLink = fieldsDict.ContainsKey("ReferenceLink") ? fieldsDict["ReferenceLink"] : null
+                    Text = fieldsDict.ContainsKey("Text") ? fieldsDict["Text"] : string.Empty,
+                    ReferenceDescription = fieldsDict.ContainsKey("ReferenceDescription") ? fieldsDict["ReferenceDescription"] : string.Empty,
+                    ReferenceLink = fieldsDict.ContainsKey("ReferenceLink") ? fieldsDict["ReferenceLink"] : string.Empty
                 };
 
                 items.Add(new RedisearchResultItem

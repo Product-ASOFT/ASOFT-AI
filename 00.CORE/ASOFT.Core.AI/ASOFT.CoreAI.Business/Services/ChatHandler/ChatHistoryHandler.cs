@@ -1,4 +1,5 @@
 ﻿using ASOFT.Core.DataAccess;
+using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Dapper;
@@ -33,10 +34,9 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler
         {
             var chatSession = await CreateChatSessionAsync(chatHistory);
             if (chatSession == null)
-                return null;
+                return new ST2133();
 
-            var chatMessage = await CreateChatMessageAsync(chatHistory, chatSession.APK);
-            return chatMessage;
+            return await CreateChatMessageAsync(chatHistory, chatSession.APK);
         }
 
         public async Task<bool> SaveChatResponseAsync(string answer, ST2133 chatMessage)
@@ -126,9 +126,9 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler
                 APK = Guid.NewGuid(),
                 CreateUserID = chatHistory.UserID,
                 ChatMessageID = chatMessageId,
-                FileName = chatHistory.FileName,
-                FileType = chatHistory.FileType,
-                FileUrl = chatHistory.FileUrl,
+                FileName = chatHistory.FileName ?? string.Empty,
+                FileType = chatHistory?.FileType,
+                FileUrl = chatHistory?.FileUrl,
                 FileData = chatHistory.FileData,
                 UploadedAt = DateTime.Now,
                 CreateDate = DateTime.Now,
@@ -160,5 +160,19 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler
         }
 
         #endregion Lấy thông tin lịch sử chat
+        public ChatHistoryModel CreateChatHistoryModel(AgentRequest request, string agentCode, int maxChat)
+        {
+            return new ChatHistoryModel
+            {
+                ChatSessionID = request.ChatSessionID,
+                UserID = request.UserId,
+                Question = request.Question,
+                TypeChat = EnumConstants.TypeChat.Plugin.ToString(),
+                ModuleName = request.Module,
+                AgentCode = agentCode,
+                PageNumber = 1,
+                PageSize = maxChat,
+            };
+        }
     }
 }

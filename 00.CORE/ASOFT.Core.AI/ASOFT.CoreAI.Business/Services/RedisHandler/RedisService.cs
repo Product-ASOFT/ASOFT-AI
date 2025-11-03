@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ASOFT.CoreAI.Business.Services.RedisHandler
 {
-    public class RedisService : IRedisHandler
+    public class RedisService : IRedisService
     {
         private readonly IRedisMemoryProvider _vectorDatabase;
         private readonly IOpenAIEmbeddingService _embeddingService;

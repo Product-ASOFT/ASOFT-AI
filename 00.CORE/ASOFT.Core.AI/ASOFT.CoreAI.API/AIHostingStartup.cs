@@ -66,7 +66,7 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<IST2131Queries, ST2131Queries>();
         services.AddScoped<IDataLoader, DataLoaderService>();
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
-        services.AddScoped<IRedisHandler, RedisService>();
+        services.AddScoped<IRedisService, RedisService>();
         services.AddScoped<SettingsManagerService>();
         services.AddScoped<ICIF1640DAL, CIF1640DAL>();
         services.AddScoped<AgentManagerService>();
@@ -74,6 +74,8 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<ITrainingDataService, TrainingDataService>();
         services.AddScoped<FilePathService>();
         services.AddScoped<AgentCompareService>();
+        services.AddScoped<ReadFileOrchestratorService>();
+        services.AddScoped<AgentPromptService>();
         services.AddScoped<ReadFileOrchestratorService>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>

@@ -112,7 +112,7 @@ namespace ASOFT.CoreAI.API.Controllers
             #region Lưu câu trả lời vào Database
 
             Guid chatSessionID = Guid.Empty;
-            if (chatMessages != null)
+            if (chatMessages != null && chatMessages.APK  != chatSessionID)
             {
                 chatSessionID = chatMessages.ChatSessionID;
                 await _chatHistoryHandler.SaveChatResponseAsync(responseMessage, chatMessages);
@@ -181,7 +181,7 @@ namespace ASOFT.CoreAI.API.Controllers
             {
                 return ChatHandlerHelper.CreateResponse(Guid.Empty, "Hiện tại bạn chưa tạo Prompt để phân loại câu hỏi. Vui lòng thiết lập Prompt để tiếp tục.");
             }
-            var chatHistoryModel = _agentManager.CreateChatHistoryModel(agentRequest, string.Empty, 10);
+            var chatHistoryModel = _chatHistoryHandler.CreateChatHistoryModel(agentRequest, string.Empty, 10);
             var chatHistory = await _chatHistoryHandler.GetChatHistoryAsync(chatHistoryModel);
             var arguments = new KernelArguments
             {

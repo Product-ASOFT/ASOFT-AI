@@ -15,13 +15,13 @@ namespace ASOFT.CoreAI.API.Controllers
     {
         private readonly IRedisMemoryProvider _vectorDatabase;
         private readonly IDataLoader _dataLoader;
-        private readonly IRedisHandler _redisHandler;
+        private readonly IRedisService _redisHandler;
         private readonly AgentManagerService _agentService;
         private readonly ICIF1640DAL _cif1640DAL;
 
         public RedisDataController(IRedisMemoryProvider vectorDatabase,
             IDataLoader dataLoader,
-            IRedisHandler redisHandler,
+            IRedisService redisHandler,
             AgentManagerService agentManager,
             ICIF1640DAL cif1640DAL)
         {

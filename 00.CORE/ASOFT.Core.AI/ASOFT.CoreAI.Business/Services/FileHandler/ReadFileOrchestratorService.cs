@@ -1,15 +1,7 @@
-﻿using ASOFT.A00.DataAccess.Interfaces;
-using ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage;
+﻿using ASOFT.CoreAI.Business.Services.RedisHandler;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
-using ASOFT.CoreAI.Infrastructure.Interface;
-using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.AspNetCore.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 
 namespace ASOFT.CoreAI.Business
@@ -20,22 +12,23 @@ namespace ASOFT.CoreAI.Business
         private readonly IST2131Queries _ST2131Queries;
         private readonly AgentCompareService _compareService;
         private readonly FilePathService _filePathService;
-        private readonly IWebHostEnvironment _env;
         private readonly ITrainingDataService _trainingService;
         private readonly IOCRService _ocrService;
+        private readonly SettingsManagerService _settingsManager;
         public ReadFileOrchestratorService(IST2130Queries ST2130Queries,
-            IST2131Queries ST2131Queries,
-            AgentCompareService compareService,
-            FilePathService filePathService, IWebHostEnvironment env, 
-            ITrainingDataService trainingDataService, IOCRService ocrService)
+            IST2131Queries ST2131Queries, AgentCompareService compareService,
+            FilePathService filePathService, ITrainingDataService trainingDataService,
+            IOCRService ocrService, SettingsManagerService settingsManager,
+            AgentPromptService agentPromptService)
         {
             _ST2130Queries = ST2130Queries;
             _ST2131Queries = ST2131Queries;
             _compareService = compareService;
             _filePathService = filePathService;
-            _env = env;
             _trainingService = trainingDataService;
             _ocrService = ocrService;
+            _settingsManager = settingsManager;
+         
         }
         public async Task<ChatResponseReadFileModel> HandleAsync(ReadFileRequest request)
         {
@@ -57,13 +50,13 @@ namespace ASOFT.CoreAI.Business
                 return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
 
             // Chuẩn hoá file
-            var validFiles = _filePathService.NormalizeToPhysicalUnderWebRoot(_env.WebRootPath, request.AttachFiles);
-            if (validFiles.Count == 0) 
+            var validFiles = _filePathService.NormalizeToPhysicalUnderWebRoot(request.AttachFiles);
+            if (validFiles.Count == 0)
                 return ChatHandlerHelper.CreateResponseReadFile("No valid file paths for OCR.", false);
 
             // OCR
             var (ocrText, ocrResults) = await _ocrService.ReadAsync(validFiles);
-            if (string.IsNullOrWhiteSpace(ocrText)) 
+            if (string.IsNullOrWhiteSpace(ocrText))
                 return ChatHandlerHelper.CreateResponseReadFile("No text extracted from the file.", false);
 
             // Training data
@@ -93,9 +86,29 @@ namespace ASOFT.CoreAI.Business
             // Save
             var resultSaveFile = await _ST2131Queries.SaveFileResult(entity);
             return ChatHandlerHelper.CreateResponseReadFile(
-                resultSaveFile ? "Đọc và ghi kết quả thành công" : 
+                resultSaveFile ? "Đọc và ghi kết quả thành công" :
                 "Đọc và ghi kết quả không thành công", resultSaveFile);
 
         }
+        public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths)
+        {
+            string configKeyOCR = _settingsManager.GetKeyReadOCR();
+            var AttachFiles = new List<AttachFileModel>();
+            foreach (var item in FilePaths)
+            {
+                AttachFiles.Add(new AttachFileModel
+                {
+                    AttachURL = item,
+                    AttachName = Path.GetFileName(item)
+                });
+            }
+            if (FilePaths != null && FilePaths.Any())
+            {
+                var (ocrText, results) = await _ocrService.ReadAsync(AttachFiles);
+                return results;
+            }
+            return new List<ResultReadFileModel>();
+        }
+
     }
 }
