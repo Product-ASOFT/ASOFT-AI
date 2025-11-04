@@ -30,7 +30,6 @@ public sealed class HostConfig
     /// </summary>
     public const string OpenAIConnectionStringName = "OpenAI";
 
-    private readonly ConfigurationManager _configurationManager;
 
     private readonly ModelAIChatConfig _openAIChatConfig = new();
 
@@ -43,7 +42,6 @@ public sealed class HostConfig
     /// <summary>
     /// Initializes a new instance of the <see cref="HostConfig"/> class.
     /// </summary>
-    /// <param name="configurationManager">The configuration manager.</param>
     //public HostConfig(ConfigurationManager configurationManager)
     //{
     //    //configurationManager

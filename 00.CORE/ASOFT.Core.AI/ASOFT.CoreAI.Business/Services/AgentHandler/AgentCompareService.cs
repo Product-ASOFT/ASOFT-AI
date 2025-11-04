@@ -10,12 +10,12 @@ namespace ASOFT.CoreAI.Business
 {
     public class AgentCompareService
     {
-        private readonly AgentManagerService _agentManager;
+        private readonly AgentPromptService _agentPromptService;
         private readonly SettingsManagerService _settings;
 
-        public AgentCompareService(AgentManagerService agentManager, SettingsManagerService settings)
+        public AgentCompareService(AgentPromptService agentPromptService, SettingsManagerService settings)
         {
-            _agentManager = agentManager;
+            _agentPromptService = agentPromptService;
             _settings = settings;
         }
         public async Task<string> CompareAsync(
@@ -27,27 +27,28 @@ namespace ASOFT.CoreAI.Business
         {
             request.Question = "Hãy đối chiếu dữ liệu đọc được từ OCR với dữ liệu ở người dùng cung cấp (datas) cho tôi";
             var useLocal = _settings.GetIsUseServiceReadOCR();
+            var detail = request!.BEMF2002Detail ?? new BEMF2002DetailModel();
 
             if (useLocal)
             {
-                return await _agentManager.SendPromptWithLocalsAsync(
+                return await _agentPromptService.SendPromptWithLocalsAsync(
                     request,
                     prompt,
                     ocrTextMerged ?? string.Empty,
                     Enumerable.Empty<ChatHistoryResponseModel>(),
                     trainingData,
-                    new List<BEMF2002DetailModel> { request.BEMF2002Detail },
+                    new List<BEMF2002DetailModel> { detail },
                     request.BEMT2001Models ?? new List<BEMT2001Model>()
                 ).ConfigureAwait(false);
             }
 
-            return await _agentManager.SendPromptWithReadFile(
+            return await _agentPromptService.SendPromptWithReadFile(
                 request,
                 prompt,
                 ocrResults ?? new List<ResultReadFileModel>(),
                 Enumerable.Empty<ChatHistoryResponseModel>(),
                 trainingData,
-                new List<BEMF2002DetailModel> { request.BEMF2002Detail },
+                new List<BEMF2002DetailModel> { detail },
                 request.BEMT2001Models ?? new List<BEMT2001Model>()
             ).ConfigureAwait(false);
         }

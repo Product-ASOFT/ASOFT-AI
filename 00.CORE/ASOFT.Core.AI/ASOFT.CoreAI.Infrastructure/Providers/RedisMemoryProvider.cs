@@ -47,7 +47,7 @@ public class RedisMemoryProvider : IRedisMemoryProvider
 
             try
             {
-                var record = System.Text.Json.JsonSerializer.Deserialize<CustomMemoryRecord>(val);
+                var record = JsonSerializer.Deserialize<CustomMemoryRecord>(val.HasValue);
                 if (record != null)
                     result.Add(record);
             }
@@ -265,7 +265,7 @@ public class RedisMemoryProvider : IRedisMemoryProvider
 
             return result;
         }
-        catch (RedisServerException ex)
+        catch (RedisServerException)
         {
             // Trường hợp index không tồn tại hoặc lỗi truy vấn
             return null;

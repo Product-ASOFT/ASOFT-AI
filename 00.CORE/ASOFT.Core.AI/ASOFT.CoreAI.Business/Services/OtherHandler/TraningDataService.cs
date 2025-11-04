@@ -13,9 +13,9 @@ namespace ASOFT.CoreAI.Business
 
     public sealed class TrainingDataService : ITrainingDataService
     {
-        private readonly IRedisHandler _redis;
+        private readonly IRedisService _redis;
         private readonly SettingsManagerService _settings;
-        public TrainingDataService(IRedisHandler redis, SettingsManagerService settings)
+        public TrainingDataService(IRedisService redis, SettingsManagerService settings)
         {
             _redis = redis;
             _settings = settings;

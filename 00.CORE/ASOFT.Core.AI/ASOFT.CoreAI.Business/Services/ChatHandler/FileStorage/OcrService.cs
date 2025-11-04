@@ -6,314 +6,439 @@ using ClosedXML.Excel;
 using Google.Cloud.Vision.V1;
 using HeyRed.Mime;
 using Microsoft.AspNetCore.StaticFiles;
-using NetTopologySuite.Utilities;
+using PdfiumViewer;
+using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.Versioning;
 using System.Text;
 using UglyToad.PdfPig;
 using Xceed.Words.NET;
+using PdfDocument = PdfiumViewer.PdfDocument;
 
 namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
 {
-    public class OcrService : IOCRService
+    public sealed class OcrService : IOCRService
     {
+        private readonly IRedisMemoryProvider _redis;
+        private readonly SettingsManagerService _settings;
+        private readonly HttpClient _httpClient;
+
         private static readonly string[] ImageMimeTypes = new[]
-         {
+        {
             "image/jpeg", "image/png", "image/gif", "image/bmp", "image/tiff"
-         };
+        };
 
-        private readonly IRedisMemoryProvider _redisMemoryProvider;
-        private readonly SettingsManagerService _settingsManager;
-        private static readonly HttpClient _httpClient = new HttpClient();
-
-        public OcrService(IRedisMemoryProvider redisMemoryProvider, SettingsManagerService settingsManager)
+        public OcrService(
+            IRedisMemoryProvider redisMemoryProvider,
+            SettingsManagerService settingsManager,
+            IHttpClientFactory httpClientFactory)
         {
-            _redisMemoryProvider = redisMemoryProvider;
-            _settingsManager = settingsManager;
+            _redis = redisMemoryProvider;
+            _settings = settingsManager;
+            _httpClient = httpClientFactory.CreateClient(nameof(OcrService));
         }
-
-        public Task<bool> IsTextPdfWithPdfium(string filePath)
-        {
-            using (var doc = PdfiumViewer.PdfDocument.Load(filePath))
-            {
-                for (int i = 0; i < doc.PageCount; i++)
-                {
-                    string text = doc.GetPdfText(i)?.Trim();
-                    if (!string.IsNullOrWhiteSpace(text))
-                        return Task.FromResult(true);
-                }
-            }
-            return Task.FromResult(false);
-        }
-
-        #region xử lý đọc hình ảnh trong file pdf ra text
-
-        // hàm xử lý đọc file PDF khi đã được scan hình ảnh
-        public async Task<string> ExtractTextFromPdfAsync(string pdfPath, bool IsUseReadOCRLocal)
-        {
-            var resultText = new List<string>();
-            if (IsUseReadOCRLocal)
-            {
-                var response = await ReadFileOCRWithLocal(new List<string> { pdfPath });
-                resultText.Add(response ?? string.Empty);
-            }
-            else
-            {
-                var images = ConvertPdfToImages(pdfPath);
-                var client = await ImageAnnotatorClient.CreateAsync();
-                foreach (var img in images)
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        img.Save(ms, ImageFormat.Png);
-                        ms.Position = 0;
-
-                        var image = Google.Cloud.Vision.V1.Image.FromStream(ms);
-                        string response = await ReadImageOcrWithGoogle(image);
-                        resultText.Add(response);
-                    }
-                    img.Dispose(); // Giải phóng bộ nhớ
-                }
-            }
-            return string.Join("\n---PAGE---\n", resultText);
-        }
-
-        // Hàm chuyển đổi PDF sang danh sách hình ảnh
-        private List<Bitmap> ConvertPdfToImages(string pdfFilePath)
-        {
-            var images = new List<Bitmap>();
-            using (var document = PdfiumViewer.PdfDocument.Load(pdfFilePath))
-            {
-                for (int i = 0; i < document.PageCount; i++)
-                {
-                    var img = document.Render(i, 300, 300, true); // Render 300 DPI
-                    images.Add(new Bitmap(img));
-                }
-            }
-            return images;
-        }
-
-        // Hàm chuyển đổi trực tiếp từ hình ảnh sang text
-        private async Task<string> ExtractTextFromImageAsync(string imagePath, bool IsUseReadOCRLocal)
-        {
-            // Kiểm tra file
-            if (!File.Exists(imagePath))
-                throw new FileNotFoundException("Ảnh không tồn tại", imagePath);
-            var response = string.Empty;
-            if (IsUseReadOCRLocal)
-            {
-                response = await ReadFileOCRWithLocal(new List<string> { imagePath });
-            }
-            else
-            {
-                var image = await Task.Run(() => Google.Cloud.Vision.V1.Image.FromFile(imagePath));
-                response = await ReadImageOcrWithGoogle(image);
-            }
-            return response ?? string.Empty;
-        }
-
-        private async Task<string> ReadImageOcrWithGoogle(Google.Cloud.Vision.V1.Image image)
-        {
-            var client = await ImageAnnotatorClient.CreateAsync();
-            var response = await client.DetectDocumentTextAsync(image);
-            return response?.Text ?? string.Empty;
-        }
-
-        #endregion xử lý đọc hình ảnh trong file pdf ra text
 
         /// <summary>
-        /// Đọc nội dung text từ danh sách file đính kèm (PDF, Word, Excel, Hình ảnh).
-        /// Kết quả sẽ cache vào Redis để lần sau không phải đọc lại.
+        /// Đọc text từ danh sách file (PDF, Word, Excel, Image).
+        /// Trả về text gộp + list kết quả từng file.
         /// </summary>
-        public async Task<List<ResultReadFileModel>> ReadTextFromFile(List<AttachFileModel> attachFiles)
-        {
-            int numberOrder = 0;
-
-            var tasks = attachFiles.Select(async attachFile =>
-            {
-                string filePath = attachFile.AttachURL ?? string.Empty;
-
-                var result = new ResultReadFileModel
-                {
-                    NumberOrder = Interlocked.Increment(ref numberOrder),
-                    FilePath = filePath,
-                    AttachID = attachFile.AttachID
-                };
-
-                if (!File.Exists(filePath))
-                    return result;
-
-                result.FileName = Path.GetFileName(filePath);
-                string mimeType = MimeTypesMap.GetMimeType(filePath);
-                if (string.IsNullOrEmpty(mimeType))
-                    return result;
-
-                var fileInfo = new FileInfo(filePath);
-                if (!fileInfo.Exists)
-                    return result;
-
-                // Cấu hình có sử dụng dịch vụ OCR Local không
-                bool IsUseReadOCRLocal = _settingsManager.GetIsUseServiceReadOCR();
-
-                // Cache key
-                string cacheKey = $"filecache:{fileInfo.FullName.ToLowerInvariant()}:{fileInfo.LastWriteTimeUtc.Ticks}:{fileInfo.Length}";
-
-                // Kiểm tra cache
-                var cached = await _redisMemoryProvider.GetFileCacheAsync(filePath, cacheKey);
-                if (!string.IsNullOrEmpty(cached))
-                {
-                    result.TextContent = cached;
-                    return result;
-                }
-
-                try
-                {
-                    if (ImageMimeTypes.Contains(mimeType))
-                    {
-                        result.TextContent = await ExtractTextFromImageAsync(filePath, IsUseReadOCRLocal);
-                    }
-                    else
-                    {
-                        switch (mimeType)
-                        {
-                            case "application/pdf":
-                                result.TextContent = await (
-                                    await IsTextPdfWithPdfium(filePath)
-                                        ? ReadTextFromPdf(filePath)
-                                        : ExtractTextFromPdfAsync(filePath, IsUseReadOCRLocal));
-                                break;
-
-                            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                            case "application/msword":
-                                result.TextContent = await ExtractTextFromWord(filePath);
-                                break;
-
-                            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-                            case "application/vnd.ms-excel":
-                                result.TextContent = await ExtractTextFromExcel(filePath);
-                                break;
-                        }
-                    }
-
-                    // Lưu cache nếu có dữ liệu
-                    if (!string.IsNullOrEmpty(result.TextContent))
-                        await _redisMemoryProvider.SaveFileCacheAsync(filePath, result.TextContent, cacheKey);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                }
-
-                return result;
-            });
-
-            var results = await Task.WhenAll(tasks);
-            return results.ToList();
-        }
-
-        #region hàm xử lý đọc file text loại file Word, Excel, PDF(text)
-
-        private Task<string> ExtractTextFromWord(string filePath)
-        {
-            using var doc = DocX.Load(filePath);
-            return Task.FromResult(doc.Text);
-        }
-
-        private Task<string> ExtractTextFromExcel(string filePath)
-        {
-            using var workbook = new XLWorkbook(filePath);
-            var textResult = new StringBuilder();
-
-            foreach (var worksheet in workbook.Worksheets)
-            {
-                textResult.AppendLine($"--- Sheet: {worksheet.Name} ---");
-                foreach (var row in worksheet.RowsUsed())
-                {
-                    foreach (var cell in row.CellsUsed())
-                    {
-                        textResult.Append(cell.GetValue<string>());
-                        textResult.Append("\t");
-                    }
-                    textResult.AppendLine();
-                }
-                textResult.AppendLine();
-            }
-            return Task.FromResult(textResult.ToString());
-        }
-
-        public Task<string> ReadTextFromPdf(string filePath)
-        {
-            var result = new StringBuilder();
-            using (PdfDocument document = PdfDocument.Open(filePath))
-            {
-                foreach (var page in document.GetPages())
-                {
-                    var text = page.Text?.Trim();
-                    if (!string.IsNullOrWhiteSpace(text))
-                    {
-                        result.AppendLine(text);
-                        result.AppendLine("\n---PAGE BREAK---\n");
-                    }
-                }
-            }
-            return Task.FromResult(result.ToString());
-        }
-
-        #endregion hàm xử lý đọc file text loại file Word, Excel, PDF(text)
-
-
-        // Hàm chuyển đổi từ file hình ảnh sang text sử dụng dịch vụ OCR local
-        public async Task<string> ReadFileOCRWithLocal(List<string> FilePaths)
-        {
-            string ocrUrl = _settingsManager.GetUrlReadOCR();
-            if ("" == ocrUrl)
-                throw new Exception("Chưa cấu hình URL OCR");
-            var form = new MultipartFormDataContent();
-            var provider = new FileExtensionContentTypeProvider();
-
-            foreach (var filePath in FilePaths)
-            {
-                if (!File.Exists(filePath))
-                    throw new FileNotFoundException($"Không tìm thấy file: {filePath}");
-
-                var fileStream = File.OpenRead(filePath);
-                var fileContent = new StreamContent(fileStream);
-
-                // Lấy content-type dựa theo phần mở rộng
-                if (!provider.TryGetContentType(filePath, out var contentType))
-                    contentType = "application/octet-stream"; // fallback
-
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-
-                form.Add(fileContent, "files", Path.GetFileName(filePath));
-            }
-            var response = await _httpClient.PostAsync(ocrUrl, form);
-
-            if (!response.IsSuccessStatusCode)
-                response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadAsStringAsync();
-            return result ?? string.Empty;
-        }
-
         public async Task<(string TextMerged, List<ResultReadFileModel> Results)> ReadAsync(IReadOnlyList<AttachFileModel> files)
         {
-            var results = await ReadTextFromFile(files.ToList());
-            if (results == null || !results.Any(r => !string.IsNullOrWhiteSpace(r.TextContent)))
+            if (files == null)
+            {
                 return (string.Empty, new List<ResultReadFileModel>());
+            }
+
+            if (files.Count == 0)
+            {
+                return (string.Empty, new List<ResultReadFileModel>());
+            }
+
+            var results = await ExtractFilesAsync(files).ConfigureAwait(false);
+            if (results == null)
+            {
+                return (string.Empty, new List<ResultReadFileModel>());
+            }
+
+            if (!results.Any(r => r != null && !string.IsNullOrWhiteSpace(r.TextContent)))
+            {
+                return (string.Empty, results);
+            }
 
             var sb = new StringBuilder();
             for (int i = 0; i < results.Count; i++)
             {
                 var r = results[i];
-                if (string.IsNullOrWhiteSpace(r?.TextContent)) continue;
+                if (r == null)
+                {
+                    continue;
+                }
+
+                var text = r.TextContent;
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
                 sb.AppendLine($"📄 File {i + 1}: **{r.FileName}**");
-                sb.AppendLine(r.TextContent);
+                sb.AppendLine(text);
                 sb.AppendLine();
             }
-            return (sb.ToString(), results);
+
+            var merged = sb.ToString();
+            return (merged, results);
+        }
+
+        // ========================= Core Extraction =========================
+
+        private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> attachFiles)
+        {
+            var bag = new ConcurrentBag<ResultReadFileModel>();
+            var isUseLocal = _settings.GetIsUseServiceReadOCR();
+            int numberOrder = 0;
+
+            await Parallel.ForEachAsync(attachFiles, async (attach, ct) =>
+            {
+                var result = new ResultReadFileModel();
+                result.NumberOrder = Interlocked.Increment(ref numberOrder);
+                if (attach != null)
+                {
+                    result.FilePath = attach.AttachURL ?? string.Empty;
+                    result.AttachID = attach.AttachID;
+                    result.FileName = Path.GetFileName(result.FilePath);
+                }
+                if (string.IsNullOrWhiteSpace(result.FilePath))
+                {
+                    bag.Add(result);
+                    return;
+                }
+
+                if (!File.Exists(result.FilePath))
+                {
+                    bag.Add(result);
+                    return;
+                }
+
+                var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
+                if (string.IsNullOrEmpty(mimeType))
+                {
+                    bag.Add(result);
+                    return;
+                }
+
+                var fileInfo = new FileInfo(result.FilePath);
+                var cacheKey = "filecache:"
+                               + fileInfo.FullName.ToLowerInvariant() + ":"
+                               + fileInfo.LastWriteTimeUtc.Ticks + ":"
+                               + fileInfo.Length;
+
+                var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey).ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(cached))
+                {
+                    result.TextContent = cached;
+                    bag.Add(result);
+                    return;
+                }
+
+                try
+                {
+                    result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, isUseLocal).ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(result.TextContent))
+                    {
+                        await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Giữ lỗi vào TextContent để trace dễ hơn (tuỳ chọn)
+                    result.TextContent = "[ERROR] " + ex.Message;
+                }
+
+                bag.Add(result);
+            });
+
+            var list = bag.ToList();
+            list.Sort((a, b) => a.NumberOrder.CompareTo(b.NumberOrder));
+            return list;
+        }
+
+        private async Task<string> ExtractByMimeTypeAsync(string filePath, string mimeType, bool useLocal)
+        {
+            if (ImageMimeTypes.Contains(mimeType))
+            {
+                return await ExtractTextFromImageAsync(filePath, useLocal).ConfigureAwait(false);
+            }
+
+            if (mimeType == "application/pdf")
+            {
+                return await HandlePdfAsync(filePath, useLocal).ConfigureAwait(false);
+            }
+
+            if (mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                || mimeType == "application/msword")
+            {
+                return await ExtractTextFromWordAsync(filePath).ConfigureAwait(false);
+            }
+
+            if (mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                || mimeType == "application/vnd.ms-excel")
+            {
+                return await ExtractTextFromExcelAsync(filePath).ConfigureAwait(false);
+            }
+
+            return string.Empty;
+        }
+
+        // ========================= PDF =========================
+
+        private async Task<string> HandlePdfAsync(string path, bool useLocal)
+        {
+            var isTextPdf = await IsTextPdfWithPdfiumAsync(path).ConfigureAwait(false);
+            if (isTextPdf)
+            {
+                return await ReadTextFromPdfAsync(path).ConfigureAwait(false);
+            }
+            else
+            {
+                return await ExtractTextFromPdfImagesAsync(path, useLocal).ConfigureAwait(false);
+            }
+        }
+
+        private static async Task<bool> IsTextPdfWithPdfiumAsync(string filePath)
+        {
+            await using (var fs = File.OpenRead(filePath))
+            {
+                using (var doc = PdfDocument.Load(fs))
+                {
+                    for (int i = 0; i < doc.PageCount; i++)
+                    {
+                        var text = doc.GetPdfText(i);
+                        if (text != null)
+                        {
+                            text = text.Trim();
+                            if (!string.IsNullOrWhiteSpace(text))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        [SupportedOSPlatform("windows6.1")]
+        private async Task<string> ExtractTextFromPdfImagesAsync(string pdfPath, bool useLocal)
+        {
+            var texts = new List<string>();
+            var pages = ConvertPdfToImages(pdfPath);
+
+            foreach (var img in pages)
+            {
+                await using (var ms = new MemoryStream())
+                {
+                    img.Save(ms, ImageFormat.Png);
+                    ms.Position = 0;
+
+                    string content;
+
+                    if (useLocal)
+                    {
+                        var list = new List<string> { pdfPath };
+                        content = await ReadFileOCRWithLocalAsync(list).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        var visionImage = Google.Cloud.Vision.V1.Image.FromStream(ms);
+                        content = await ReadImageOcrWithGoogleAsync(visionImage).ConfigureAwait(false);
+                    }
+
+                    if (content == null)
+                    {
+                        content = string.Empty;
+                    }
+
+                    texts.Add(content);
+                }
+
+                img.Dispose();
+            }
+
+            return string.Join("\n---PAGE---\n", texts);
+        }
+
+
+        [SupportedOSPlatform("windows6.1")]
+        private static List<Bitmap> ConvertPdfToImages(string pdfFilePath)
+        {
+            var images = new List<Bitmap>();
+            using (var doc = PdfiumViewer.PdfDocument.Load(pdfFilePath))
+            {
+                for (int i = 0; i < doc.PageCount; i++)
+                {
+                    using (var rendered = doc.Render(i, 300, 300, true))
+                    {
+                        var bmp = new Bitmap(rendered);
+                        images.Add(bmp);
+                    }
+                }
+            }
+            return images;
+        }
+
+        private static async Task<string> ReadTextFromPdfAsync(string path)
+        {
+            var sb = new StringBuilder();
+            using (var doc = UglyToad.PdfPig.PdfDocument.Open(path))
+            {
+                foreach (var page in doc.GetPages())
+                {
+                    if (page != null && !string.IsNullOrWhiteSpace(page.Text))
+                    {
+                        sb.AppendLine(page.Text.Trim());
+                        sb.AppendLine("\n---PAGE BREAK---\n");
+                    }
+                }
+            }
+            return await Task.FromResult(sb.ToString());
+        }
+
+        // ========================= Image =========================
+
+        private async Task<string> ExtractTextFromImageAsync(string path, bool useLocal)
+        {
+            if (!File.Exists(path))
+            {
+                return string.Empty;
+            }
+
+            if (useLocal)
+            {
+                var list = new List<string> { path };
+                var textLocal = await ReadFileOCRWithLocalAsync(list).ConfigureAwait(false);
+                return textLocal;
+            }
+            else
+            {
+                var image = Google.Cloud.Vision.V1.Image.FromFile(path);
+                var textCloud = await ReadImageOcrWithGoogleAsync(image).ConfigureAwait(false);
+                return textCloud;
+            }
+        }
+
+        private async Task<string> ReadImageOcrWithGoogleAsync(Google.Cloud.Vision.V1.Image image)
+        {
+            var client = await ImageAnnotatorClient.CreateAsync().ConfigureAwait(false);
+            var res = await client.DetectDocumentTextAsync(image).ConfigureAwait(false);
+            if (res == null)
+            {
+                return string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(res.Text))
+            {
+                return string.Empty;
+            }
+
+            return res.Text;
+        }
+
+        // ========================= Word / Excel =========================
+
+        private static async Task<string> ExtractTextFromWordAsync(string path)
+        {
+            using (var doc = DocX.Load(path))
+            {
+                var text = doc.Text;
+                if (text == null)
+                {
+                    return string.Empty;
+                }
+
+                return await Task.FromResult(text);
+            }
+        }
+
+        private static async Task<string> ExtractTextFromExcelAsync(string path)
+        {
+            using (var wb = new XLWorkbook(path))
+            {
+                var sb = new StringBuilder();
+
+                foreach (var ws in wb.Worksheets)
+                {
+                    sb.AppendLine("--- Sheet: " + ws.Name + " ---");
+
+                    foreach (var row in ws.RowsUsed())
+                    {
+                        foreach (var cell in row.CellsUsed())
+                        {
+                            var value = cell.GetValue<string>();
+                            if (value != null)
+                            {
+                                sb.Append(value);
+                            }
+                            sb.Append('\t');
+                        }
+                        sb.AppendLine();
+                    }
+
+                    sb.AppendLine();
+                }
+
+                var text = sb.ToString();
+                return await Task.FromResult(text);
+            }
+        }
+
+        // ========================= OCR Local =========================
+
+        private async Task<string> ReadFileOCRWithLocalAsync(List<string> filePaths)
+        {
+            var ocrUrl = _settings.GetUrlReadOCR();
+            if (string.IsNullOrWhiteSpace(ocrUrl))
+            {
+                throw new InvalidOperationException("Chưa cấu hình URL OCR.");
+            }
+
+            using (var form = new MultipartFormDataContent())
+            {
+                var provider = new FileExtensionContentTypeProvider();
+
+                foreach (var filePath in filePaths)
+                {
+                    if (!File.Exists(filePath))
+                    {
+                        continue;
+                    }
+
+                    var stream = File.OpenRead(filePath);
+                    var content = new StreamContent(stream);
+
+                    string contentType;
+                    var ok = provider.TryGetContentType(filePath, out contentType);
+                    if (!ok || string.IsNullOrWhiteSpace(contentType))
+                    {
+                        contentType = "application/octet-stream";
+                    }
+
+                    content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                    form.Add(content, "files", Path.GetFileName(filePath));
+                }
+
+                var response = await _httpClient.PostAsync(ocrUrl, form).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                if (result == null)
+                {
+                    return string.Empty;
+                }
+
+                return result;
+            }
         }
     }
 }
