@@ -165,7 +165,7 @@ namespace ASOFT.CoreAI.Business
 
             request.Question = "Hãy đối chiếu dữ liệu đọc được từ OCR với dữ liệu ở người dùng cung cấp (datas) cho tôi";
 
-            var prompt = await _ST2130Queries.QueryPromptsByAgentCode(AgentKeys.BEM_AGENT_BEMF2000_CREATEFILE);
+            var prompt = await _ST2130Queries.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_CREATEFILE);
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
                 return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
 
@@ -179,8 +179,8 @@ namespace ASOFT.CoreAI.Business
                 new List<ResultReadFileModel>(),
                 Enumerable.Empty<ChatHistoryResponseModel>(),
                 trainingData,
-                new List<BEMF2002DetailModel>(),
-                new List<BEMT2001Model>(),
+                new List<BEMF2000ViewModel>(),
+                new List<BEMF2001ViewModel>(),
                 request.TextContent
             );
 

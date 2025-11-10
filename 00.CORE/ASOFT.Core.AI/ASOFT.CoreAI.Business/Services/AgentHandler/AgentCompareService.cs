@@ -27,7 +27,7 @@ namespace ASOFT.CoreAI.Business
         {
             request.Question = "Hãy đối chiếu dữ liệu đọc được từ OCR với dữ liệu ở người dùng cung cấp (datas) cho tôi";
             var useLocal = _settings.GetIsUseServiceReadOCR();
-            var detail = request!.BEMF2002Detail ?? new BEMF2002DetailModel();
+            var detail = request!.BEMF2000ViewModel ?? new BEMF2000ViewModel();
 
             if (useLocal)
             {
@@ -37,8 +37,8 @@ namespace ASOFT.CoreAI.Business
                     ocrTextMerged ?? string.Empty,
                     Enumerable.Empty<ChatHistoryResponseModel>(),
                     trainingData,
-                    new List<BEMF2002DetailModel> { detail },
-                    request.BEMT2001Models ?? new List<BEMT2001Model>()
+                    new List<BEMF2000ViewModel> { detail },
+                    request.BEMF2001ViewModels ?? new List<BEMF2001ViewModel>()
                 ).ConfigureAwait(false);
             }
 
@@ -48,8 +48,8 @@ namespace ASOFT.CoreAI.Business
                 ocrResults ?? new List<ResultReadFileModel>(),
                 Enumerable.Empty<ChatHistoryResponseModel>(),
                 trainingData,
-                new List<BEMF2002DetailModel> { detail },
-                request.BEMT2001Models ?? new List<BEMT2001Model>()
+                new List<BEMF2000ViewModel> { detail },
+                request.BEMF2001ViewModels ?? new List<BEMF2001ViewModel>()
             ).ConfigureAwait(false);
         }
     }

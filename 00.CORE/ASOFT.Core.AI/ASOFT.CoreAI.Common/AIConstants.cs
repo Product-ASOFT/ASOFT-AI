@@ -44,7 +44,14 @@
             public const string BEM_AGENT_BEMF2000_CREATEFILE = "BEM_AGENT_BEMF2000_CREATEFILE";
             public const string HRM_AGENT_HRMF2220 = "HRM_AGENT_HRMF2220";
         }
-
+        public static class AgentTypeKeys
+        {
+            public const string BEM_AGENT_BEMF2000_WAREHOUSE = "BEM_AGENT_BEMF2000_WAREHOUSE";
+            public const string BEM_AGENT_BEMF2000_MACHINE = "BEM_AGENT_BEMF2000_MACHINE";
+            public const string BEM_AGENT_BEMF2000_SERVICE = "BEM_AGENT_BEMF2000_SERVICE";
+            public const string BEM_AGENT_BEMF2000_BUILD = "BEM_AGENT_BEMF2000_BUILD";
+            public const string BEM_AGENT_BEMF2000_OTHER = "BEM_AGENT_BEMF2000_OTHER";
+        }
         #endregion Tạo các key cho Agent
     }
 }

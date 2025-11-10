@@ -13,15 +13,26 @@ namespace ASOFT.CoreAI.Infrastructure
             _agentPromptContext = Checker.NotNull(agentPromptContext, nameof(agentPromptContext));
         }
 
-        public async Task<ST2130> QueryPromptsByAgentCode(string agentCode, CancellationToken cancellationToken = default)
+        public async Task<ST2130> GetPromptByCode(string agentCode, CancellationToken cancellationToken = default)
         {
             try
             {
-                var prompt = await _agentPromptContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2130>(m => m.AgentCode == agentCode));
-                return prompt;
-
+                return await _agentPromptContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2130>(m => m.AgentCode == agentCode));
             }
-            catch (Exception ex)
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task<ST2130> GetPromptByTypeCompare(string agentCode, string typeCompare, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _agentPromptContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2130>(m => m.AgentCode == agentCode && m.TypeCompare == typeCompare));
+            }
+            catch (Exception)
             {
 
                 throw;
@@ -35,6 +46,22 @@ namespace ASOFT.CoreAI.Infrastructure
                 return await _agentPromptContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
                 {
                     await _agentPromptContext.AddAsync(agent, cancellationToken);
+                    await _agentPromptContext.UnitOfWork.CompleteAsync();
+                    return true;
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<bool> CreateListAgentPrompt( IEnumerable<ST2130> agents, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _agentPromptContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
+                {
+                    await _agentPromptContext.AddRangeAsync(agents, cancellationToken);
                     await _agentPromptContext.UnitOfWork.CompleteAsync();
                     return true;
                 });

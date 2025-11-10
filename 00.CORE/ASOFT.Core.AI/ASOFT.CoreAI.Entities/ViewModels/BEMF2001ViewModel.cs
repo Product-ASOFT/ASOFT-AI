@@ -1,10 +1,10 @@
 ﻿namespace ASOFT.CoreAI.Entities
 {
-    public class BEMT2001Model
+    public class BEMF2001ViewModel
     {
         public int RowNum { get; set; }
         public int TotalRow { get; set; }
-        public string APK { get; set; }
+        public string APK { get; set; } = null!;
         public string? APKMaster { get; set; }
         public string? APKMaster_9000 { get; set; }
         public string? DivisionID { get; set; }
@@ -60,7 +60,6 @@
         public string? ApprovePerson02StatusName { get; set; }
         public string? ApprovePerson02Note { get; set; }
         public DateTime? ApprovePerson02Date { get; set; }
-
         public string InvoiceDateFormatted
         {
             get

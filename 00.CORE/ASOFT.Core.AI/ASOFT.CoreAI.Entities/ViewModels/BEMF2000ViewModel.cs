@@ -1,6 +1,6 @@
 ﻿namespace ASOFT.CoreAI.Entities
 {
-    public class BEMF2002DetailModel
+    public class BEMF2000ViewModel
     {
         public Guid APK { get; set; }
         public string? DivisionID { get; set; }
@@ -101,5 +101,6 @@
                 return string.Empty;
             }
         }
+        public string PaymentRequestType { get; set; } = null!;
     }
 }
