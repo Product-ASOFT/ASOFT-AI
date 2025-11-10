@@ -176,7 +176,7 @@ namespace ASOFT.CoreAI.API.Controllers
         // Hàm phân loại câu hỏi để xác định là câu hỏi thường hay câu hỏi AI Plugin
         private async Task<ChatResponseModel> GetTypeQuestionAsync(AgentRequest agentRequest, CancellationToken cancellationToken)
         {
-            var prompt = await _agentPromptQueries.QueryPromptsByAgentCode(AgentKeys.TYPE_QUESTION);
+            var prompt = await _agentPromptQueries.GetPromptByCode(AgentKeys.TYPE_QUESTION);
             if (prompt == null || string.IsNullOrEmpty(prompt.PromptContent))
             {
                 return ChatHandlerHelper.CreateResponse(Guid.Empty, "Hiện tại bạn chưa tạo Prompt để phân loại câu hỏi. Vui lòng thiết lập Prompt để tiếp tục.");

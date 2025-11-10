@@ -23,7 +23,7 @@ namespace ASOFT.CoreAI.Entities
         public List<string> Permisions { get; set; } = new List<string>();
         public List<string>? FilePaths { get; set; }
         public List<string>? FileNames { get; set; }
-        public BEMF2002DetailModel? BEMF2002Detail { get; set; } = null;
-        public List<BEMT2001Model>? BEMT2001Models { get; set; } = null;
+        public BEMF2000ViewModel? BEMF2000ViewModel { get; set; } = null;
+        public List<BEMF2001ViewModel>? BEMF2001ViewModel { get; set; } = null;
     }
 }

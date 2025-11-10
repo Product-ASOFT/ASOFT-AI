@@ -8,10 +8,9 @@ namespace ASOFT.CoreAI.Infrastructure
         /// Lấy danh sách các prompt của agent
         /// </summary>
         /// <param name="agentCode">Mã agent</param>
-        /// <param name="moduleCode">Mã module (nếu có)</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Danh sách các prompt</returns>
-        Task<ST2130> QueryPromptsByAgentCode(string agentCode, CancellationToken cancellationToken = default);
+        Task<ST2130> GetPromptByCode(string agentCode, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Thêm mới một prompt cho agent
@@ -20,5 +19,22 @@ namespace ASOFT.CoreAI.Infrastructure
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<bool> CreateAgentPrompt(ST2130 agent, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Lấy prompt theo mã agent và loại so sánh  
+        /// </summary>
+        /// <param name="agentCode"></param>
+        /// <param name="typeCompare"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<ST2130> GetPromptByTypeCompare(string agentCode, string typeCompare, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Thêm mới nhiều prompt cho agent
+        /// </summary>
+        /// <param name="agents"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<bool> CreateListAgentPrompt(IEnumerable<ST2130> agents, CancellationToken cancellationToken = default);
     }
 }

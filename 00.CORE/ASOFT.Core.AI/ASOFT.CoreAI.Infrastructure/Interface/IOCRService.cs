@@ -9,6 +9,6 @@ namespace ASOFT.CoreAI.Infrastructure
 {
     public interface IOCRService
     {
-        Task<(string TextMerged, List<ResultReadFileModel> Results)> ReadAsync(IReadOnlyList<AttachFileModel> files);
+        Task<(string TextMerged, List<ResultReadFileModel> Results)> ReadAsync(IReadOnlyList<AttachFileModel> files, Guid APK);
     }
 }

@@ -7,5 +7,6 @@
         public string FilePath { get; set; }
         public string TextContent { get; set; }
         public int AttachID { get; set; }
+        public bool HasErrorReadFile { get; set; }
     }
 }

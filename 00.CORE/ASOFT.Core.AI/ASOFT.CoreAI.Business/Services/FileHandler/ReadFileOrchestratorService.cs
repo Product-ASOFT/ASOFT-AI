@@ -28,36 +28,31 @@ namespace ASOFT.CoreAI.Business
             _trainingService = trainingDataService;
             _ocrService = ocrService;
             _settingsManager = settingsManager;
-         
+
         }
         public async Task<ChatResponseReadFileModel> HandleAsync(ReadFileRequest request)
         {
-            if (request == null)
-                return ChatHandlerHelper.CreateResponseReadFile("Request body is null.", false);
+            // Validate request
+            var (isValid, validationMessage) = ValidateReadFileRequest(request);
+            if (!isValid)
+            {
+                return ChatHandlerHelper.CreateResponseReadFile(validationMessage, false);
+            }
+            string typeCompare = GetAgentKeyByTypeCompare(request.BEMF2000ViewModel!.PaymentRequestType);
+            var prompt = await _ST2130Queries.GetPromptByTypeCompare(AgentKeys.BEM_AGENT_BEMF2000, typeCompare);
 
-            if (string.IsNullOrWhiteSpace(request.UserId))
-                return ChatHandlerHelper.CreateResponseReadFile("UserId is required.", false);
-
-            if (request.BEMF2002Detail == null)
-                return ChatHandlerHelper.CreateResponseReadFile("BEMF2002Detail is required.", false);
-
-            if (request.AttachFiles == null || !request.AttachFiles.Any(x => !string.IsNullOrWhiteSpace(x.AttachURL)))
-                return ChatHandlerHelper.CreateResponseReadFile("Invalid request or file path is empty.", false);
-
-
-            var prompt = await _ST2130Queries.QueryPromptsByAgentCode(AgentKeys.BEM_AGENT_BEMF2000);
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
                 return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
 
             // Chuẩn hoá file
-            var validFiles = _filePathService.NormalizeToPhysicalUnderWebRoot(request.AttachFiles);
+            var validFiles = _filePathService.NormalizeToPhysicalUnderWebRoot(request.AttachFiles!);
             if (validFiles.Count == 0)
-                return ChatHandlerHelper.CreateResponseReadFile("No valid file paths for OCR.", false);
+                return ChatHandlerHelper.CreateResponseReadFile("Tệp đính kèm không tồn tại!", false);
 
             // OCR
-            var (ocrText, ocrResults) = await _ocrService.ReadAsync(validFiles);
+            var (ocrText, ocrResults) = await _ocrService.ReadAsync(validFiles, request.BEMF2000ViewModel.APK);
             if (string.IsNullOrWhiteSpace(ocrText))
-                return ChatHandlerHelper.CreateResponseReadFile("No text extracted from the file.", false);
+                return ChatHandlerHelper.CreateResponseReadFile("Không có thông tin đọc được từ tệp đính kèm", false);
 
             // Training data
             var trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
@@ -69,12 +64,12 @@ namespace ASOFT.CoreAI.Business
             var entity = new ST2131
             {
                 APK = Guid.NewGuid(),
-                APKMaster = request.BEMF2002Detail.APK,
+                APKMaster = request.BEMF2000ViewModel.APK,
                 AttachName = "Thông tin kết quả đối chiếu",
                 CreateUserID = request.UserId,
                 CreateDate = DateTime.Now,
                 TextContentOCR = ocrText,
-                DivisionID = request.BEMF2002Detail.DivisionID,
+                DivisionID = request.BEMF2000ViewModel.DivisionID,
                 AttachID = validFiles.Select(x => x.AttachID).FirstOrDefault(),
                 TextContentAI = !string.IsNullOrWhiteSpace(aiResult) ? aiResult : "Không có kết quả đối chiếu",
             };
@@ -90,7 +85,7 @@ namespace ASOFT.CoreAI.Business
                 "Đọc và ghi kết quả không thành công", resultSaveFile);
 
         }
-        public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths)
+        public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths, Guid APK)
         {
             string configKeyOCR = _settingsManager.GetKeyReadOCR();
             var AttachFiles = new List<AttachFileModel>();
@@ -104,11 +99,41 @@ namespace ASOFT.CoreAI.Business
             }
             if (FilePaths != null && FilePaths.Any())
             {
-                var (ocrText, results) = await _ocrService.ReadAsync(AttachFiles);
+                var (ocrText, results) = await _ocrService.ReadAsync(AttachFiles, APK);
                 return results;
             }
             return new List<ResultReadFileModel>();
         }
+        private string GetAgentKeyByTypeCompare(string typeCompare)
+        {
+            return typeCompare switch
+            {
+                "WareHouse" => AgentTypeKeys.BEM_AGENT_BEMF2000_WAREHOUSE,
+                "Machine" => AgentTypeKeys.BEM_AGENT_BEMF2000_MACHINE,
+                "Service" => AgentTypeKeys.BEM_AGENT_BEMF2000_SERVICE,
+                "Build" => AgentTypeKeys.BEM_AGENT_BEMF2000_BUILD,
+                "Other" => AgentTypeKeys.BEM_AGENT_BEMF2000_OTHER,
+                _ => throw new NotImplementedException(),
+            };
+        }
+        private (bool IsValid, string Message) ValidateReadFileRequest(ReadFileRequest request)
+        {
+            if (request == null)
+                return (false, "Thông tin dữ liệu không được để trống!");
 
+            if (string.IsNullOrWhiteSpace(request.UserId))
+                return (false, "Thông tin người dùng không được để trống!");
+
+            if (request.BEMF2000ViewModel == null)
+                return (false, "Chưa có thông tin về phiếu DNTT");
+
+            if (string.IsNullOrWhiteSpace(request.BEMF2000ViewModel.PaymentRequestType))
+                return (false, "Chưa có thông tin về loại phiếu DNTT cần đối chiếu!");
+
+            if (request.AttachFiles == null || !request.AttachFiles.Any(x => !string.IsNullOrWhiteSpace(x.AttachURL)))
+                return (false, "Tệp đính kèm không tồn tại!");
+
+            return (true, string.Empty);
+        }
     }
 }

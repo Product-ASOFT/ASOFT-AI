@@ -21,7 +21,7 @@ namespace ASOFT.CoreAI.Business
 
         public async Task<string> GetPromptTemplate(string agentKey)
         {
-            var prompt = await _agentPromptQueries.QueryPromptsByAgentCode(agentKey);
+            var prompt = await _agentPromptQueries.GetPromptByCode(agentKey);
 
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
                 return string.Empty;
@@ -35,7 +35,7 @@ namespace ASOFT.CoreAI.Business
         IEnumerable<ChatHistoryResponseModel> chatHistory,
         IEnumerable<RedisearchResultItem> trainingData,
         List<T> datas,
-        List<BEMT2001Model> details, string? resultCreateFile = null)
+        List<BEMF2001ViewModel> details, string? resultCreateFile = null)
         {
             try
             {
@@ -83,7 +83,7 @@ namespace ASOFT.CoreAI.Business
         IEnumerable<ChatHistoryResponseModel> chatHistory,
         IEnumerable<RedisearchResultItem> trainingData,
         List<T> datas,
-        List<BEMT2001Model> details, string? resultCreateFile = null)
+        List<BEMF2001ViewModel> details, string? resultCreateFile = null)
         {
             try
             {

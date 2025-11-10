@@ -44,7 +44,7 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
         /// Đọc text từ danh sách file (PDF, Word, Excel, Image).
         /// Trả về text gộp + list kết quả từng file.
         /// </summary>
-        public async Task<(string TextMerged, List<ResultReadFileModel> Results)> ReadAsync(IReadOnlyList<AttachFileModel> files)
+        public async Task<(string TextMerged, List<ResultReadFileModel> Results)> ReadAsync(IReadOnlyList<AttachFileModel> files, Guid APK)
         {
             if (files == null)
             {
@@ -56,8 +56,8 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
                 return (string.Empty, new List<ResultReadFileModel>());
             }
 
-            var results = await ExtractFilesAsync(files).ConfigureAwait(false);
-            if (results == null)
+            var results = await ExtractFilesAsync(files, APK).ConfigureAwait(false);
+            if (results == null || results.Count() == 0)
             {
                 return (string.Empty, new List<ResultReadFileModel>());
             }
@@ -93,12 +93,11 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
 
         // ========================= Core Extraction =========================
 
-        private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> attachFiles)
+        private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> attachFiles, Guid APK)
         {
             var bag = new ConcurrentBag<ResultReadFileModel>();
             var isUseLocal = _settings.GetIsUseServiceReadOCR();
             int numberOrder = 0;
-
             await Parallel.ForEachAsync(attachFiles, async (attach, ct) =>
             {
                 var result = new ResultReadFileModel();
@@ -114,7 +113,6 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
                     bag.Add(result);
                     return;
                 }
-
                 if (!File.Exists(result.FilePath))
                 {
                     bag.Add(result);
@@ -129,10 +127,13 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
                 }
 
                 var fileInfo = new FileInfo(result.FilePath);
-                var cacheKey = "filecache:"
-                               + fileInfo.FullName.ToLowerInvariant() + ":"
-                               + fileInfo.LastWriteTimeUtc.Ticks + ":"
-                               + fileInfo.Length;
+                var cacheKey = string.Format(
+                    "FileCache_:{1}:{2}:{3}",
+                    APK.ToString(),
+                    fileInfo.FullName.ToLowerInvariant(),
+                    fileInfo.LastWriteTimeUtc.Ticks,
+                    fileInfo.Length
+                );
 
                 var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey).ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(cached))
@@ -155,15 +156,15 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
                     // Giữ lỗi vào TextContent để trace dễ hơn (tuỳ chọn)
                     result.TextContent = "[ERROR] " + ex.Message;
                 }
-
                 bag.Add(result);
             });
-
-            var list = bag.ToList();
-            list.Sort((a, b) => a.NumberOrder.CompareTo(b.NumberOrder));
-            return list;
+            var resultReadFileModels = bag.Where(x => x.HasErrorReadFile == false).ToList();
+            if (resultReadFileModels != null && resultReadFileModels.Count() > 0)
+            {
+                resultReadFileModels.Sort((a, b) => a.NumberOrder.CompareTo(b.NumberOrder));
+            }
+            return resultReadFileModels;
         }
-
         private async Task<string> ExtractByMimeTypeAsync(string filePath, string mimeType, bool useLocal)
         {
             if (ImageMimeTypes.Contains(mimeType))
@@ -192,7 +193,7 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
         }
 
         // ========================= PDF =========================
-
+        [SupportedOSPlatform("windows6.1")]
         private async Task<string> HandlePdfAsync(string path, bool useLocal)
         {
             var isTextPdf = await IsTextPdfWithPdfiumAsync(path).ConfigureAwait(false);
@@ -233,39 +234,33 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
         private async Task<string> ExtractTextFromPdfImagesAsync(string pdfPath, bool useLocal)
         {
             var texts = new List<string>();
-            var pages = ConvertPdfToImages(pdfPath);
-
-            foreach (var img in pages)
+            if (useLocal)
             {
-                await using (var ms = new MemoryStream())
-                {
-                    img.Save(ms, ImageFormat.Png);
-                    ms.Position = 0;
-
-                    string content;
-
-                    if (useLocal)
-                    {
-                        var list = new List<string> { pdfPath };
-                        content = await ReadFileOCRWithLocalAsync(list).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        var visionImage = Google.Cloud.Vision.V1.Image.FromStream(ms);
-                        content = await ReadImageOcrWithGoogleAsync(visionImage).ConfigureAwait(false);
-                    }
-
-                    if (content == null)
-                    {
-                        content = string.Empty;
-                    }
-
-                    texts.Add(content);
-                }
-
-                img.Dispose();
+                var list = new List<string> { pdfPath };
+                string content = await ReadFileOCRWithLocalAsync(list).ConfigureAwait(false);
+                texts.Add(content);
             }
+            else
+            {
+                var pages = ConvertPdfToImages(pdfPath);
+                foreach (var img in pages)
+                {
+                    await using (var ms = new MemoryStream())
+                    {
+                        img.Save(ms, ImageFormat.Png);
+                        ms.Position = 0;
+                        var visionImage = Google.Cloud.Vision.V1.Image.FromStream(ms);
+                        string content = await ReadImageOcrWithGoogleAsync(visionImage).ConfigureAwait(false);
 
+                        if (content == null)
+                        {
+                            content = string.Empty;
+                        }
+                        texts.Add(content);
+                    }
+                    img.Dispose();
+                }
+            }
             return string.Join("\n---PAGE---\n", texts);
         }
 
@@ -418,8 +413,8 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
                     var content = new StreamContent(stream);
 
                     string contentType;
-                    var ok = provider.TryGetContentType(filePath, out contentType);
-                    if (!ok || string.IsNullOrWhiteSpace(contentType))
+                    var responeSuccess = provider.TryGetContentType(filePath, out contentType);
+                    if (!responeSuccess || string.IsNullOrWhiteSpace(contentType))
                     {
                         contentType = "application/octet-stream";
                     }

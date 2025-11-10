@@ -16,6 +16,8 @@ namespace ASOFT.CoreAI.Entities
 
         public string TypePrompt { get; set; } = null!;
 
+        public string? TypeCompare { get; set; } 
+
         [MaxLength(500)]
         public string? Description { get; set; }
 

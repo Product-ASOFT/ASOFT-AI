@@ -94,8 +94,8 @@ public class AgentManagerService
         [AgentKeys.CRM_AGENT_CRMF2160] = () => TryHandlePluginAsync<CRMF2160ViewModel>(request, AgentKeys.CRM_AGENT_CRMF2160, "yêu cầu hỗ trợ"),
         [AgentKeys.RESEARCH_AGENT] = () => TryHandlePluginAsync<RedisearchResultItem>(request, AgentKeys.RESEARCH_AGENT, "tra cứu thông tin"),
         [AgentKeys.READFILE_AGENT] = () => TryHandlePluginAsync<RedisearchResultItem>(request, AgentKeys.READFILE_AGENT, "Đọc thông tin"),
-        [AgentKeys.BEM_AGENT_BEMF2000] = () => TryHandlePluginAsync<BEMF2002DetailModel>(request, AgentKeys.BEM_AGENT_BEMF2000, "DNTT/DNTTTU/DNTU"),
-        [AgentKeys.HRM_AGENT_HRMF2220] = () => TryHandlePluginAsync<BEMF2002DetailModel>(request, AgentKeys.HRM_AGENT_HRMF2220, "Chấm công")
+        [AgentKeys.BEM_AGENT_BEMF2000] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.BEM_AGENT_BEMF2000, "DNTT/DNTTTU/DNTU"),
+        [AgentKeys.HRM_AGENT_HRMF2220] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.HRM_AGENT_HRMF2220, "Chấm công")
     };
 
     private bool IsNoDataMessage(string message) => message.StartsWith("Không có");
@@ -256,7 +256,7 @@ public class AgentManagerService
             if(request.FilePaths == null || request.FilePaths.Count == 0)
                 return "Vui lòng cung cấp đường dẫn file để đọc nội dung.";
 
-            var answerOCRs = await _readFileOrchestratorService.ReadFileFromChatBot(request.FilePaths);
+            var answerOCRs = await _readFileOrchestratorService.ReadFileFromChatBot(request.FilePaths, request.ChatSessionID!.Value);
             trainingData = await _redisHandler.GetDataByReadFileAsync(request, indexName, limit);
 
             return await _agentPromptService.SendPromptWithDocsAsync(request, promptTemplate, answerOCRs, chatHistory, trainingData, new List<RedisearchResultItem>());
