@@ -1,5 +1,7 @@
 ﻿using ASOFT.CoreAI.Business.Services.RedisHandler;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Hosting;

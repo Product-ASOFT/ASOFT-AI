@@ -1,4 +1,4 @@
-﻿using ASOFT.CoreAI.Entities;
+﻿using ASOFT.CoreAI.Entities.ViewModels.System;
 
 public interface IDataLoader
 {

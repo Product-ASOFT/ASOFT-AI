@@ -1,4 +1,5 @@
-﻿using ASOFT.CoreAI.Entities;
+﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;

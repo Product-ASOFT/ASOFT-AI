@@ -1,4 +1,5 @@
 ﻿using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using System;

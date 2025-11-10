@@ -2,6 +2,8 @@
 using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Business.Services.PromptHandler;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using System.Text;
 

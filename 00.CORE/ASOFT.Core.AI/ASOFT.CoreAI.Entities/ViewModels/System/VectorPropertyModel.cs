@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ASOFT.CoreAI.Entities;
+namespace ASOFT.CoreAI.Entities.ViewModels.System;
 
 public class VectorPropertyModel(string modelName, Type type) : PropertyModel(modelName, type)
 {
@@ -10,14 +10,14 @@ public class VectorPropertyModel(string modelName, Type type) : PropertyModel(mo
 
     public int Dimensions
     {
-        get => this._dimensions;
+        get => _dimensions;
         set
         {
             if (value <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(value), "Dimensions must be greater than zero.");
             }
-            this._dimensions = value;
+            _dimensions = value;
         }
     }
 
@@ -34,9 +34,9 @@ public class VectorPropertyModel(string modelName, Type type) : PropertyModel(mo
         where TEmbedding : Embedding
         => embeddingGenerator switch
         {
-            IEmbeddingGenerator<string, TEmbedding> when this.Type == typeof(string) && (userRequestedEmbeddingType is null || userRequestedEmbeddingType == typeof(TEmbedding))
+            IEmbeddingGenerator<string, TEmbedding> when Type == typeof(string) && (userRequestedEmbeddingType is null || userRequestedEmbeddingType == typeof(TEmbedding))
                 => typeof(TEmbedding),
-            IEmbeddingGenerator<DataContent, TEmbedding> when this.Type == typeof(DataContent) && (userRequestedEmbeddingType is null || userRequestedEmbeddingType == typeof(TEmbedding))
+            IEmbeddingGenerator<DataContent, TEmbedding> when Type == typeof(DataContent) && (userRequestedEmbeddingType is null || userRequestedEmbeddingType == typeof(TEmbedding))
                 => typeof(TEmbedding),
             null => throw new ArgumentNullException(nameof(embeddingGenerator), "This method should only be called when an embedding generator is configured."),
             _ => null
@@ -46,24 +46,24 @@ public class VectorPropertyModel(string modelName, Type type) : PropertyModel(mo
       where TRecord : class
       where TEmbedding : Embedding
     {
-        switch (this.EmbeddingGenerator)
+        switch (EmbeddingGenerator)
         {
-            case IEmbeddingGenerator<string, TEmbedding> generator when this.EmbeddingType == typeof(TEmbedding):
+            case IEmbeddingGenerator<string, TEmbedding> generator when EmbeddingType == typeof(TEmbedding):
                 {
                     task = generator.GenerateAsync(
-                        this.GetValueAsObject(record) is var value && value is string s
+                        GetValueAsObject(record) is var value && value is string s
                             ? s
-                            : throw new InvalidOperationException($"Property '{this.ModelName}' was configured with an embedding generator accepting a string, but {value?.GetType().Name ?? "null"} was provided."),
+                            : throw new InvalidOperationException($"Property '{ModelName}' was configured with an embedding generator accepting a string, but {value?.GetType().Name ?? "null"} was provided."),
                         options: null,
                         cancellationToken);
                     return true;
                 }
-            case IEmbeddingGenerator<DataContent, TEmbedding> generator when this.EmbeddingType == typeof(TEmbedding):
+            case IEmbeddingGenerator<DataContent, TEmbedding> generator when EmbeddingType == typeof(TEmbedding):
                 {
                     task = generator.GenerateAsync(
-                        this.GetValueAsObject(record) is var value && value is DataContent c
+                        GetValueAsObject(record) is var value && value is DataContent c
                             ? c
-                            : throw new InvalidOperationException($"Property '{this.ModelName}' was configured with an embedding generator accepting a {nameof(DataContent)}, but {value?.GetType().Name ?? "null"} was provided."),
+                            : throw new InvalidOperationException($"Property '{ModelName}' was configured with an embedding generator accepting a {nameof(DataContent)}, but {value?.GetType().Name ?? "null"} was provided."),
                         options: null,
                         cancellationToken);
                     return true;
@@ -80,22 +80,22 @@ public class VectorPropertyModel(string modelName, Type type) : PropertyModel(mo
         where TRecord : class
         where TEmbedding : Embedding
     {
-        switch (this.EmbeddingGenerator)
+        switch (EmbeddingGenerator)
         {
-            case IEmbeddingGenerator<string, TEmbedding> generator when this.EmbeddingType == typeof(TEmbedding):
+            case IEmbeddingGenerator<string, TEmbedding> generator when EmbeddingType == typeof(TEmbedding):
                 task = generator.GenerateAsync(
-                    records.Select(r => this.GetValueAsObject(r) is var value && value is string s
+                    records.Select(r => GetValueAsObject(r) is var value && value is string s
                         ? s
-                        : throw new InvalidOperationException($"Property '{this.ModelName}' was configured with an embedding generator accepting a string, but {value?.GetType().Name ?? "null"} was provided.")),
+                        : throw new InvalidOperationException($"Property '{ModelName}' was configured with an embedding generator accepting a string, but {value?.GetType().Name ?? "null"} was provided.")),
                     options: null,
                     cancellationToken);
                 return true;
 
-            case IEmbeddingGenerator<DataContent, TEmbedding> generator when this.EmbeddingType == typeof(TEmbedding):
+            case IEmbeddingGenerator<DataContent, TEmbedding> generator when EmbeddingType == typeof(TEmbedding):
                 task = generator.GenerateAsync(
-                    records.Select(r => this.GetValueAsObject(r) is var value && value is DataContent c
+                    records.Select(r => GetValueAsObject(r) is var value && value is DataContent c
                         ? c
-                        : throw new InvalidOperationException($"Property '{this.ModelName}' was configured with an embedding generator accepting a {nameof(DataContent)}, but {value?.GetType().Name ?? "null"} was provided.")),
+                        : throw new InvalidOperationException($"Property '{ModelName}' was configured with an embedding generator accepting a {nameof(DataContent)}, but {value?.GetType().Name ?? "null"} was provided.")),
                     options: null,
                     cancellationToken);
                 return true;

@@ -1,6 +1,6 @@
-﻿namespace ASOFT.CoreAI.Entities
+﻿namespace ASOFT.CoreAI.Entities.ViewModels.AI
 {
-    public class ChatbotConfig
+    public class ChatbotConfigViewModel
     {
         public string APK { get; set; }
         public string ChatbotName { get; set; }

@@ -1,9 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using Microsoft.Extensions.Configuration;
 using System.ComponentModel.DataAnnotations;
 
-namespace ASOFT.CoreAI.Entities;
+namespace ASOFT.CoreAI.Entities.ViewModels.System;
 
 /// <summary>
 /// Helper class for loading host configuration settings.
@@ -77,7 +78,7 @@ public sealed class HostConfig
     /// <summary>
     /// The OpenAI chat service configuration.
     /// </summary>
-    public ModelAIChatConfig OpenAIChat => this._openAIChatConfig;
+    public ModelAIChatConfig OpenAIChat => _openAIChatConfig;
 
     /// <summary>
     /// The OpenAI embeddings service configuration.

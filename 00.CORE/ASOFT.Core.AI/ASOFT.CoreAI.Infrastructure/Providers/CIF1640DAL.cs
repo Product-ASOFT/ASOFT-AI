@@ -1,5 +1,5 @@
 ﻿using ASOFT.Core.DataAccess;
-using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using Dapper;
 
 namespace ASOFT.CoreAI.Infrastructure
@@ -17,12 +17,12 @@ namespace ASOFT.CoreAI.Infrastructure
         LEFT JOIN ST0099 S2 ON C.ChatbotModel = S2.ID  AND S2.CodeMaster = 'ChatbotModel'
         WHERE IsUse = 1 ";
 
-        public async Task<ChatbotConfig> GetConfigModelAI()
+        public async Task<ChatbotConfigViewModel> GetConfigModelAI()
         {
             var dynamicParameters = new DynamicParameters();
             return await UseConnectionAsync(
             async connection =>
-          await connection.QueryFirstOrDefaultAsync<ChatbotConfig>(SQL_GetConfigModelAIIsUse, dynamicParameters));
+          await connection.QueryFirstOrDefaultAsync<ChatbotConfigViewModel>(SQL_GetConfigModelAIIsUse, dynamicParameters));
         }
     }
 }
