@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
+using System.ComponentModel.DataAnnotations;
 
 namespace ASOFT.CoreAI.Entities
 {

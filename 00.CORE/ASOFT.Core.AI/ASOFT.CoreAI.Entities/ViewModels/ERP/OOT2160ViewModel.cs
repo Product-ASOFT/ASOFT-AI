@@ -8,7 +8,7 @@
 
 using System;
 
-namespace ASOFT.CoreAI.Entities
+namespace ASOFT.CoreAI.Entities.ViewModels.ERP
 {
     public class OOT2160ViewModel
     {
@@ -54,11 +54,11 @@ namespace ASOFT.CoreAI.Entities
         {
             get
             {
-                if (!string.IsNullOrEmpty(this.Url))
+                if (!string.IsNullOrEmpty(Url))
                 {
-                    return $"<a href=\"{this.Url}/ViewMasterDetail2/Index/OO/OOF2162?PK={APK}&Table=OOT2160&key=APK&DivisionID={DivisionID}\" target=\"_blank\">{IssuesID}</a>";
+                    return $"<a href=\"{Url}/ViewMasterDetail2/Index/OO/OOF2162?PK={APK}&Table=OOT2160&key=APK&DivisionID={DivisionID}\" target=\"_blank\">{IssuesID}</a>";
                 }
-                return this.IssuesID;
+                return IssuesID;
             }
         }
     }

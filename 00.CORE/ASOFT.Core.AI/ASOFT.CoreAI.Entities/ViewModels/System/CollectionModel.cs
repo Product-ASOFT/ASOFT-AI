@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace ASOFT.CoreAI.Entities;
+namespace ASOFT.CoreAI.Entities.ViewModels.System;
 
 /// <summary>
 /// Represents a record in a vector store collection.
@@ -37,29 +37,29 @@ public sealed class CollectionModel
         IReadOnlyList<VectorPropertyModel> vectorProperties,
         IReadOnlyDictionary<string, PropertyModel> propertyMap)
     {
-        this._recordType = recordType;
-        this._recordCreator = recordCreator;
+        _recordType = recordType;
+        _recordCreator = recordCreator;
 
-        this.KeyProperties = keyProperties;
-        this.DataProperties = dataProperties;
-        this.VectorProperties = vectorProperties;
-        this.PropertyMap = propertyMap;
-        this.Properties = propertyMap.Values.ToList();
+        KeyProperties = keyProperties;
+        DataProperties = dataProperties;
+        VectorProperties = vectorProperties;
+        PropertyMap = propertyMap;
+        Properties = propertyMap.Values.ToList();
 
-        this.EmbeddingGenerationRequired = vectorProperties.Any(p => p.EmbeddingType != p.Type);
+        EmbeddingGenerationRequired = vectorProperties.Any(p => p.EmbeddingType != p.Type);
     }
 
     /// <summary>
     /// Returns the single key property in the model, and throws if there are multiple key properties.
     /// Suitable for connectors where validation is in place for single keys only (<see cref="CollectionModelBuildingOptions.SupportsMultipleKeys"/>).
     /// </summary>
-    public KeyPropertyModel KeyProperty => this._singleKeyProperty ??= this.KeyProperties.Single();
+    public KeyPropertyModel KeyProperty => _singleKeyProperty ??= KeyProperties.Single();
 
     /// <summary>
     /// Returns the single vector property in the model, and throws if there are multiple vector properties.
     /// Suitable for connectors where validation is in place for single vectors only (<see cref="CollectionModelBuildingOptions.SupportsMultipleVectors"/>).
     /// </summary>
-    public VectorPropertyModel VectorProperty => this._singleVectorProperty ??= this.VectorProperties.Single();
+    public VectorPropertyModel VectorProperty => _singleVectorProperty ??= VectorProperties.Single();
 
     /// <summary>
     /// Instantiates a new record of the specified type.
@@ -70,9 +70,9 @@ public sealed class CollectionModel
     // populated.
     public TRecord CreateRecord<TRecord>()
     {
-        Debug.Assert(typeof(TRecord) == this._recordType, "Type mismatch between record type and model type.");
+        Debug.Assert(typeof(TRecord) == _recordType, "Type mismatch between record type and model type.");
 
-        return this._recordCreator.Create<TRecord>();
+        return _recordCreator.Create<TRecord>();
     }
 
     /// <summary>
@@ -85,28 +85,28 @@ public sealed class CollectionModel
     {
         if (searchOptions.VectorProperty is not null)
         {
-            return this.GetMatchingProperty<TRecord, VectorPropertyModel>(searchOptions.VectorProperty, data: false);
+            return GetMatchingProperty<TRecord, VectorPropertyModel>(searchOptions.VectorProperty, data: false);
         }
 
         // If vector property name is not provided, check if there is a single vector property, or throw if there are no vectors or more than one.
         // TODO: Make a single switch expression + coalesce from the following - dotnet format fails on it for now
-        if (this._singleVectorProperty is null)
+        if (_singleVectorProperty is null)
         {
-            switch (this.VectorProperties)
+            switch (VectorProperties)
             {
                 case [var singleProperty]:
-                    this._singleVectorProperty = singleProperty;
+                    _singleVectorProperty = singleProperty;
                     break;
 
                 case { Count: 0 }:
-                    throw new InvalidOperationException($"The '{this._recordType.Name}' type does not have any vector properties.");
+                    throw new InvalidOperationException($"The '{_recordType.Name}' type does not have any vector properties.");
 
                 default:
-                    throw new InvalidOperationException($"The '{this._recordType.Name}' type has multiple vector properties, please specify your chosen property via options.");
+                    throw new InvalidOperationException($"The '{_recordType.Name}' type has multiple vector properties, please specify your chosen property via options.");
             }
         }
 
-        return this._singleVectorProperty;
+        return _singleVectorProperty;
     }
 
     /// <summary>
@@ -160,7 +160,7 @@ public sealed class CollectionModel
     /// <param name="expression">The property selector.</param>
     /// <exception cref="InvalidOperationException">The provided property name is not a valid data or key property name.</exception>
     public PropertyModel GetDataOrKeyProperty<TRecord>(Expression<Func<TRecord, object?>> expression)
-        => this.GetMatchingProperty<TRecord, PropertyModel>(expression, data: true);
+        => GetMatchingProperty<TRecord, PropertyModel>(expression, data: true);
 
     private TProperty GetMatchingProperty<TRecord, TProperty>(Expression<Func<TRecord, object?>> expression, bool data)
         where TProperty : PropertyModel
@@ -192,7 +192,7 @@ public sealed class CollectionModel
             _ => throw new InvalidOperationException("Property selector lambda is invalid")
         };
 
-        if (!this.PropertyMap.TryGetValue(propertyName, out var property))
+        if (!PropertyMap.TryGetValue(propertyName, out var property))
         {
             throw new InvalidOperationException($"Property '{propertyName}' could not be found.");
         }
@@ -226,7 +226,7 @@ public class KeyPropertyModel(string modelName, Type type) : PropertyModel(model
 {
     /// <inheritdoc/>
     public override string ToString()
-        => $"{this.ModelName} (Key, {this.Type.Name})";
+        => $"{ModelName} (Key, {Type.Name})";
 }
 
 public class DataPropertyModel(string modelName, Type type) : PropertyModel(modelName, type)
@@ -236,5 +236,5 @@ public class DataPropertyModel(string modelName, Type type) : PropertyModel(mode
     public bool IsFullTextIndexed { get; set; }
 
     public override string ToString()
-        => $"{this.ModelName} (Data, {this.Type.Name})";
+        => $"{ModelName} (Data, {Type.Name})";
 }

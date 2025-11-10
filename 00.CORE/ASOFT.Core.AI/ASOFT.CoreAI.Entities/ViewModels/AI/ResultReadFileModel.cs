@@ -1,4 +1,4 @@
-﻿namespace ASOFT.CoreAI.Entities
+﻿namespace ASOFT.CoreAI.Entities.ViewModels.AI
 {
     public class ResultReadFileModel
     {

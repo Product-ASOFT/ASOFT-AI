@@ -1,5 +1,7 @@
 ﻿using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using System;
 using System.Collections.Generic;
 using System.Linq;

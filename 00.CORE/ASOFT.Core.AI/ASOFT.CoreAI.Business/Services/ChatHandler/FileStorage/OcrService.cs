@@ -1,7 +1,7 @@
 ﻿using ASOFT.CoreAI.Abstractions;
-using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using ASOFT.CoreAI.Infrastructure;
-using ASOFT.CoreAI.Infrastructure.Interface;
+using Aspose.Words.Drawing;
 using ClosedXML.Excel;
 using Google.Cloud.Vision.V1;
 using HeyRed.Mime;
@@ -15,9 +15,10 @@ using System.Runtime.Versioning;
 using System.Text;
 using UglyToad.PdfPig;
 using Xceed.Words.NET;
+using static ASOFT.CoreAI.Common.AIConstants;
 using PdfDocument = PdfiumViewer.PdfDocument;
 
-namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
+namespace ASOFT.CoreAI.Business
 {
     public sealed class OcrService : IOCRService
     {
@@ -25,207 +26,156 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
         private readonly SettingsManagerService _settings;
         private readonly HttpClient _httpClient;
 
-        private static readonly string[] ImageMimeTypes = new[]
-        {
-            "image/jpeg", "image/png", "image/gif", "image/bmp", "image/tiff"
-        };
-
         public OcrService(
-            IRedisMemoryProvider redisMemoryProvider,
+            IRedisMemoryProvider redisProvider,
             SettingsManagerService settingsManager,
             IHttpClientFactory httpClientFactory)
         {
-            _redis = redisMemoryProvider;
+            _redis = redisProvider;
             _settings = settingsManager;
             _httpClient = httpClientFactory.CreateClient(nameof(OcrService));
         }
 
+        #region ==== PUBLIC METHOD ====
+
         /// <summary>
-        /// Đọc text từ danh sách file (PDF, Word, Excel, Image).
-        /// Trả về text gộp + list kết quả từng file.
+        /// Đọc text từ danh sách file (PDF, Word, Excel, Image)
         /// </summary>
+        [SupportedOSPlatform("windows6.1")]
         public async Task<(string TextMerged, List<ResultReadFileModel> Results)> ReadAsync(IReadOnlyList<AttachFileModel> files, Guid APK)
         {
-            if (files == null)
-            {
+            if (files == null || files.Count == 0)
                 return (string.Empty, new List<ResultReadFileModel>());
-            }
 
-            if (files.Count == 0)
-            {
+            var results = await ExtractFilesAsync(files, APK);
+            if (results == null || results.Count == 0)
                 return (string.Empty, new List<ResultReadFileModel>());
-            }
 
-            var results = await ExtractFilesAsync(files, APK).ConfigureAwait(false);
-            if (results == null || results.Count() == 0)
-            {
-                return (string.Empty, new List<ResultReadFileModel>());
-            }
-
-            if (!results.Any(r => r != null && !string.IsNullOrWhiteSpace(r.TextContent)))
-            {
-                return (string.Empty, results);
-            }
-
+            // Gộp text các file
             var sb = new StringBuilder();
-            for (int i = 0; i < results.Count; i++)
+            foreach (var (r, index) in results.Select((x, i) => (x, i + 1)))
             {
-                var r = results[i];
-                if (r == null)
-                {
+                if (string.IsNullOrWhiteSpace(r?.TextContent))
                     continue;
-                }
 
-                var text = r.TextContent;
-                if (string.IsNullOrWhiteSpace(text))
-                {
-                    continue;
-                }
-
-                sb.AppendLine($"📄 File {i + 1}: **{r.FileName}**");
-                sb.AppendLine(text);
+                sb.AppendLine($"📄 File {index}: **{r.FileName}**");
+                sb.AppendLine(r.TextContent);
                 sb.AppendLine();
             }
 
-            var merged = sb.ToString();
-            return (merged, results);
+            return (sb.ToString(), results);
         }
 
-        // ========================= Core Extraction =========================
+        #endregion
 
-        private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> attachFiles, Guid APK)
+        #region ==== CORE EXTRACTION ====
+        [SupportedOSPlatform("windows6.1")]
+        private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> files, Guid apk)
         {
-            var bag = new ConcurrentBag<ResultReadFileModel>();
-            var isUseLocal = _settings.GetIsUseServiceReadOCR();
-            int numberOrder = 0;
-            await Parallel.ForEachAsync(attachFiles, async (attach, ct) =>
+            var results = new ConcurrentBag<ResultReadFileModel>();
+            var useLocal = _settings.GetIsUseServiceReadOCR();
+            int order = 0;
+
+            await Parallel.ForEachAsync(files, async (attach, ct) =>
             {
-                var result = new ResultReadFileModel();
-                result.NumberOrder = Interlocked.Increment(ref numberOrder);
-                if (attach != null)
-                {
-                    result.FilePath = attach.AttachURL ?? string.Empty;
-                    result.AttachID = attach.AttachID;
-                    result.FileName = Path.GetFileName(result.FilePath);
-                }
-                if (string.IsNullOrWhiteSpace(result.FilePath))
-                {
-                    bag.Add(result);
-                    return;
-                }
+                
+                var result = InitResultModel(attach, Interlocked.Increment(ref order));
                 if (!File.Exists(result.FilePath))
                 {
-                    bag.Add(result);
+                    results.Add(result);
                     return;
                 }
 
                 var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
                 if (string.IsNullOrEmpty(mimeType))
                 {
-                    bag.Add(result);
+                    results.Add(result);
                     return;
                 }
 
                 var fileInfo = new FileInfo(result.FilePath);
-                var cacheKey = string.Format(
-                    "FileCache_:{1}:{2}:{3}",
-                    APK.ToString(),
-                    fileInfo.FullName.ToLowerInvariant(),
-                    fileInfo.LastWriteTimeUtc.Ticks,
-                    fileInfo.Length
-                );
+                var cacheKey = $"FileCache_:{apk}:{fileInfo.FullName.ToLowerInvariant()}:{fileInfo.LastWriteTimeUtc.Ticks}:{fileInfo.Length}";
 
-                var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey).ConfigureAwait(false);
+                // Try cache
+                var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
                 if (!string.IsNullOrEmpty(cached))
                 {
                     result.TextContent = cached;
-                    bag.Add(result);
+                    results.Add(result);
                     return;
                 }
 
                 try
                 {
-                    result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, isUseLocal).ConfigureAwait(false);
+                    result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
                     if (!string.IsNullOrWhiteSpace(result.TextContent))
-                    {
-                        await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey).ConfigureAwait(false);
-                    }
+                        await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey);
                 }
                 catch (Exception ex)
                 {
-                    // Giữ lỗi vào TextContent để trace dễ hơn (tuỳ chọn)
+                    result.HasErrorReadFile = false;
                     result.TextContent = "[ERROR] " + ex.Message;
                 }
-                bag.Add(result);
+
+                results.Add(result);
             });
-            var resultReadFileModels = bag.Where(x => x.HasErrorReadFile == false).ToList();
-            if (resultReadFileModels != null && resultReadFileModels.Count() > 0)
-            {
-                resultReadFileModels.Sort((a, b) => a.NumberOrder.CompareTo(b.NumberOrder));
-            }
-            return resultReadFileModels;
+            return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
         }
+        // Khởi tạo model kết quả
+
+        private ResultReadFileModel InitResultModel(AttachFileModel attach, int numberOrder)
+        {
+            return new ResultReadFileModel
+            {
+                NumberOrder = numberOrder,
+                FilePath = attach?.AttachURL ?? string.Empty,
+                AttachID = attach?.AttachID ?? 1,
+                FileName = attach?.AttachName ?? string.Empty
+            };
+        }
+        // Phân loại và xử lý theo mime type
+        [SupportedOSPlatform("windows6.1")]
         private async Task<string> ExtractByMimeTypeAsync(string filePath, string mimeType, bool useLocal)
         {
-            if (ImageMimeTypes.Contains(mimeType))
-            {
-                return await ExtractTextFromImageAsync(filePath, useLocal).ConfigureAwait(false);
-            }
+            if (MimeTypesConstants.ImageTypes.Contains(mimeType))
+                return await ExtractTextFromImageAsync(filePath, useLocal);
 
-            if (mimeType == "application/pdf")
-            {
-                return await HandlePdfAsync(filePath, useLocal).ConfigureAwait(false);
-            }
+            if (mimeType.Equals(MimeTypesConstants.Pdf, StringComparison.OrdinalIgnoreCase))
+                return await HandlePdfAsync(filePath, useLocal);
 
-            if (mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                || mimeType == "application/msword")
-            {
-                return await ExtractTextFromWordAsync(filePath).ConfigureAwait(false);
-            }
+            if (mimeType.Equals(MimeTypesConstants.WordDocx, StringComparison.OrdinalIgnoreCase) ||
+                mimeType.Equals(MimeTypesConstants.WordDoc, StringComparison.OrdinalIgnoreCase))
+                return await ExtractTextFromWordAsync(filePath);
 
-            if (mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                || mimeType == "application/vnd.ms-excel")
-            {
-                return await ExtractTextFromExcelAsync(filePath).ConfigureAwait(false);
-            }
+            if (mimeType.Equals(MimeTypesConstants.ExcelXlsx, StringComparison.OrdinalIgnoreCase) ||
+                mimeType.Equals(MimeTypesConstants.ExcelXls, StringComparison.OrdinalIgnoreCase))
+                return await ExtractTextFromExcelAsync(filePath);
 
             return string.Empty;
         }
 
-        // ========================= PDF =========================
+        #endregion
+
+        #region ==== PDF HANDLER ====
+
         [SupportedOSPlatform("windows6.1")]
         private async Task<string> HandlePdfAsync(string path, bool useLocal)
         {
-            var isTextPdf = await IsTextPdfWithPdfiumAsync(path).ConfigureAwait(false);
-            if (isTextPdf)
-            {
-                return await ReadTextFromPdfAsync(path).ConfigureAwait(false);
-            }
-            else
-            {
-                return await ExtractTextFromPdfImagesAsync(path, useLocal).ConfigureAwait(false);
-            }
+            if (await IsTextPdfAsync(path))
+                return await ReadTextFromPdfAsync(path);
+
+            return await ExtractTextFromPdfImagesAsync(path, useLocal);
         }
 
-        private static async Task<bool> IsTextPdfWithPdfiumAsync(string filePath)
+        private static async Task<bool> IsTextPdfAsync(string filePath)
         {
-            await using (var fs = File.OpenRead(filePath))
+            await using var fs = File.OpenRead(filePath);
+            using var doc = PdfDocument.Load(fs);
+            for (int i = 0; i < doc.PageCount; i++)
             {
-                using (var doc = PdfDocument.Load(fs))
-                {
-                    for (int i = 0; i < doc.PageCount; i++)
-                    {
-                        var text = doc.GetPdfText(i);
-                        if (text != null)
-                        {
-                            text = text.Trim();
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
+                var text = doc.GetPdfText(i)?.Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                    return true;
             }
             return false;
         }
@@ -233,207 +183,132 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler.FileStorage
         [SupportedOSPlatform("windows6.1")]
         private async Task<string> ExtractTextFromPdfImagesAsync(string pdfPath, bool useLocal)
         {
-            var texts = new List<string>();
             if (useLocal)
-            {
-                var list = new List<string> { pdfPath };
-                string content = await ReadFileOCRWithLocalAsync(list).ConfigureAwait(false);
-                texts.Add(content);
-            }
-            else
-            {
-                var pages = ConvertPdfToImages(pdfPath);
-                foreach (var img in pages)
-                {
-                    await using (var ms = new MemoryStream())
-                    {
-                        img.Save(ms, ImageFormat.Png);
-                        ms.Position = 0;
-                        var visionImage = Google.Cloud.Vision.V1.Image.FromStream(ms);
-                        string content = await ReadImageOcrWithGoogleAsync(visionImage).ConfigureAwait(false);
+                return await ReadFileOCRWithLocalAsync(new List<string> { pdfPath });
 
-                        if (content == null)
-                        {
-                            content = string.Empty;
-                        }
-                        texts.Add(content);
-                    }
-                    img.Dispose();
-                }
+            var texts = new List<string>();
+            foreach (var img in ConvertPdfToImages(pdfPath))
+            {
+                await using var ms = new MemoryStream();
+                img.Save(ms, ImageFormat.Png);
+                ms.Position = 0;
+
+                var visionImg = Google.Cloud.Vision.V1.Image.FromStream(ms);
+                var content = await ReadImageOcrWithGoogleAsync(visionImg) ?? string.Empty;
+                texts.Add(content);
+                img.Dispose();
             }
+
             return string.Join("\n---PAGE---\n", texts);
         }
-
 
         [SupportedOSPlatform("windows6.1")]
         private static List<Bitmap> ConvertPdfToImages(string pdfFilePath)
         {
             var images = new List<Bitmap>();
-            using (var doc = PdfiumViewer.PdfDocument.Load(pdfFilePath))
-            {
-                for (int i = 0; i < doc.PageCount; i++)
-                {
-                    using (var rendered = doc.Render(i, 300, 300, true))
-                    {
-                        var bmp = new Bitmap(rendered);
-                        images.Add(bmp);
-                    }
-                }
-            }
+            using var doc = PdfDocument.Load(pdfFilePath);
+            for (int i = 0; i < doc.PageCount; i++)
+                images.Add(new Bitmap(doc.Render(i, 300, 300, true)));
             return images;
         }
 
         private static async Task<string> ReadTextFromPdfAsync(string path)
         {
             var sb = new StringBuilder();
-            using (var doc = UglyToad.PdfPig.PdfDocument.Open(path))
+            using var doc = UglyToad.PdfPig.PdfDocument.Open(path);
+            foreach (var page in doc.GetPages())
             {
-                foreach (var page in doc.GetPages())
+                if (!string.IsNullOrWhiteSpace(page?.Text))
                 {
-                    if (page != null && !string.IsNullOrWhiteSpace(page.Text))
-                    {
-                        sb.AppendLine(page.Text.Trim());
-                        sb.AppendLine("\n---PAGE BREAK---\n");
-                    }
+                    sb.AppendLine(page.Text.Trim());
+                    sb.AppendLine("\n---PAGE BREAK---\n");
                 }
             }
             return await Task.FromResult(sb.ToString());
         }
 
-        // ========================= Image =========================
+        #endregion
+
+        #region ==== IMAGE HANDLER ====
 
         private async Task<string> ExtractTextFromImageAsync(string path, bool useLocal)
         {
             if (!File.Exists(path))
-            {
                 return string.Empty;
-            }
 
-            if (useLocal)
-            {
-                var list = new List<string> { path };
-                var textLocal = await ReadFileOCRWithLocalAsync(list).ConfigureAwait(false);
-                return textLocal;
-            }
-            else
-            {
-                var image = Google.Cloud.Vision.V1.Image.FromFile(path);
-                var textCloud = await ReadImageOcrWithGoogleAsync(image).ConfigureAwait(false);
-                return textCloud;
-            }
+            return useLocal
+                ? await ReadFileOCRWithLocalAsync(new List<string> { path })
+                : await ReadImageOcrWithGoogleAsync(Google.Cloud.Vision.V1.Image.FromFile(path));
         }
 
         private async Task<string> ReadImageOcrWithGoogleAsync(Google.Cloud.Vision.V1.Image image)
         {
-            var client = await ImageAnnotatorClient.CreateAsync().ConfigureAwait(false);
-            var res = await client.DetectDocumentTextAsync(image).ConfigureAwait(false);
-            if (res == null)
-            {
-                return string.Empty;
-            }
-
-            if (string.IsNullOrWhiteSpace(res.Text))
-            {
-                return string.Empty;
-            }
-
-            return res.Text;
+            var client = await ImageAnnotatorClient.CreateAsync();
+            var res = await client.DetectDocumentTextAsync(image);
+            return string.IsNullOrWhiteSpace(res?.Text) ? string.Empty : res.Text;
         }
 
-        // ========================= Word / Excel =========================
+        #endregion
+
+        #region ==== WORD / EXCEL HANDLER ====
 
         private static async Task<string> ExtractTextFromWordAsync(string path)
         {
-            using (var doc = DocX.Load(path))
-            {
-                var text = doc.Text;
-                if (text == null)
-                {
-                    return string.Empty;
-                }
-
-                return await Task.FromResult(text);
-            }
+            using var doc = DocX.Load(path);
+            return await Task.FromResult(doc.Text ?? string.Empty);
         }
 
         private static async Task<string> ExtractTextFromExcelAsync(string path)
         {
-            using (var wb = new XLWorkbook(path))
+            var sb = new StringBuilder();
+            using var wb = new XLWorkbook(path);
+
+            foreach (var ws in wb.Worksheets)
             {
-                var sb = new StringBuilder();
-
-                foreach (var ws in wb.Worksheets)
+                sb.AppendLine($"--- Sheet: {ws.Name} ---");
+                foreach (var row in ws.RowsUsed())
                 {
-                    sb.AppendLine("--- Sheet: " + ws.Name + " ---");
-
-                    foreach (var row in ws.RowsUsed())
-                    {
-                        foreach (var cell in row.CellsUsed())
-                        {
-                            var value = cell.GetValue<string>();
-                            if (value != null)
-                            {
-                                sb.Append(value);
-                            }
-                            sb.Append('\t');
-                        }
-                        sb.AppendLine();
-                    }
-
+                    foreach (var cell in row.CellsUsed())
+                        sb.Append(cell.GetValue<string>() + "\t");
                     sb.AppendLine();
                 }
-
-                var text = sb.ToString();
-                return await Task.FromResult(text);
+                sb.AppendLine();
             }
+
+            return await Task.FromResult(sb.ToString());
         }
 
-        // ========================= OCR Local =========================
+        #endregion
+
+        #region ==== OCR LOCAL SERVICE ====
 
         private async Task<string> ReadFileOCRWithLocalAsync(List<string> filePaths)
         {
             var ocrUrl = _settings.GetUrlReadOCR();
             if (string.IsNullOrWhiteSpace(ocrUrl))
-            {
                 throw new InvalidOperationException("Chưa cấu hình URL OCR.");
-            }
 
-            using (var form = new MultipartFormDataContent())
+            using var form = new MultipartFormDataContent();
+            var provider = new FileExtensionContentTypeProvider();
+
+            foreach (var filePath in filePaths)
             {
-                var provider = new FileExtensionContentTypeProvider();
+                if (!File.Exists(filePath)) continue;
 
-                foreach (var filePath in filePaths)
+                var stream = File.OpenRead(filePath);
+                var content = new StreamContent(stream)
                 {
-                    if (!File.Exists(filePath))
-                    {
-                        continue;
-                    }
-
-                    var stream = File.OpenRead(filePath);
-                    var content = new StreamContent(stream);
-
-                    string contentType;
-                    var responeSuccess = provider.TryGetContentType(filePath, out contentType);
-                    if (!responeSuccess || string.IsNullOrWhiteSpace(contentType))
-                    {
-                        contentType = "application/octet-stream";
-                    }
-
-                    content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-                    form.Add(content, "files", Path.GetFileName(filePath));
-                }
-
-                var response = await _httpClient.PostAsync(ocrUrl, form).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-
-                var result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                if (result == null)
-                {
-                    return string.Empty;
-                }
-
-                return result;
+                    Headers = { ContentType = new MediaTypeHeaderValue(provider.TryGetContentType(filePath, out var type) ? type : "application/octet-stream") }
+                };
+                form.Add(content, "files", Path.GetFileName(filePath));
             }
+
+            var response = await _httpClient.PostAsync(ocrUrl, form);
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync() ?? string.Empty;
         }
+
+        #endregion
     }
 }

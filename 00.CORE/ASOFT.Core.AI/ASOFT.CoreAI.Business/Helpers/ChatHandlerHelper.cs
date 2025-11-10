@@ -1,5 +1,6 @@
 ﻿using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
 

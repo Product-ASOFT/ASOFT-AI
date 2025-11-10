@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
-namespace ASOFT.CoreAI.Entities
+namespace ASOFT.CoreAI.Entities.ViewModels.System
 {
     public abstract class PropertyModel(string modelName, Type type)
     {
@@ -18,8 +18,8 @@ namespace ASOFT.CoreAI.Entities
         /// </summary>
         public string StorageName
         {
-            get => this._storageName ?? this.ModelName;
-            set => this._storageName = value;
+            get => _storageName ?? ModelName;
+            set => _storageName = value;
         }
 
         // See comment in VectorStoreJsonModelBuilder
@@ -50,17 +50,17 @@ namespace ASOFT.CoreAI.Entities
         /// </summary>
         public virtual object? GetValueAsObject(object record)
         {
-            if (this.PropertyInfo is null)
+            if (PropertyInfo is null)
             {
                 if (record is Dictionary<string, object?> dictionary)
                 {
-                    var value = dictionary.TryGetValue(this.ModelName, out var tempValue)
+                    var value = dictionary.TryGetValue(ModelName, out var tempValue)
                         ? tempValue
                         : null;
 
-                    if (value is not null && value.GetType() != (Nullable.GetUnderlyingType(this.Type) ?? this.Type))
+                    if (value is not null && value.GetType() != (Nullable.GetUnderlyingType(Type) ?? Type))
                     {
-                        throw new InvalidCastException($"Property '{this.ModelName}' has a value of type '{value.GetType().Name}', but its configured type is '{this.Type.Name}'.");
+                        throw new InvalidCastException($"Property '{ModelName}' has a value of type '{value.GetType().Name}', but its configured type is '{Type.Name}'.");
                     }
 
                     return value;
@@ -74,7 +74,7 @@ namespace ASOFT.CoreAI.Entities
             // TODO: Implement compiled delegates for better performance, #11122
             // TODO: Implement source-generated accessors for NativeAOT, #10256
 
-            return this.PropertyInfo.GetValue(record);
+            return PropertyInfo.GetValue(record);
         }
 
         /// <summary>
@@ -82,12 +82,12 @@ namespace ASOFT.CoreAI.Entities
         /// </summary>s
         public virtual void SetValueAsObject(object record, object? value)
         {
-            if (this.PropertyInfo is null)
+            if (PropertyInfo is null)
             {
                 if (record.GetType() == typeof(Dictionary<string, object?>))
                 {
                     var dictionary = (Dictionary<string, object?>)record;
-                    dictionary[this.ModelName] = value;
+                    dictionary[ModelName] = value;
                     return;
                 }
 
@@ -102,7 +102,7 @@ namespace ASOFT.CoreAI.Entities
             // If the value is null, no need to set the property (it's the CLR default)
             if (value is not null)
             {
-                this.PropertyInfo.SetValue(record, value);
+                PropertyInfo.SetValue(record, value);
             }
         }
 
@@ -111,7 +111,7 @@ namespace ASOFT.CoreAI.Entities
         /// </summary>
         // TODO: actually implement the generic accessors to avoid boxing, and make use of them in connectors
         public virtual T GetValue<T>(object record)
-            => (T)(object)this.GetValueAsObject(record)!;
+            => (T)GetValueAsObject(record)!;
 
         /// <summary>
         /// Writes the property from the given <paramref name="record"/>.
@@ -119,7 +119,7 @@ namespace ASOFT.CoreAI.Entities
         // TODO: actually implement the generic accessors to avoid boxing, and make use of them in connectors
         public virtual void SetValue<T>(object record, T value)
         {
-            this.SetValueAsObject(record, value);
+            SetValueAsObject(record, value);
         }
     }
 }

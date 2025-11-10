@@ -1,7 +1,7 @@
-﻿using ASOFT.CoreAI.Business.Services.RedisHandler;
-using ASOFT.CoreAI.Entities;
+﻿using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
-using Microsoft.AspNetCore.Hosting;
 using static ASOFT.CoreAI.Common.AIConstants;
 
 namespace ASOFT.CoreAI.Business
@@ -44,13 +44,8 @@ namespace ASOFT.CoreAI.Business
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
                 return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
 
-            // Chuẩn hoá file
-            var validFiles = _filePathService.NormalizeToPhysicalUnderWebRoot(request.AttachFiles!);
-            if (validFiles.Count == 0)
-                return ChatHandlerHelper.CreateResponseReadFile("Tệp đính kèm không tồn tại!", false);
-
             // OCR
-            var (ocrText, ocrResults) = await _ocrService.ReadAsync(validFiles, request.BEMF2000ViewModel.APK);
+            var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel.APK);
             if (string.IsNullOrWhiteSpace(ocrText))
                 return ChatHandlerHelper.CreateResponseReadFile("Không có thông tin đọc được từ tệp đính kèm", false);
 
@@ -70,7 +65,7 @@ namespace ASOFT.CoreAI.Business
                 CreateDate = DateTime.Now,
                 TextContentOCR = ocrText,
                 DivisionID = request.BEMF2000ViewModel.DivisionID,
-                AttachID = validFiles.Select(x => x.AttachID).FirstOrDefault(),
+                AttachID = request.AttachFiles!.Select(x => x.AttachID).FirstOrDefault(),
                 TextContentAI = !string.IsNullOrWhiteSpace(aiResult) ? aiResult : "Không có kết quả đối chiếu",
             };
 

@@ -1,9 +1,9 @@
-﻿using ASOFT.CoreAI.Entities;
+﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
     public interface ICIF1640DAL
     {
-        Task<ChatbotConfig> GetConfigModelAI();
+        Task<ChatbotConfigViewModel> GetConfigModelAI();
     }
 }

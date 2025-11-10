@@ -1,5 +1,5 @@
 ﻿using ASOFT.CoreAI.Common;
-using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using ASOFT.CoreAI.Infrastructure;
 using OpenAI.Embeddings;
 using System.Text.Json;

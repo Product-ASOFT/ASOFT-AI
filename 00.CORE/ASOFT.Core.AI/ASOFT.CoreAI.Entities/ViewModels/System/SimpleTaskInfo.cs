@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace ASOFT.CoreAI.Entities
+namespace ASOFT.CoreAI.Entities.ViewModels.System
 {
     public class SimpleTaskInfo
     {
@@ -45,11 +45,11 @@ namespace ASOFT.CoreAI.Entities
         {
             get
             {
-                if (!string.IsNullOrEmpty(this.Url))
+                if (!string.IsNullOrEmpty(Url))
                 {
-                    return $"<a href=\"{this.Url}/ViewMasterDetail2/Index/OO/OOF2112?PK={APK}&Table=OOT2110&key=APK&DivisionID={DivisionID}\" target=\"_blank\">{TaskID}</a>";
+                    return $"<a href=\"{Url}/ViewMasterDetail2/Index/OO/OOF2112?PK={APK}&Table=OOT2110&key=APK&DivisionID={DivisionID}\" target=\"_blank\">{TaskID}</a>";
                 }
-                return this.TaskID;
+                return TaskID;
             }
         }
         public string PlanStartDateFormat
@@ -75,7 +75,7 @@ namespace ASOFT.CoreAI.Entities
                     return "Chưa đặt hạn";
 
                 // (1) Đã hoàn thành
-                if (this.StatusID == "TTCV0003")
+                if (StatusID == "TTCV0003")
                 {
                     return "Hoàn thành";
                 }

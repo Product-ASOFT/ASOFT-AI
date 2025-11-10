@@ -1,5 +1,8 @@
 ﻿using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities.ViewModels.ERP;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

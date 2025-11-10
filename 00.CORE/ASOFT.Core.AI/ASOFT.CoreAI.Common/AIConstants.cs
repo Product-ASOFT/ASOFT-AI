@@ -53,5 +53,33 @@
             public const string BEM_AGENT_BEMF2000_OTHER = "BEM_AGENT_BEMF2000_OTHER";
         }
         #endregion Tạo các key cho Agent
+        public static class MimeTypesConstants
+        {
+            //  Ảnh
+            public static readonly string[] ImageTypes =
+            {
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/bmp",
+                "image/tiff"
+            };
+
+            //  PDF
+            public const string Pdf = "application/pdf";
+
+            //  Word
+            public const string WordDocx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            public const string WordDoc = "application/msword";
+
+            //  Excel
+            public const string ExcelXlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            public const string ExcelXls = "application/vnd.ms-excel";
+
+            // PowerPoint 
+            public const string Pptx = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            public const string Ppt = "application/vnd.ms-powerpoint";
+        }
+
     }
 }
