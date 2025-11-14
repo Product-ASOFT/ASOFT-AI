@@ -32,15 +32,15 @@
         public string? BankAccountID { get; set; }
         public string? BankAccountNo { get; set; }
         public string? BankAccountName { get; set; }
-        public int ApprovingLevel { get; set; }
-        public int ApproveLevel { get; set; }
+        public int? ApprovingLevel { get; set; }
+        public int? ApproveLevel { get; set; }
         public string? DebitAccountID { get; set; }
         public string? CreditAccountID { get; set; }
         public string? MediumAccountID { get; set; }
         public string? DebitAcccountGroupID { get; set; }
         public string? ListAPKDInherited { get; set; }
-        public int DeleteFlg { get; set; }
-        public int OrderNo { get; set; }
+        public int? DeleteFlg { get; set; }
+        public int? OrderNo { get; set; }
         public DateTime? CreateDate { get; set; }
         public string? CreateUserID { get; set; }
         public DateTime? LastModifyDate { get; set; }
@@ -51,12 +51,12 @@
         public string? TVoucherID { get; set; }
         public string? TBatchID { get; set; }
         public string? APK900101 { get; set; }
-        public int ApprovePerson01Status { get; set; }
+        public int? ApprovePerson01Status { get; set; }
         public string? ApprovePerson01StatusName { get; set; }
         public string? ApprovePerson01Note { get; set; }
         public DateTime? ApprovePerson01Date { get; set; }
         public string? APK900102 { get; set; }
-        public int ApprovePerson02Status { get; set; }
+        public int? ApprovePerson02Status { get; set; }
         public string? ApprovePerson02StatusName { get; set; }
         public string? ApprovePerson02Note { get; set; }
         public DateTime? ApprovePerson02Date { get; set; }

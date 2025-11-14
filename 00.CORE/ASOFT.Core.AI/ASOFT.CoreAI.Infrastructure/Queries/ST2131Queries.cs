@@ -12,13 +12,6 @@ namespace ASOFT.CoreAI.Infrastructure
         {
             _businessContext = Checker.NotNull(businessContext, nameof(businessContext));
         }
-
-        public async Task<ST2131> QueryPromptsByAgentCode(int AattachID)
-        {
-            var readFileResult = await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.AttachID == AattachID));
-            return readFileResult;
-        }
-
         public async Task<bool> SaveFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default)
         {
             try
@@ -51,6 +44,28 @@ namespace ASOFT.CoreAI.Infrastructure
             {
                 throw;
             }
+        }
+
+        public async Task<bool> UpdateFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
+                {
+                    await _businessContext.UpdateAsync(readFileResult, cancellationToken);
+                    await _businessContext.UnitOfWork.CompleteAsync();
+                    return true;
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<ST2131> GetFileResult(Guid APK)
+        {
+            return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.APK == APK));
         }
     }
 }

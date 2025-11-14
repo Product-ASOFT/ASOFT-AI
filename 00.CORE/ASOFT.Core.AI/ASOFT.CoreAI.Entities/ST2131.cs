@@ -12,5 +12,6 @@ namespace ASOFT.CoreAI.Entities
         public string? TextContentOCR { get; set; }
         public string? TextContentAI { get; set; }
         public string? Note { get; set; }
+        public string? StatusProcess { get; set; }
     }
 }

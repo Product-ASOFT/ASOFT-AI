@@ -6,6 +6,7 @@ using ClosedXML.Excel;
 using Google.Cloud.Vision.V1;
 using HeyRed.Mime;
 using Microsoft.AspNetCore.StaticFiles;
+using NRedisStack.Search;
 using PdfiumViewer;
 using System.Collections.Concurrent;
 using System.Drawing;
@@ -25,15 +26,18 @@ namespace ASOFT.CoreAI.Business
         private readonly IRedisMemoryProvider _redis;
         private readonly SettingsManagerService _settings;
         private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _clientFactory;
 
         public OcrService(
             IRedisMemoryProvider redisProvider,
             SettingsManagerService settingsManager,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IHttpClientFactory clientFactory)
         {
             _redis = redisProvider;
             _settings = settingsManager;
             _httpClient = httpClientFactory.CreateClient(nameof(OcrService));
+            _clientFactory = clientFactory;
         }
 
         #region ==== PUBLIC METHOD ====
@@ -76,25 +80,29 @@ namespace ASOFT.CoreAI.Business
             var useLocal = _settings.GetIsUseServiceReadOCR();
             int order = 0;
 
-            await Parallel.ForEachAsync(files, async (attach, ct) =>
+            //await Parallel.ForEachAsync(files, async (attach, ct) =>
+            //{
+            foreach (var attach in files)
             {
-                
                 var result = InitResultModel(attach, Interlocked.Increment(ref order));
                 if (!File.Exists(result.FilePath))
                 {
                     results.Add(result);
-                    return;
+                    //return;
+                    continue;
                 }
 
                 var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
                 if (string.IsNullOrEmpty(mimeType))
                 {
                     results.Add(result);
-                    return;
+                    //return;
+                    continue;
                 }
 
                 var fileInfo = new FileInfo(result.FilePath);
-                var cacheKey = $"FileCache_:{apk}:{fileInfo.FullName.ToLowerInvariant()}:{fileInfo.LastWriteTimeUtc.Ticks}:{fileInfo.Length}";
+                var fileName = string.Concat(Path.GetFileNameWithoutExtension(fileInfo.FullName), fileInfo.Extension);
+                var cacheKey = $"FileCache_{apk}:{fileName.ToLowerInvariant()}:{fileInfo.LastWriteTimeUtc.Ticks}:{fileInfo.Length}";
 
                 // Try cache
                 var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
@@ -102,7 +110,8 @@ namespace ASOFT.CoreAI.Business
                 {
                     result.TextContent = cached;
                     results.Add(result);
-                    return;
+                    //return;
+                    continue;
                 }
 
                 try
@@ -118,7 +127,9 @@ namespace ASOFT.CoreAI.Business
                 }
 
                 results.Add(result);
-            });
+                //});
+            }
+
             return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
         }
         // Khởi tạo model kết quả
@@ -288,6 +299,9 @@ namespace ASOFT.CoreAI.Business
             if (string.IsNullOrWhiteSpace(ocrUrl))
                 throw new InvalidOperationException("Chưa cấu hình URL OCR.");
 
+            var client = _clientFactory.CreateClient("OCR");
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+
             using var form = new MultipartFormDataContent();
             var provider = new FileExtensionContentTypeProvider();
 
@@ -302,11 +316,17 @@ namespace ASOFT.CoreAI.Business
                 };
                 form.Add(content, "files", Path.GetFileName(filePath));
             }
+            using var req = new HttpRequestMessage(HttpMethod.Post, ocrUrl) { Content = form };
 
-            var response = await _httpClient.PostAsync(ocrUrl, form);
-            response.EnsureSuccessStatusCode();
+            using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
-            return await response.Content.ReadAsStringAsync() ?? string.Empty;
+            resp.EnsureSuccessStatusCode();
+            return await resp.Content.ReadAsStringAsync(cts.Token) ?? string.Empty;
+
+            //var response = await _httpClient.PostAsync(ocrUrl, form);
+            //response.EnsureSuccessStatusCode();
+
+            //return await response.Content.ReadAsStringAsync() ?? string.Empty;
         }
 
         #endregion
