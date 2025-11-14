@@ -2,7 +2,10 @@
 using ASOFT.CoreAI.Entities.ViewModels.AI;
 using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
+using ASOFT.CoreAI.Infrastructure.Interface;
+using Microsoft.Extensions.Logging;
 using static ASOFT.CoreAI.Common.AIConstants;
+using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -15,11 +18,13 @@ namespace ASOFT.CoreAI.Business
         private readonly ITrainingDataService _trainingService;
         private readonly IOCRService _ocrService;
         private readonly SettingsManagerService _settingsManager;
+        private readonly IJobQueue _jobQueue;
+
         public ReadFileOrchestratorService(IST2130Queries ST2130Queries,
             IST2131Queries ST2131Queries, AgentCompareService compareService,
             FilePathService filePathService, ITrainingDataService trainingDataService,
             IOCRService ocrService, SettingsManagerService settingsManager,
-            AgentPromptService agentPromptService)
+            AgentPromptService agentPromptService, IJobQueue jobQueue)
         {
             _ST2130Queries = ST2130Queries;
             _ST2131Queries = ST2131Queries;
@@ -28,34 +33,22 @@ namespace ASOFT.CoreAI.Business
             _trainingService = trainingDataService;
             _ocrService = ocrService;
             _settingsManager = settingsManager;
-
+            _jobQueue = jobQueue;
         }
         public async Task<ChatResponseReadFileModel> HandleAsync(ReadFileRequest request)
         {
-            // Validate request
+            // 1) Validate
             var (isValid, validationMessage) = ValidateReadFileRequest(request);
             if (!isValid)
-            {
                 return ChatHandlerHelper.CreateResponseReadFile(validationMessage, false);
-            }
+
+            // 2) (Tuỳ chọn) Kiểm tra tồn tại prompt sớm để fail fast (hoặc để workflow kiểm tra)
             string typeCompare = GetAgentKeyByTypeCompare(request.BEMF2000ViewModel!.PaymentRequestType);
             var prompt = await _ST2130Queries.GetPromptByTypeCompare(AgentKeys.BEM_AGENT_BEMF2000, typeCompare);
-
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
                 return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
 
-            // OCR
-            var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel.APK);
-            if (string.IsNullOrWhiteSpace(ocrText))
-                return ChatHandlerHelper.CreateResponseReadFile("Không có thông tin đọc được từ tệp đính kèm", false);
-
-            // Training data
-            var trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
-
-            // Compare via Agent
-            var aiResult = await _compareService.CompareAsync(request, prompt.PromptContent!, ocrText, ocrResults, trainingData);
-
-            // Build entity
+            // 3) Tạo record PROCESSING
             var entity = new ST2131
             {
                 APK = Guid.NewGuid(),
@@ -63,22 +56,19 @@ namespace ASOFT.CoreAI.Business
                 AttachName = "Thông tin kết quả đối chiếu",
                 CreateUserID = request.UserId,
                 CreateDate = DateTime.Now,
-                TextContentOCR = ocrText,
                 DivisionID = request.BEMF2000ViewModel.DivisionID,
-                AttachID = request.AttachFiles!.Select(x => x.AttachID).FirstOrDefault(),
-                TextContentAI = !string.IsNullOrWhiteSpace(aiResult) ? aiResult : "Không có kết quả đối chiếu",
+                StatusProcess = StatusProcessCompareOCR.PROCESSING.ToString(),
             };
 
-            var match = ExtractMatchInfo.Extract(aiResult);
-            if (!string.IsNullOrEmpty(match.MatchRate)) entity.Percentage = match.MatchRate;
-            if (!string.IsNullOrEmpty(match.Conclusion)) entity.Status = match.Conclusion;
+            var saved = await _ST2131Queries.SaveFileResult(entity);
+            if (!saved)
+                return ChatHandlerHelper.CreateResponseReadFile("Không thể khởi tạo lưu kết quả.", false);
 
-            // Save
-            var resultSaveFile = await _ST2131Queries.SaveFileResult(entity);
-            return ChatHandlerHelper.CreateResponseReadFile(
-                resultSaveFile ? "Đọc và ghi kết quả thành công" :
-                "Đọc và ghi kết quả không thành công", resultSaveFile);
+            // 4) Đẩy job chạy nền (worker sẽ tự OCR → compare → cập nhật)
+            await _jobQueue.EnqueueAsync(new ReadFileJob(entity.APK, request, prompt.PromptContent));
 
+            // 5) Trả về ngay cho UI
+            return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {entity.APK}. Hệ thống đang xử lý nền.", true);
         }
         public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths, Guid APK)
         {
@@ -103,11 +93,11 @@ namespace ASOFT.CoreAI.Business
         {
             return typeCompare switch
             {
-                "WareHouse" => AgentTypeKeys.BEM_AGENT_BEMF2000_WAREHOUSE,
-                "Machine" => AgentTypeKeys.BEM_AGENT_BEMF2000_MACHINE,
-                "Service" => AgentTypeKeys.BEM_AGENT_BEMF2000_SERVICE,
-                "Build" => AgentTypeKeys.BEM_AGENT_BEMF2000_BUILD,
-                "Other" => AgentTypeKeys.BEM_AGENT_BEMF2000_OTHER,
+                "WAREHOUSE" => AgentTypeKeys.BEM_AGENT_BEMF2000_WAREHOUSE,
+                "MACHINE" => AgentTypeKeys.BEM_AGENT_BEMF2000_MACHINE,
+                "SERVICE" => AgentTypeKeys.BEM_AGENT_BEMF2000_SERVICE,
+                "BUILD" => AgentTypeKeys.BEM_AGENT_BEMF2000_BUILD,
+                "OTHER" => AgentTypeKeys.BEM_AGENT_BEMF2000_OTHER,
                 _ => throw new NotImplementedException(),
             };
         }

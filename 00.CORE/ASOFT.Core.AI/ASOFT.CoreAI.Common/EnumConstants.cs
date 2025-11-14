@@ -36,5 +36,11 @@
         {
             UNDEFINED = 0,
         }
+        public enum StatusProcessCompareOCR
+        {
+            PROCESSING = 0,
+            COMPLETED = 1,
+            FAILED = 2,
+        }
     }
 }

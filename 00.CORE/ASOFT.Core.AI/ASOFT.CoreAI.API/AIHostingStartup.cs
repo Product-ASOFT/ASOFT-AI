@@ -11,11 +11,13 @@ using ASOFT.Core.DataAccess.ModelBuilderConfiguration;
 using ASOFT.CoreAI.API.Resources;
 using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Business.LibraryKernel;
+using ASOFT.CoreAI.Business.Services.BackgroudJobHandler;
 using ASOFT.CoreAI.Business.Services.ChatHandler;
 using ASOFT.CoreAI.Business.Services.ChatHandler.ChatStorage;
 using ASOFT.CoreAI.Business.Services.RedisHandler;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Infrastructure;
+using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -75,6 +77,9 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<ReadFileOrchestratorService>();
         services.AddScoped<AgentPromptService>();
         services.AddScoped<ReadFileOrchestratorService>();
+        services.AddSingleton<IJobQueue>(sp => new ChannelJobQueue(capacity: 200));
+        services.AddHostedService<ReadFileWorker>();
+        services.AddScoped<IReadFileBackgroundWorkflow, ReadFileBackgroundWorkflow>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
@@ -143,7 +148,16 @@ public class AIHostingStartup : IHostingStartup
         // Đăng ký các dịch vụ cho MediatR
         //services.AddCoreApplicationServices();
 
-        services.AddHttpClient();
+        services.AddHttpClient("OCR", client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(15);
+
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+            ResponseDrainTimeout = TimeSpan.FromSeconds(30)
+        });
     }
 
     private static void AddAIServices(IServiceCollection services)

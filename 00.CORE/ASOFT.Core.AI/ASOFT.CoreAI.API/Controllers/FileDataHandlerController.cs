@@ -29,9 +29,9 @@ namespace ASOFT.CoreAI.API.Controllers
         }
         [HttpPost]
         [ActionName("UploadFile")]
-        public async Task<ChatResponseModel> UploadFileAsync([FromForm] List<IFormFile> files)
+        public async Task<ChatResponseModel> UploadFileAsync([FromForm] List<IFormFile> files, [FromForm] bool IsCompare)
         {
-            return await _filePathService.UpLoadFile(files);
+            return await _filePathService.UpLoadFile(files, IsCompare);
         }
         [HttpPost]
         [ActionName("CreateFile")]

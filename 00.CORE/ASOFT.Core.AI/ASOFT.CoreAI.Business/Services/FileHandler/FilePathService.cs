@@ -39,7 +39,7 @@ namespace ASOFT.CoreAI.Business
             _redisService = redisService;
             _httpContextAccessor = httpContextAccessor;
         }
-        public async Task<ChatResponseModel> UpLoadFile(List<IFormFile> files)
+        public async Task<ChatResponseModel> UpLoadFile(List<IFormFile> files, bool IsCompare)
         {
             if (files == null || files.Count == 0)
                 return ChatHandlerHelper.CreateResponse(Guid.Empty, "No file uploaded");
@@ -56,7 +56,11 @@ namespace ASOFT.CoreAI.Business
             {
                 var fileName = Path.GetFileNameWithoutExtension(file.FileName);
                 var ext = Path.GetExtension(file.FileName);
-                var uniqueFileName = $"{fileName}_{Guid.NewGuid():N}{ext}";
+                var uniqueFileName = $"{fileName}{ext}";
+                if (!IsCompare)
+                {
+                    uniqueFileName = $"{fileName}_{Guid.NewGuid():N}{ext}";
+                }
                 var fullPath = Path.Combine(folderPath, uniqueFileName);
 
                 using (var stream = new FileStream(fullPath, FileMode.Create))
