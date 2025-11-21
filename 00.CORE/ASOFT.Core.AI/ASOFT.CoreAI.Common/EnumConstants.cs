@@ -8,8 +8,8 @@
             Internal = 1,
             External = 2,
             Both = 3,
-            SFXXX1 = 4, // Quyền được hỏi dữ liệu ngoài internet
-            SFXXX2 = 5, // Quyền được hỏi dữ liệu nội bộ
+            SF2130 = 4, // Quyền được hỏi dữ liệu ngoài internet
+            SF2140 = 5, // Quyền được hỏi dữ liệu nội bộ
         }
 
         public enum ChatSessionStatus
@@ -41,6 +41,12 @@
             PROCESSING = 0,
             COMPLETED = 1,
             FAILED = 2,
+        }
+        public enum StatusResultCompare
+        {
+            NG = 0,
+            OK = 1,
+            BLANK = 2,
         }
     }
 }

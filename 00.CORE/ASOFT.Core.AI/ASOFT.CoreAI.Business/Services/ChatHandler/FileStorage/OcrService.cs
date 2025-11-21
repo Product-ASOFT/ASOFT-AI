@@ -102,7 +102,7 @@ namespace ASOFT.CoreAI.Business
 
                 var fileInfo = new FileInfo(result.FilePath);
                 var fileName = string.Concat(Path.GetFileNameWithoutExtension(fileInfo.FullName), fileInfo.Extension);
-                var cacheKey = $"FileCache_{apk}:{fileName.ToLowerInvariant()}:{fileInfo.LastWriteTimeUtc.Ticks}:{fileInfo.Length}";
+                var cacheKey = $"FileCache_{apk}:{fileName.ToLowerInvariant()}:{fileInfo.Length}";
 
                 // Try cache
                 var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
@@ -158,9 +158,11 @@ namespace ASOFT.CoreAI.Business
                 mimeType.Equals(MimeTypesConstants.WordDoc, StringComparison.OrdinalIgnoreCase))
                 return await ExtractTextFromWordAsync(filePath);
 
-            if (mimeType.Equals(MimeTypesConstants.ExcelXlsx, StringComparison.OrdinalIgnoreCase) ||
-                mimeType.Equals(MimeTypesConstants.ExcelXls, StringComparison.OrdinalIgnoreCase))
+            if (mimeType.Equals(MimeTypesConstants.ExcelXlsx, StringComparison.OrdinalIgnoreCase))
                 return await ExtractTextFromExcelAsync(filePath);
+
+            if (mimeType.Equals(MimeTypesConstants.ExcelXls, StringComparison.OrdinalIgnoreCase))
+                return await ReadFileOCRWithLocalAsync(new List<string> { filePath });
 
             return string.Empty;
         }

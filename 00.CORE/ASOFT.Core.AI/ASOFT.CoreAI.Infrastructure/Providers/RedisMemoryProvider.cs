@@ -241,8 +241,7 @@ public class RedisMemoryProvider : IRedisMemoryProvider
         }
         catch (RedisServerException)
         {
-            // Index không tồn tại, trả về null
-            throw;
+            return null;
         }
     }
 

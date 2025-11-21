@@ -210,17 +210,35 @@ namespace ASOFT.CoreAI.Business
             }
             else
             {
-                var result = await _kernel.InvokePromptAsync(
+                try
+                {
+                    var result = await _kernel.InvokePromptAsync(
                     promptTemplate,
                     arguments,
                     "handlebars",
                     new HandlebarsPromptTemplateFactory(),
                     cancellationToken);
 
-                return result.ToString();
+                    return result.ToString();
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
             }
         }
 
+
+
+        public async Task<string> SendPromptWithSumaryResultAsync( string promptTemplate, string result)
+        {
+            var arguments = new KernelArguments
+            {
+                ["result"] = result,
+            };
+            return await HandleChatWithModelAI(arguments, false, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+        }
         #endregion Xử lý gửi câu hỏi,lịch sử chat, thông tin training, thông tin dữ liệu từ Database sang ModelAI
         // Hàm BuildQueryFromRawText cũng generic, dùng cho bất kỳ loại nào
         public async Task<List<T>> BuildQueryFromRawText<T>(
