@@ -64,6 +64,7 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<IPermissionHandler, PermissionService>();
         services.AddScoped<IST2130Queries, ST2130Queries>();
         services.AddScoped<IST2131Queries, ST2131Queries>();
+        services.AddScoped<IST2136Queries, ST2136Queries>();
         services.AddScoped<IDataLoader, DataLoaderService>();
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
         services.AddScoped<IRedisService, RedisService>();
@@ -85,6 +86,7 @@ public class AIHostingStartup : IHostingStartup
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
             var redisConfigString = configuration.GetValue<string>(AIConstants.RedisConfig);
+            var redisConfigDatabaseName = configuration.GetValue<string>(AIConstants.RedisConfigDatabaseName);
 
             if (string.IsNullOrWhiteSpace(redisConfigString))
             {
@@ -101,7 +103,9 @@ public class AIHostingStartup : IHostingStartup
             redisConfig.AsyncTimeout = 30000;
             redisConfig.ConnectTimeout = 30000;
             redisConfig.AbortOnConnectFail = false;
-            redisConfig.DefaultDatabase = 0; // Chọn database 0 làm mặc định
+            Int32.TryParse(redisConfigDatabaseName, out int databaseName);
+            redisConfig.DefaultDatabase = databaseName;
+
             // hàm
             try
             {

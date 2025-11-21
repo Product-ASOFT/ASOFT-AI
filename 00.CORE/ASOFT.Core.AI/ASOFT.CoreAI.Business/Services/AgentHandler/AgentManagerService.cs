@@ -98,7 +98,8 @@ public class AgentManagerService
         [AgentKeys.RESEARCH_AGENT] = () => TryHandlePluginAsync<RedisearchResultItem>(request, AgentKeys.RESEARCH_AGENT, "tra cứu thông tin"),
         [AgentKeys.READFILE_AGENT] = () => TryHandlePluginAsync<RedisearchResultItem>(request, AgentKeys.READFILE_AGENT, "Đọc thông tin"),
         [AgentKeys.BEM_AGENT_BEMF2000] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.BEM_AGENT_BEMF2000, "DNTT/DNTTTU/DNTU"),
-        [AgentKeys.HRM_AGENT_HRMF2220] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.HRM_AGENT_HRMF2220, "Chấm công")
+        [AgentKeys.HRM_AGENT_HRMF2220] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.HRM_AGENT_HRMF2220, "Chấm công"),
+        [AgentKeys.HRM_AGENT_HRMF1030] = () => TryHandlePluginAsync<HRMF1030ViewModel>(request, AgentKeys.HRM_AGENT_HRMF1030, "Hồ sơ ứng viên")
     };
 
     private bool IsNoDataMessage(string message) => message.StartsWith("Không có");
@@ -206,7 +207,8 @@ public class AgentManagerService
                 (AgentKeys.OO_AGENT_OOF2190, TryGetPluginData(pluginData, AgentKeys.OO_AGENT_OOF2190, out List<MilestoneViewModel>? milestones) ? milestones : null),
                 (AgentKeys.CRM_AGENT_CRMF2030, TryGetPluginData(pluginData, AgentKeys.CRM_AGENT_CRMF2030, out List<CRMF2030ViewModel>? keyContacts) ? keyContacts : null),
                 (AgentKeys.CRM_AGENT_CRMF2050, TryGetPluginData(pluginData, AgentKeys.CRM_AGENT_CRMF2050, out List<CRMF2050ViewModel>? opportunities) ? opportunities : null),
-                (AgentKeys.CRM_AGENT_CRMF2160, TryGetPluginData(pluginData, AgentKeys.CRM_AGENT_CRMF2160, out List<CRMF2160ViewModel>? supportRequests) ? supportRequests : null)
+                (AgentKeys.CRM_AGENT_CRMF2160, TryGetPluginData(pluginData, AgentKeys.CRM_AGENT_CRMF2160, out List<CRMF2160ViewModel>? supportRequests) ? supportRequests : null),
+                (AgentKeys.HRM_AGENT_HRMF1030, TryGetPluginData(pluginData, AgentKeys.HRM_AGENT_HRMF1030, out List<HRMF1030ViewModel>? candidates) ? candidates : null)
             };
 
         foreach (var (key, data) in agentMap)
@@ -236,6 +238,9 @@ public class AgentManagerService
 
                 case AgentKeys.CRM_AGENT_CRMF2160:
                     return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2160ViewModel>)data, chatHistory, promptTemplate, trainingData);
+                
+                case AgentKeys.HRM_AGENT_HRMF1030:
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<HRMF1030ViewModel>)data, chatHistory, promptTemplate, trainingData);
             }
         }
         // Agent tìm kiếm thông tin

@@ -5,6 +5,7 @@
         public const string FIELD_EMBEDDING = "EmbeddingVector";
         public const string ModelAIKey = "ModelAIKey";
         public const string RedisConfig = "Redis:Configuration";
+        public const string RedisConfigDatabaseName = "Redis:DatabaseName";
         public const string APIOCRConfig = "APIOCR:URL";
 
         #region tạo các lệnh Redis
@@ -43,6 +44,8 @@
             public const string TYPE_QUESTION = "TYPE_QUESTION";
             public const string BEM_AGENT_BEMF2000_CREATEFILE = "BEM_AGENT_BEMF2000_CREATEFILE";
             public const string HRM_AGENT_HRMF2220 = "HRM_AGENT_HRMF2220";
+            public const string HRM_AGENT_HRMF1030 = "HRM_AGENT_HRMF1030";
+            public const string BEM_AGENT_BEMF2000_SUMMARY = "BEM_AGENT_BEMF2000_SUMMARY";
         }
         public static class AgentTypeKeys
         {

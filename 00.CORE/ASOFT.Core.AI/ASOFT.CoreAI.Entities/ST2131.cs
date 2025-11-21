@@ -13,5 +13,6 @@ namespace ASOFT.CoreAI.Entities
         public string? TextContentAI { get; set; }
         public string? Note { get; set; }
         public string? StatusProcess { get; set; }
+        public string? TextConditionFail { get; set; }
     }
 }

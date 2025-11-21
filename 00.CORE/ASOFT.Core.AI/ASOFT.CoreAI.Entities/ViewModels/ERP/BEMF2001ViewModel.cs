@@ -47,7 +47,7 @@
         public string? LastModifyUserID { get; set; }
         public string? ApprovalNotes { get; set; }
         public DateTime? ApprovalDate { get; set; }
-        public int Status { get; set; }
+        public int? Status { get; set; }
         public string? TVoucherID { get; set; }
         public string? TBatchID { get; set; }
         public string? APK900101 { get; set; }

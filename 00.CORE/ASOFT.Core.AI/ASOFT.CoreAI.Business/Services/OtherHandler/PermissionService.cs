@@ -7,8 +7,8 @@ namespace ASOFT.CoreAI.Business
     {
         public Task<string> GetAccessType(List<string> permisions)
         {
-            bool hasExternal = permisions.Any(x => x == AccessTypeName.SFXXX1.ToString());
-            bool hasInternal = permisions.Any(x => x == AccessTypeName.SFXXX2.ToString());
+            bool hasExternal = permisions.Any(x => x == AccessTypeName.SF2130.ToString());
+            bool hasInternal = permisions.Any(x => x == AccessTypeName.SF2140.ToString());
             if (hasInternal && hasExternal)
                 return Task.FromResult(AccessTypeName.Both.ToString());
 
