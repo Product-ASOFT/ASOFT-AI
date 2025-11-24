@@ -25,6 +25,7 @@ namespace ASOFT.CoreAI.API.Controllers
         [ActionName("HandlerFile")]
         public async Task<ChatResponseReadFileModel> HandlerFileAsync([FromBody] ReadFileRequest request)
         {
+
             return await _orchestrator.HandleAsync(request);
         }
         [HttpPost]

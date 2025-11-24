@@ -1,5 +1,10 @@
 ﻿using ASOFT.A00.DataAccess.Interfaces;
 using ASOFT.Core.DataAccess.Enums;
+using ASOFT.CoreAI.Common;
+using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Infrastructure;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 
 namespace ASOFT.CoreAI.Business
@@ -8,13 +13,17 @@ namespace ASOFT.CoreAI.Business
     {
         private readonly IConfiguration _configuration;
         private IASOFTCommonQueries _aSOFCommonQueries;
-
-        public SettingsManagerService(IConfiguration configuration, IASOFTCommonQueries aSOFTCommonQueries)
+        private readonly IRedisMemoryProvider _vectorDatabase;
+        private readonly ICIF1640DAL _cif1640DAL;
+        public SettingsManagerService(IConfiguration configuration, IASOFTCommonQueries aSOFTCommonQueries,
+            IRedisMemoryProvider vectorDatabase,
+            ICIF1640DAL cif1640DAL)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _aSOFCommonQueries = aSOFTCommonQueries ?? throw new ArgumentNullException(nameof(aSOFTCommonQueries));
+            _vectorDatabase = vectorDatabase ?? throw new ArgumentNullException(nameof(vectorDatabase));
+            _cif1640DAL = cif1640DAL ?? throw new ArgumentNullException(nameof(cif1640DAL));
         }
-
         public (int maxChat, int maxTraining) GetNumberRecords()
         {
             int maxChatRecords = _configuration.GetValue<int>("ChatHistorySettings:MaxRecords");
@@ -60,6 +69,28 @@ namespace ASOFT.CoreAI.Business
                 IsUseServiceLocal = bool.Parse(configUse);
             }
             return IsUseServiceLocal;
+        }
+        public async Task<ChatResponseModel> CheckConfigModelAI()
+        {
+            string cacheKey = AIConstants.ModelAIKey;
+            var cachedKey = await _vectorDatabase.IsCheckExistKeyAsync(cacheKey);
+            if (cachedKey == false)
+            {
+                var configModelAI = await _cif1640DAL.GetConfigModelAI();
+                if (configModelAI != null && !string.IsNullOrEmpty(configModelAI.APIKey) && !string.IsNullOrEmpty(configModelAI.ChatbotModel))
+                {
+                    double day = 1; 
+                    var modelAIConfig = new ModelAIChatConfig
+                    {
+                        ApiKey = configModelAI.APIKey,
+                        ModelName = configModelAI.ChatbotModel,
+                    };
+                    string apiKey = await _vectorDatabase.SaveAPIKeyAsync(cacheKey, modelAIConfig, day);
+                    return ChatHandlerHelper.CreateResponse(Guid.Empty, apiKey, true);
+                }
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin cấu hình Model AI", false);
+            }
+            return ChatHandlerHelper.CreateResponse(Guid.Empty, cachedKey.ToString(), true);
         }
     }
 }
