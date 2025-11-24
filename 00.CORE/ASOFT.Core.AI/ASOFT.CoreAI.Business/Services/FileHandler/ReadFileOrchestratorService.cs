@@ -1,9 +1,9 @@
 ﻿using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 using static ASOFT.CoreAI.Common.EnumConstants;
 
@@ -103,6 +103,10 @@ namespace ASOFT.CoreAI.Business
         }
         private (bool IsValid, string Message) ValidateReadFileRequest(ReadFileRequest request)
         {
+            var CheckConfigModelAI = _settingsManager.CheckConfigModelAI().Result;
+            if (CheckConfigModelAI.Status == false)
+                return (false, CheckConfigModelAI.Result);
+
             if (request == null)
                 return (false, "Thông tin dữ liệu không được để trống!");
 

@@ -1,5 +1,5 @@
 ﻿using ASOFT.CoreAI.Abstractions;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Aspose.Words.Drawing;
 using ClosedXML.Excel;

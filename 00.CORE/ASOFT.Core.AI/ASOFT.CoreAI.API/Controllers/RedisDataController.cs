@@ -19,19 +19,15 @@ namespace ASOFT.CoreAI.API.Controllers
         private readonly IDataLoader _dataLoader;
         private readonly IRedisService _redisHandler;
         private readonly AgentManagerService _agentService;
-        private readonly ICIF1640DAL _cif1640DAL;
+        private readonly SettingsManagerService _settings;
 
-        public RedisDataController(IRedisMemoryProvider vectorDatabase,
-            IDataLoader dataLoader,
-            IRedisService redisHandler,
-            AgentManagerService agentManager,
-            ICIF1640DAL cif1640DAL)
+        public RedisDataController(IRedisMemoryProvider vectorDatabase, IDataLoader dataLoader, IRedisService redisHandler, AgentManagerService agentManager, SettingsManagerService settings)
         {
             _vectorDatabase = vectorDatabase;
             _dataLoader = dataLoader;
             _redisHandler = redisHandler;
             _agentService = agentManager;
-            _cif1640DAL = cif1640DAL;
+            _settings = settings;
         }
 
         [ActionName("TrainingData")]
@@ -57,25 +53,8 @@ namespace ASOFT.CoreAI.API.Controllers
         [ActionName("CheckModelAIConfig")]
         public async Task<ChatResponseModel> CheckModelAIConfigAsync()
         {
-            string cacheKey = AIConstants.ModelAIKey;
-            var cachedKey = await _vectorDatabase.IsCheckExistKeyAsync(cacheKey);
-            if (cachedKey == false)
-            {
-                var configModelAI = await _cif1640DAL.GetConfigModelAI();
-                if (configModelAI != null && !string.IsNullOrEmpty(configModelAI.APIKey) && !string.IsNullOrEmpty(configModelAI.ChatbotModel))
-                {
-                    double day = 1; // Thời gian lưu trữ key, có thể lấy từ config hoặc tham số
-                    var modelAIConfig = new ModelAIChatConfig
-                    {
-                        ApiKey = configModelAI.APIKey,
-                        ModelName = configModelAI.ChatbotModel,
-                    };
-                    string apiKey = await _vectorDatabase.SaveAPIKeyAsync(cacheKey, modelAIConfig, day);
-                    return ChatHandlerHelper.CreateResponse(Guid.Empty, apiKey);
-                }
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin cấu hình Model AI");
-            }
-            return ChatHandlerHelper.CreateResponse(Guid.Empty, cachedKey.ToString());
+           
+            return await _settings.CheckConfigModelAI();
         }
 
         [HttpPost]
