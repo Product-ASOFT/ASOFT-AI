@@ -14,7 +14,7 @@ namespace ASOFT.CoreAI.Infrastructure
 
         Task<bool> CreateFileResult(IEnumerable<ST2131> readFileResults, CancellationToken cancellationToken = default);
 
-        Task<bool> UpdateFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default);
+        Task UpdateFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default);
         Task<ST2131> GetFileResult(Guid APK);
     }
 }

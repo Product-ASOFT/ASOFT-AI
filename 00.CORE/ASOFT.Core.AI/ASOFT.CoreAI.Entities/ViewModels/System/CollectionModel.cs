@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.System;
+namespace ASOFT.CoreAI.Entities;
 
 /// <summary>
 /// Represents a record in a vector store collection.

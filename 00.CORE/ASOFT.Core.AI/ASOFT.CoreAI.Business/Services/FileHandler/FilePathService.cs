@@ -1,7 +1,4 @@
-﻿using ASOFT.CoreAI.Business.Services.RedisHandler;
-using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
+﻿using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Hosting;
@@ -88,8 +85,8 @@ namespace ASOFT.CoreAI.Business
                 return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
 
             var indexName = AgentKeyHelper.GetIndexKey(AgentKeys.BEM_AGENT_BEMF2000_CREATEFILE);
-            var maxRecords = _settings.GetNumberRecords().maxTraining;
-            var trainingData = await _redisService.GetDataByReadFileAsync(request, indexName, maxRecords);
+            var maxRecords = await _settings.GetNumberRecordsAsync();
+            var trainingData = await _redisService.GetDataByReadFileAsync(request, indexName, maxRecords.maxTraining);
 
             var result = await _agentPromptService.SendPromptWithReadFile(
                 request,

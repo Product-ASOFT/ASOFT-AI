@@ -77,27 +77,27 @@ namespace ASOFT.CoreAI.Business
         private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> files, Guid apk)
         {
             var results = new ConcurrentBag<ResultReadFileModel>();
-            var useLocal = _settings.GetIsUseServiceReadOCR();
+            var useLocal = await _settings.GetIsUseServiceReadOCRAsync();
             int order = 0;
 
-            //await Parallel.ForEachAsync(files, async (attach, ct) =>
-            //{
-            foreach (var attach in files)
+            await Parallel.ForEachAsync(files, async (attach, ct) =>
             {
+                //    foreach (var attach in files)
+                //{
                 var result = InitResultModel(attach, Interlocked.Increment(ref order));
                 if (!File.Exists(result.FilePath))
                 {
                     results.Add(result);
-                    //return;
-                    continue;
+                    return;
+                    //continue;
                 }
 
                 var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
                 if (string.IsNullOrEmpty(mimeType))
                 {
                     results.Add(result);
-                    //return;
-                    continue;
+                    return;
+                    //continue;
                 }
 
                 var fileInfo = new FileInfo(result.FilePath);
@@ -110,8 +110,8 @@ namespace ASOFT.CoreAI.Business
                 {
                     result.TextContent = cached;
                     results.Add(result);
-                    //return;
-                    continue;
+                    return;
+                    //continue;
                 }
 
                 try
@@ -127,8 +127,8 @@ namespace ASOFT.CoreAI.Business
                 }
 
                 results.Add(result);
-                //});
-            }
+            });
+            //}
 
             return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
         }
@@ -297,7 +297,7 @@ namespace ASOFT.CoreAI.Business
 
         private async Task<string> ReadFileOCRWithLocalAsync(List<string> filePaths)
         {
-            var ocrUrl = _settings.GetUrlReadOCR();
+            var ocrUrl = await _settings.GetUrlReadOCRAsync();
             if (string.IsNullOrWhiteSpace(ocrUrl))
                 throw new InvalidOperationException("Chưa cấu hình URL OCR.");
 

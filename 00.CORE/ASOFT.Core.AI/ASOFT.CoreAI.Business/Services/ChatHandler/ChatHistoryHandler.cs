@@ -1,8 +1,8 @@
 ﻿using ASOFT.Core.DataAccess;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
+using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Dapper;
 using System.Data;

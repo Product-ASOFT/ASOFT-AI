@@ -44,11 +44,11 @@ namespace ASOFT.CoreAI.Entities
         {
             get
             {
-                if (!string.IsNullOrEmpty(this.Url))
+                if (!string.IsNullOrEmpty(Url))
                 {
-                    return $"<a href=\"{this.Url}/ViewMasterDetail2/Index/CRM/CRMF2032?PK={APK}&Table=CRMT20301&key=APK&DivisionID={DivisionID}\" target=\"_blank\">{LeadID}</a>";
+                    return $"<a href=\"{Url}/ViewMasterDetail2/Index/CRM/CRMF2032?PK={APK}&Table=CRMT20301&key=APK&DivisionID={DivisionID}\" target=\"_blank\">{LeadID}</a>";
                 }
-                return this.LeadID;
+                return LeadID;
             }
         }
     }

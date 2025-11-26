@@ -64,9 +64,9 @@
         {
             get
             {
-                if (this.InvoiceDate.HasValue)
+                if (InvoiceDate.HasValue)
                 {
-                    return this.InvoiceDate.Value.ToString("dd/MM/yyyy");
+                    return InvoiceDate.Value.ToString("dd/MM/yyyy");
                 }
                 return string.Empty;
             }

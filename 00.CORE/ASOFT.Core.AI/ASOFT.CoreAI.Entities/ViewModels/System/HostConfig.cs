@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities;
 using Microsoft.Extensions.Configuration;
 using System.ComponentModel.DataAnnotations;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.System;
+namespace ASOFT.CoreAI.Entities;
 
 /// <summary>
 /// Helper class for loading host configuration settings.

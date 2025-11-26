@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.AI
+namespace ASOFT.CoreAI.Entities
 {
 
     public class CriteriaSummaryResult

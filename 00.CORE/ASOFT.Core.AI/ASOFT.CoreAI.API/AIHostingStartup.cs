@@ -3,6 +3,7 @@
 // #
 // # History：
 // #	Date Time	    Updated		    Content
+// #    10/07/2025      Đức Mạnh        Tạo mới
 // ##################################################################
 
 using ASOFT.Core.API.Extensions;
@@ -15,12 +16,10 @@ using ASOFT.CoreAI.Business.Services.BackgroudJobHandler;
 using ASOFT.CoreAI.Business.Services.ChatHandler;
 using ASOFT.CoreAI.Business.Services.ChatHandler.ChatStorage;
 using ASOFT.CoreAI.Business.Services.RedisHandler;
-using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using Kernel = ASOFT.CoreAI.Abstractions.Kernel;
@@ -38,6 +37,8 @@ public class AIHostingStartup : IHostingStartup
             var configuration = ctx.Configuration;
 
             ConfigureCoreServices(ctx, services);
+
+            ConfigureRedisServices(services);
 
             AddAIServices(services);
 
@@ -60,11 +61,12 @@ public class AIHostingStartup : IHostingStartup
         services.AddAsoftKernel();
 
         services.AddTransient<ChatCompletionAgent>();
-
         services.AddScoped<IPermissionHandler, PermissionService>();
         services.AddScoped<IST2130Queries, ST2130Queries>();
         services.AddScoped<IST2131Queries, ST2131Queries>();
         services.AddScoped<IST2136Queries, ST2136Queries>();
+        services.AddScoped<IONT1021Service, ONT1021Service>();
+        services.AddScoped<IONT1030Service, ONT1030Service>();
         services.AddScoped<IDataLoader, DataLoaderService>();
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
         services.AddScoped<IRedisService, RedisService>();
@@ -81,64 +83,6 @@ public class AIHostingStartup : IHostingStartup
         services.AddSingleton<IJobQueue>(sp => new ChannelJobQueue(capacity: 200));
         services.AddHostedService<ReadFileWorker>();
         services.AddScoped<IReadFileBackgroundWorkflow, ReadFileBackgroundWorkflow>();
-
-        services.AddSingleton<IConnectionMultiplexer>(sp =>
-        {
-            var configuration = sp.GetRequiredService<IConfiguration>();
-            var redisConfigString = configuration.GetValue<string>(AIConstants.RedisConfig);
-            var redisConfigDatabaseName = configuration.GetValue<string>(AIConstants.RedisConfigDatabaseName);
-
-            if (string.IsNullOrWhiteSpace(redisConfigString))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("❌ Redis config string is missing.");
-                Console.ResetColor();
-                throw new InvalidOperationException("Redis configuration is required.");
-            }
-
-            var redisConfig = ConfigurationOptions.Parse(redisConfigString);
-            redisConfig.User = "default";
-            redisConfig.Password = "asd@123";
-            redisConfig.SyncTimeout = 30000;
-            redisConfig.AsyncTimeout = 30000;
-            redisConfig.ConnectTimeout = 30000;
-            redisConfig.AbortOnConnectFail = false;
-            Int32.TryParse(redisConfigDatabaseName, out int databaseName);
-            redisConfig.DefaultDatabase = databaseName;
-
-            // hàm
-            try
-            {
-                var connection = ConnectionMultiplexer.Connect(redisConfig);
-
-                connection.ConnectionFailed += (s, e) =>
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"❌ Redis Connection Failed: Endpoint={e.EndPoint}, Type={e.FailureType}, Message={e.Exception?.Message}");
-                    Console.ResetColor();
-                };
-
-                connection.ConnectionRestored += (s, e) =>
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"✅ Redis Connection Restored: Endpoint={e.EndPoint}");
-                    Console.ResetColor();
-                };
-
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("✅ Redis connected successfully.");
-                Console.ResetColor();
-
-                return connection;
-            }
-            catch (Exception ex)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"🚨 Failed to connect to Redis: {ex.Message}");
-                Console.ResetColor();
-                throw;
-            }
-        });
 
         services.AddScoped<IDatabase>(sp =>
         {
@@ -198,6 +142,45 @@ public class AIHostingStartup : IHostingStartup
             {
                 Kernel = sp.GetRequiredService<Kernel>()
             };
+        });
+    }
+    public void ConfigureRedisServices(IServiceCollection services)
+    {
+        services.AddScoped<ConfigManagerService>();
+        services.AddScoped<IRedisConfigProvider, RedisConfigProvider>();
+        // Đăng ký IConnectionMultiplexer trong DI container
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            using var scope = sp.CreateScope();
+            var scopedProvider = scope.ServiceProvider;
+
+            var redisConfigProvider = scopedProvider.GetRequiredService<IRedisConfigProvider>();
+
+            var redisConfig = redisConfigProvider.GetRedisConfigAsync().GetAwaiter().GetResult();
+
+            if (redisConfig == null || string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
+                throw new InvalidOperationException("Redis connection string is missing.");
+
+            var redisOptions = ConfigurationOptions.Parse(redisConfig.ConnectionString);
+
+            if (!string.IsNullOrEmpty(redisConfig.UserName))
+                redisOptions.User = redisConfig.UserName;
+
+            if (!string.IsNullOrEmpty(redisConfig.Password))
+                redisOptions.Password = redisConfig.Password;
+
+            if (!string.IsNullOrEmpty(redisConfig.DatabaseName)
+                && int.TryParse(redisConfig.DatabaseName, out var db))
+            {
+                redisOptions.DefaultDatabase = db;
+            }
+
+            redisOptions.SyncTimeout = 30000;
+            redisOptions.AsyncTimeout = 30000;
+            redisOptions.ConnectTimeout = 30000;
+            redisOptions.AbortOnConnectFail = false;
+
+            return ConnectionMultiplexer.Connect(redisOptions);
         });
     }
 }

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.System
+namespace ASOFT.CoreAI.Entities
 {
     public class SimpleTaskInfo
     {

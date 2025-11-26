@@ -1,8 +1,5 @@
 ﻿using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.ERP;
-using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,7 +29,7 @@ public class AgentManagerService
         _redisHandler = redisHandler;
         _agentPromptService = agentPromptService;
         _readFileOrchestratorService = readFileOrchestratorService;
-        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", _settingsManager.GetKeyReadOCR());
+        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS",  _settingsManager.GetKeyReadOCRAsync().Result);
     }
 
     #region Api xử lý gọi Agent
@@ -147,7 +144,7 @@ public class AgentManagerService
         var prop = typeof(T).GetProperty("Url");
         if (prop == null || !prop.CanWrite)
             return;
-        string baseUrl = await _settingsManager.GetExternalApi();
+        string baseUrl = await _settingsManager.GetUrlERPAsync();
 
         if (string.IsNullOrEmpty(baseUrl))
             return;
@@ -162,7 +159,7 @@ public class AgentManagerService
 
     private async Task<ChatResponseModel> HandleByFilterAsync(AgentRequest request, string agentCode, IDictionary<string, object> pluginData)
     {
-        var valueRecords = _settingsManager.GetNumberRecords();
+        var valueRecords = await _settingsManager.GetNumberRecordsAsync();
         var chatHistoryModel = _chatHistoryHandler.CreateChatHistoryModel(request, agentCode, valueRecords.maxChat);
 
         #region Lấy dữ liệu từ Redis Vector Store và lịch sử chat
