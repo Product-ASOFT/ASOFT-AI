@@ -1,5 +1,4 @@
-﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
+﻿using ASOFT.CoreAI.Entities;
 using StackExchange.Redis;
 
 namespace ASOFT.CoreAI.Infrastructure
@@ -44,5 +43,6 @@ namespace ASOFT.CoreAI.Infrastructure
         Task<string?> GetFileCacheAsync(string filePath, string cacheKey);
 
         Task SaveFileCacheAsync(string filePath, string textContent, string cacheKey);
+
     }
 }

@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.System
+namespace ASOFT.CoreAI.Entities
 {
     public abstract class PropertyModel(string modelName, Type type)
     {

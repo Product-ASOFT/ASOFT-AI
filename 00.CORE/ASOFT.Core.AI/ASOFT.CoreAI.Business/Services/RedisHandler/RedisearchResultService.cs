@@ -1,4 +1,4 @@
-﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
+﻿using ASOFT.CoreAI.Entities;
 using StackExchange.Redis;
 using System.Text.Json;
 

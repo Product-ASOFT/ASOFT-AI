@@ -1,5 +1,5 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.Extensions.Logging;
@@ -72,7 +72,7 @@ namespace ASOFT.CoreAI.Business
         }
         public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths, Guid APK)
         {
-            string configKeyOCR = _settingsManager.GetKeyReadOCR();
+            string configKeyOCR = await _settingsManager.GetKeyReadOCRAsync();
             var AttachFiles = new List<AttachFileModel>();
             foreach (var item in FilePaths)
             {

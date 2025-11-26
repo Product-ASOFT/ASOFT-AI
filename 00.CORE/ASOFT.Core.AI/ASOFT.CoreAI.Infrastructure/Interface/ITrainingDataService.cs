@@ -1,5 +1,5 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

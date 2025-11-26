@@ -8,7 +8,7 @@
 
 using System;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.ERP
+namespace ASOFT.CoreAI.Entities
 {
     public class OOT2160ViewModel
     {

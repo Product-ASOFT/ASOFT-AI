@@ -5,6 +5,7 @@ namespace ASOFT.CoreAI.Business
 {
     public class PermissionService : IPermissionHandler
     {
+        // xác định loại truy cập dựa trên danh sách quyền
         public Task<string> GetAccessType(List<string> permisions)
         {
             bool hasExternal = permisions.Any(x => x == AccessTypeName.SF2130.ToString());
@@ -24,10 +25,6 @@ namespace ASOFT.CoreAI.Business
         // kiểm tra danh sách plugin mà user có quyền truy cập
         public List<string> GetPluginsUserHasAccess(string userId, IEnumerable<string> pluginCodesToCheck)
         {
-            //return _pluginPermissions
-            //    .Where(p => p.UserId == userId && p.CanAccess && pluginCodesToCheck.Contains(p.PluginCode))
-            //    .Select(p => p.PluginCode)
-            //    .Distinct().ToList();
             return new List<string>
             {
                 "OO_AGENT_OOF2110",

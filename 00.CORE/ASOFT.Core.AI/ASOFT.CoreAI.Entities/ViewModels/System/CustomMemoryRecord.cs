@@ -1,4 +1,4 @@
-﻿namespace ASOFT.CoreAI.Entities.ViewModels.System
+﻿namespace ASOFT.CoreAI.Entities
 {
     public class CustomMemoryRecord
     {

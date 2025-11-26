@@ -2,8 +2,8 @@
 using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
+using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.OO.API.Controllers;
 using Microsoft.AspNetCore.Mvc;

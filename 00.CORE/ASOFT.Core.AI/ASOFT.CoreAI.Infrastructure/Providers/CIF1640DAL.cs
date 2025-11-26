@@ -1,5 +1,5 @@
 ﻿using ASOFT.Core.DataAccess;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities;
 using Dapper;
 
 namespace ASOFT.CoreAI.Infrastructure

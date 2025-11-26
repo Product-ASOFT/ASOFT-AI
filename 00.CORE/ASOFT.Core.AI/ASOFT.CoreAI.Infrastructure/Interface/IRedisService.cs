@@ -1,5 +1,4 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
 using Newtonsoft.Json.Linq;
 
 namespace ASOFT.CoreAI.Infrastructure

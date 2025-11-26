@@ -2,7 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.AI;
+namespace ASOFT.CoreAI.Entities;
 
 /// <summary>
 /// OpenAI chat configuration.

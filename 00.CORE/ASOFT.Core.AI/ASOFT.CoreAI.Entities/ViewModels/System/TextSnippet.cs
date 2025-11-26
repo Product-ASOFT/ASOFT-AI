@@ -3,7 +3,7 @@
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Data;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.System;
+namespace ASOFT.CoreAI.Entities;
 
 /// <summary>s
 /// Data model for storing a section of text with an embedding and an optional reference link.

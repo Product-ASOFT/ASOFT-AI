@@ -1,5 +1,5 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using System;
@@ -24,8 +24,8 @@ namespace ASOFT.CoreAI.Business
 
         public async Task<IEnumerable<RedisearchResultItem>> GetTrainingDataAsync(ReadFileRequest request, string indexName)
         {
-            var maxRecords = _settings.GetNumberRecords().maxTraining;
-            return await _redis.GetDataByReadFileAsync(request, indexName, maxRecords) ?? Enumerable.Empty<RedisearchResultItem>();
+            var maxRecords = await _settings.GetNumberRecordsAsync();
+            return await _redis.GetDataByReadFileAsync(request, indexName, maxRecords.maxTraining) ?? Enumerable.Empty<RedisearchResultItem>();
         }
     }
 }

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ASOFT.CoreAI.Entities.ViewModels.System;
+namespace ASOFT.CoreAI.Entities;
 
 public class VectorPropertyModel(string modelName, Type type) : PropertyModel(modelName, type)
 {
