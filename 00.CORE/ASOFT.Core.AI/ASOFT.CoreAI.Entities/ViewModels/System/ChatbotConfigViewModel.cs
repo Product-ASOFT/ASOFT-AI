@@ -1,4 +1,4 @@
-﻿namespace ASOFT.CoreAI.Entities.ViewModels.AI
+﻿namespace ASOFT.CoreAI.Entities
 {
     public class ChatbotConfigViewModel
     {

@@ -1,7 +1,7 @@
 ﻿using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
+using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using System;
 using System.Collections.Generic;
@@ -34,7 +34,7 @@ namespace ASOFT.CoreAI.Business
             IEnumerable<RedisearchResultItem> trainingData)
         {
             request.Question = "Hãy đối chiếu dữ liệu đọc được từ OCR với dữ liệu ở người dùng cung cấp (datas) cho tôi";
-            var useLocal = _settings.GetIsUseServiceReadOCR();
+            var useLocal = await _settings.GetIsUseServiceReadOCRAsync();
             var detail = request!.BEMF2000ViewModel ?? new BEMF2000ViewModel();
 
             if (useLocal)

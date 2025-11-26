@@ -46,21 +46,13 @@ namespace ASOFT.CoreAI.Infrastructure
             }
         }
 
-        public async Task<bool> UpdateFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default)
+        public async Task UpdateFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
-                {
-                    await _businessContext.UpdateAsync(readFileResult, cancellationToken);
-                    await _businessContext.UnitOfWork.CompleteAsync();
-                    return true;
-                });
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
+           {
+               await _businessContext.UpdateAsync(readFileResult, cancellationToken);
+               await _businessContext.UnitOfWork.CompleteAsync();
+           });
         }
 
         public async Task<ST2131> GetFileResult(Guid APK)

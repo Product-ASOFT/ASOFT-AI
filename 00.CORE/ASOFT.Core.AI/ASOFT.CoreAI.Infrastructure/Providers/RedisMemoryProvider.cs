@@ -1,5 +1,4 @@
-﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
-using ASOFT.CoreAI.Entities.ViewModels.System;
+﻿using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
@@ -215,10 +214,10 @@ public class RedisMemoryProvider : IRedisMemoryProvider
     public async Task<RedisResult> SearchByVectorAsync(string indexName, string vectorField, float[] queryEmbedding, int k)
     {
         if (queryEmbedding == null || queryEmbedding.Length == 0)
-            throw new ArgumentException("queryEmbedding cannot be null or empty", nameof(queryEmbedding));
+            return null;
 
         if (queryEmbedding.Length != 1536)
-            throw new ArgumentException("Embedding dimension mismatch, expected 1536.", nameof(queryEmbedding));
+            return null;
 
         byte[] vectorBytes = new byte[queryEmbedding.Length * 4];
         Buffer.BlockCopy(queryEmbedding, 0, vectorBytes, 0, vectorBytes.Length);

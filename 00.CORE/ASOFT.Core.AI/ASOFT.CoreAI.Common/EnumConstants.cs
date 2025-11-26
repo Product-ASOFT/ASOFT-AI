@@ -1,4 +1,6 @@
-﻿namespace ASOFT.CoreAI.Common
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ASOFT.CoreAI.Common
 {
     public static class EnumConstants
     {
@@ -47,6 +49,30 @@
             NG = 0,
             OK = 1,
             BLANK = 2,
+        }
+        public enum IntegrationServiceType
+        {
+            [Display(Name = "AI")]
+            AI = 1,
+
+            [Display(Name = "Ecommerce")]
+            ECOMMERCE = 2,
+
+            [Display(Name = "Social Network")]
+            SOCIAL_NETWORK = 3,
+
+            [Display(Name = "Call Center")]
+            CALL_CENTER = 4,
+
+            [Display(Name = "External System Connection")]
+            EXTERNAL_SYSTEM_CONNECTION = 5,
+
+            [Display(Name = "E-Invoice")]
+            E_INVOICE = 6,
+
+            [Display(Name = "Agent")]
+            AGENT = 7,
+
         }
     }
 }

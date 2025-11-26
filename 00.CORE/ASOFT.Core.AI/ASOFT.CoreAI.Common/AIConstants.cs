@@ -20,14 +20,6 @@
 
         #endregion tạo các lệnh Redis
 
-        #region Tạo tên các Index
-
-        public const string IndexOO = "oo_content";
-        public const string IndexCRM = "crm_content";
-        public const string IndexReSearch = "search_content";
-
-        #endregion Tạo tên các Index
-
         #region Tạo các key cho Agent
 
         public static class AgentKeys
@@ -84,5 +76,21 @@
             public const string Ppt = "application/vnd.ms-powerpoint";
         }
 
+    }
+    public static class APIConfigKeys
+    {
+        public const string AI_API_BASEURL = "AI_BaseApiUrl"; // key cấu hình API AI ở webconfig của ERP9
+        public const string AI_ERP_BASEURL = "AI_ERP:BaseUrl"; // key cấu hình URL của ERP9
+        public const string AI_OCR_BASEURL = "AI_OCR:BaseUrl"; // key cấu hình URL của API OCR
+        public const string REDIS_CONNECTIONSTRING = "Redis:ConnectionString"; // key cấu hình chuỗi kết nối Redis
+        public const string OCR_USE_LOCAL_SERVICE = "OCR:UseLocalService"; // key cấu hình sử dụng dịch vụ OCR nội bộ hay không
+        public const string AI_OCR_EXTERNAL_API_KEY = "AI_OCR:ExternalApiKey"; // key cấu hình API Key của dịch vụ OCR bên ngoài
+        public const string CHAT_HISTORY_MAX_RECORDS = "Chat:HistoryMaxRecords"; // key cấu hình số bản ghi tối đa của lịch sử chat
+        public const string AI_TRAINING_MAX_RECORDS = "AI_Training:MaxRecords"; // key cấu hình số bản ghi tối đa của dữ liệu huấn luyện AI
+        public const string REDIS_DEFAULT_EXPIRE_DAYS = "Redis:DefaultExpireDays"; // key cấu hình số ngày hết hạn mặc định cho Redis
+        public const string REDIS_DATABASE_NAME = "Redis:DatabaseName"; // key cấu hình tên database Redis
+        public const string REDIS_DATABASE_USERNAME = "Redis:Username"; // key cấu hình tên Username Redis
+        public const string REDIS_DATABASE_PASSWORD = "Redis:Password"; // key cấu hình tên Password Redis
+        public const string AI_MODEL_EMBEDDING = "ModelEmbedding:ModelName"; // key cấu hình model Embedding
     }
 }

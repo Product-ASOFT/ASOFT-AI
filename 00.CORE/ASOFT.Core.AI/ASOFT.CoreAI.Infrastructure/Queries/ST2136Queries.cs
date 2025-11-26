@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public class ST2136Queries: IST2136Queries
+    public class ST2136Queries : IST2136Queries
     {
 
         private readonly IBusinessContext<ST2136> _businessContext;
@@ -34,22 +34,14 @@ namespace ASOFT.CoreAI.Infrastructure
             return await _businessContext.QueryAsync(new FilterQuery<ST2136>(m => m.BusinessParent == BusinessParent));
         }
 
-        public async Task<bool> SaveResultDetail(IEnumerable<ST2136> resultDetails, CancellationToken cancellationToken = default)
+        public Task SaveResultDetail(IEnumerable<ST2136> resultDetails, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
+            return _businessContext.UnitOfWork.ExecuteInTransactionAsync(
+                async transactionHolder =>
                 {
                     await _businessContext.AddRangeAsync(resultDetails, cancellationToken);
                     await _businessContext.UnitOfWork.CompleteAsync();
-                    return true;
                 });
-            }
-            catch (Exception)
-            {
-                throw;
-            }
         }
-        
     }
 }

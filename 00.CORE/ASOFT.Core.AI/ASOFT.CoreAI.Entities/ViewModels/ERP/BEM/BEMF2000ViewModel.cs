@@ -58,9 +58,9 @@
         {
             get
             {
-                if (this.VoucherDate.HasValue)
+                if (VoucherDate.HasValue)
                 {
-                    return this.VoucherDate.Value.ToString("dd/MM/yyyy");
+                    return VoucherDate.Value.ToString("dd/MM/yyyy");
                 }
                 return string.Empty;
             }
@@ -70,9 +70,9 @@
         {
             get
             {
-                if (this.Deadline.HasValue)
+                if (Deadline.HasValue)
                 {
-                    return this.Deadline.Value.ToString("dd/MM/yyyy");
+                    return Deadline.Value.ToString("dd/MM/yyyy");
                 }
                 return string.Empty;
             }
@@ -82,9 +82,9 @@
         {
             get
             {
-                if (this.AdvancePayment.HasValue)
+                if (AdvancePayment.HasValue)
                 {
-                    return this.AdvancePayment.Value.ToString("N0");
+                    return AdvancePayment.Value.ToString("N0");
                 }
                 return string.Empty;
             }
@@ -94,9 +94,9 @@
         {
             get
             {
-                if (this.CreateDate.HasValue)
+                if (CreateDate.HasValue)
                 {
-                    return this.CreateDate.Value.ToString("dd/MM/yyyy");
+                    return CreateDate.Value.ToString("dd/MM/yyyy");
                 }
                 return string.Empty;
             }
