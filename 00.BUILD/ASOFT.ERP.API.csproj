@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\Use\UsageInstructions.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\00.A00\ASOFT.A00.API\ASOFT.A00.API.csproj" />
     <ProjectReference Include="..\00.CORE\ASOFT.Core.AI\ASOFT.CoreAI.API\ASOFT.CoreAI.API.csproj" />
   </ItemGroup>
