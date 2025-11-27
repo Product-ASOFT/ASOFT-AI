@@ -9,7 +9,7 @@ namespace ASOFT.CoreAI.Infrastructure
 {
     public interface IONT1030Service
     {
-        Task<ONT1030ViewModel> GetAIModelAsync();
-        Task<IEnumerable<ONT1030ViewModel>> GetAIModelsAsync();
+        Task<ONT1030> GetAIModelAsync();
+        Task<IEnumerable<ONT1030>> GetAIModelsAsync();
     }
 }

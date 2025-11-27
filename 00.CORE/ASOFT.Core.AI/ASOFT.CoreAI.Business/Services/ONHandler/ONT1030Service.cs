@@ -19,19 +19,19 @@ namespace ASOFT.CoreAI.Business
 {
     public class ONT1030Service : IONT1030Service
     {
-        private readonly IBusinessContext<ONT1030ViewModel> _businessContext;
-        public ONT1030Service(IBusinessContext<ONT1030ViewModel> businessContext)
+        private readonly IBusinessContext<ONT1030> _businessContext;
+        public ONT1030Service(IBusinessContext<ONT1030> businessContext)
         {
             _businessContext = businessContext;
         }
-        public Task<ONT1030ViewModel> GetAIModelAsync()
+        public Task<ONT1030> GetAIModelAsync()
         {
             throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<ONT1030ViewModel>> GetAIModelsAsync()
+        public async Task<IEnumerable<ONT1030>> GetAIModelsAsync()
         {
-            return await _businessContext.QueryAsync(new FilterQuery<ONT1030ViewModel>(m => m.IsUse));
+            return await _businessContext.QueryAsync(new FilterQuery<ONT1030>(m => m.IsUse == 1));
         }
     }
 }
