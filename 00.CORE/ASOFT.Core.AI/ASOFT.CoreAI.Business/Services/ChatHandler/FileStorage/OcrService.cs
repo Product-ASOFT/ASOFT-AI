@@ -1,20 +1,16 @@
 ﻿using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
-using Aspose.Words.Drawing;
 using ClosedXML.Excel;
 using Google.Cloud.Vision.V1;
 using HeyRed.Mime;
 using Microsoft.AspNetCore.StaticFiles;
-using NRedisStack.Search;
-using PdfiumViewer;
 using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net.Http.Headers;
 using System.Runtime.Versioning;
 using System.Text;
-using UglyToad.PdfPig;
 using Xceed.Words.NET;
 using static ASOFT.CoreAI.Common.AIConstants;
 using PdfDocument = PdfiumViewer.PdfDocument;
@@ -70,9 +66,10 @@ namespace ASOFT.CoreAI.Business
             return (sb.ToString(), results);
         }
 
-        #endregion
+        #endregion ==== PUBLIC METHOD ====
 
         #region ==== CORE EXTRACTION ====
+
         [SupportedOSPlatform("windows6.1")]
         private async Task<List<ResultReadFileModel>> ExtractFilesAsync(IReadOnlyList<AttachFileModel> files, Guid apk)
         {
@@ -132,6 +129,7 @@ namespace ASOFT.CoreAI.Business
 
             return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
         }
+
         // Khởi tạo model kết quả
 
         private ResultReadFileModel InitResultModel(AttachFileModel attach, int numberOrder)
@@ -144,6 +142,7 @@ namespace ASOFT.CoreAI.Business
                 FileName = attach?.AttachName ?? string.Empty
             };
         }
+
         // Phân loại và xử lý theo mime type
         [SupportedOSPlatform("windows6.1")]
         private async Task<string> ExtractByMimeTypeAsync(string filePath, string mimeType, bool useLocal)
@@ -167,7 +166,7 @@ namespace ASOFT.CoreAI.Business
             return string.Empty;
         }
 
-        #endregion
+        #endregion ==== CORE EXTRACTION ====
 
         #region ==== PDF HANDLER ====
 
@@ -240,7 +239,7 @@ namespace ASOFT.CoreAI.Business
             return await Task.FromResult(sb.ToString());
         }
 
-        #endregion
+        #endregion ==== PDF HANDLER ====
 
         #region ==== IMAGE HANDLER ====
 
@@ -261,7 +260,7 @@ namespace ASOFT.CoreAI.Business
             return string.IsNullOrWhiteSpace(res?.Text) ? string.Empty : res.Text;
         }
 
-        #endregion
+        #endregion ==== IMAGE HANDLER ====
 
         #region ==== WORD / EXCEL HANDLER ====
 
@@ -291,7 +290,7 @@ namespace ASOFT.CoreAI.Business
             return await Task.FromResult(sb.ToString());
         }
 
-        #endregion
+        #endregion ==== WORD / EXCEL HANDLER ====
 
         #region ==== OCR LOCAL SERVICE ====
 
@@ -331,6 +330,6 @@ namespace ASOFT.CoreAI.Business
             //return await response.Content.ReadAsStringAsync() ?? string.Empty;
         }
 
-        #endregion
+        #endregion ==== OCR LOCAL SERVICE ====
     }
 }

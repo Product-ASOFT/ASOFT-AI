@@ -1,6 +1,5 @@
 ﻿using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

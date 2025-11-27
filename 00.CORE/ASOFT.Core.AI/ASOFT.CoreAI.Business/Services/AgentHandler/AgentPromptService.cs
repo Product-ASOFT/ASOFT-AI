@@ -16,7 +16,6 @@ namespace ASOFT.CoreAI.Business
         {
             _agentPromptQueries = agentPromptQueries;
             _kernel = kernel;
-
         }
 
         public async Task<string> GetPromptTemplate(string agentKey)
@@ -28,6 +27,7 @@ namespace ASOFT.CoreAI.Business
 
             return prompt.PromptContent;
         }
+
         public async Task<string> SendPromptWithReadFile<T>(
         ReadFileRequest request,
         string promptTemplate,
@@ -123,6 +123,7 @@ namespace ASOFT.CoreAI.Business
                 throw;
             }
         }
+
         #region Xử lý gửi câu hỏi,lịch sử chat, thông tin training, thông tin dữ liệu từ Database sang ModelAI
 
         public async Task<string> SendPromptWithAgentAsync<T>(
@@ -221,15 +222,12 @@ namespace ASOFT.CoreAI.Business
                 }
                 catch (Exception)
                 {
-
                     throw;
                 }
             }
         }
 
-
-
-        public async Task<string> SendPromptWithSumaryResultAsync( string promptTemplate, string result)
+        public async Task<string> SendPromptWithSumaryResultAsync(string promptTemplate, string result)
         {
             var arguments = new KernelArguments
             {
@@ -237,7 +235,9 @@ namespace ASOFT.CoreAI.Business
             };
             return await HandleChatWithModelAI(arguments, false, promptTemplate, CancellationToken.None).ConfigureAwait(false);
         }
+
         #endregion Xử lý gửi câu hỏi,lịch sử chat, thông tin training, thông tin dữ liệu từ Database sang ModelAI
+
         // Hàm BuildQueryFromRawText cũng generic, dùng cho bất kỳ loại nào
         public async Task<List<T>> BuildQueryFromRawText<T>(
             AgentRequest request,

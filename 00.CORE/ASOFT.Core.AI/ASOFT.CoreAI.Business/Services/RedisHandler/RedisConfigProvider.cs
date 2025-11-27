@@ -1,14 +1,6 @@
 ﻿using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
-using ASOFT.CoreAI.Infrastructure.Interface;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.Business
 {

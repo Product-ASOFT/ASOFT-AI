@@ -1,8 +1,6 @@
 ﻿using ASOFT.Core.DataAccess;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Dapper;
 using System.Data;
@@ -162,6 +160,7 @@ namespace ASOFT.CoreAI.Business.Services.ChatHandler
         }
 
         #endregion Lấy thông tin lịch sử chat
+
         public ChatHistoryModel CreateChatHistoryModel(AgentRequest request, string agentCode, int maxChat)
         {
             return new ChatHistoryModel

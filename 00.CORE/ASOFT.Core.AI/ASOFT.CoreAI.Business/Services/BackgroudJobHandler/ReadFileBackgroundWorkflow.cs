@@ -1,12 +1,7 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Infrastructure.Interface;
 using ASOFT.CoreAI.Infrastructure;
+using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 using static ASOFT.CoreAI.Common.EnumConstants;
 
@@ -23,6 +18,7 @@ namespace ASOFT.CoreAI.Business
         private readonly AgentCompareService _compareService;
         private readonly ILogger<ReadFileBackgroundWorkflow> _logger;
         private readonly AgentCompareService _agentCompareService;
+
         public ReadFileBackgroundWorkflow(
             IST2131Queries ST2131,
             IST2130Queries ST2130,
@@ -145,6 +141,5 @@ namespace ASOFT.CoreAI.Business
                 _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);
             }
         }
-   
     }
 }

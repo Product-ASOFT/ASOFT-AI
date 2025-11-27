@@ -1,15 +1,7 @@
-﻿using ASOFT.CoreAI.Business;
-using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
+﻿using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 
 namespace ASOFT.CoreAI.Business
@@ -26,6 +18,7 @@ namespace ASOFT.CoreAI.Business
             _settings = settings;
             _ST2136Queries = ST2136Queries;
         }
+
         public async Task<string> CompareAsync(
             ReadFileRequest request,
             string prompt,
@@ -70,7 +63,7 @@ namespace ASOFT.CoreAI.Business
             var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContent, result).ConfigureAwait(false);
             if (resultJson == null)
                 return null;
-           var resultJsonFormat = StripOutsideJson(resultJson);
+            var resultJsonFormat = StripOutsideJson(resultJson);
             var objectResult = JsonSerializer.Deserialize<CriteriaSummaryResult>(resultJsonFormat,
             new JsonSerializerOptions
             {
@@ -78,6 +71,7 @@ namespace ASOFT.CoreAI.Business
             });
             return objectResult!;
         }
+
         private static string ExtractSummaryBlock(string aiText)
         {
             var match = Regex.Match(aiText, @"tổng\s*hợp", RegexOptions.IgnoreCase);
@@ -91,6 +85,7 @@ namespace ASOFT.CoreAI.Business
 
             return aiText.Substring(startIndex);
         }
+
         public static string StripOutsideJson(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -120,6 +115,5 @@ namespace ASOFT.CoreAI.Business
 
             return input.Substring(start, end - start + 1);
         }
-
     }
 }

@@ -1,8 +1,5 @@
-﻿using ASOFT.CoreAI.Common;
-using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
+﻿using ASOFT.CoreAI.Entities;
 using System.Text.RegularExpressions;
-using static ASOFT.CoreAI.Common.AIConstants;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -863,6 +860,7 @@ namespace ASOFT.CoreAI.Business
             return $"{agentKey}{Suffix}";
         }
     }
+
     public static class ExtractMatchInfo
     {
         public static (string? MatchRate, string? Conclusion) Extract(string aiText)
