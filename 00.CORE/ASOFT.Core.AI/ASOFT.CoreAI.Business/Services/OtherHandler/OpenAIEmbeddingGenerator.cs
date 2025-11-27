@@ -11,11 +11,12 @@ namespace ASOFT.CoreAI.Business
         private readonly IRedisMemoryProvider _vectorDatabase;
         private readonly SettingsManagerService _settingsManagerService;
 
-        public OpenAIEmbeddingService(IRedisMemoryProvider vectorDatabase,  SettingsManagerService settingsManagerService)
+        public OpenAIEmbeddingService(IRedisMemoryProvider vectorDatabase, SettingsManagerService settingsManagerService)
         {
             _vectorDatabase = vectorDatabase;
             _settingsManagerService = settingsManagerService;
         }
+
         // Phương thức để tạo embedding từ mô tả văn bản sử dụng OpenAI API
         public async Task<float[]> CreateEmbeddingAsync(string description)
         {

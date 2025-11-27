@@ -1,9 +1,6 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 using static ASOFT.CoreAI.Common.EnumConstants;
 
@@ -35,6 +32,7 @@ namespace ASOFT.CoreAI.Business
             _settingsManager = settingsManager;
             _jobQueue = jobQueue;
         }
+
         public async Task<ChatResponseReadFileModel> HandleAsync(ReadFileRequest request)
         {
             // 1) Validate
@@ -70,6 +68,7 @@ namespace ASOFT.CoreAI.Business
             // 5) Trả về ngay cho UI
             return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {entity.APK}. Hệ thống đang xử lý nền.", true);
         }
+
         public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths, Guid APK)
         {
             string configKeyOCR = await _settingsManager.GetKeyReadOCRAsync();
@@ -89,6 +88,7 @@ namespace ASOFT.CoreAI.Business
             }
             return new List<ResultReadFileModel>();
         }
+
         private string GetAgentKeyByTypeCompare(string typeCompare)
         {
             return typeCompare switch
@@ -101,6 +101,7 @@ namespace ASOFT.CoreAI.Business
                 _ => throw new NotImplementedException(),
             };
         }
+
         private (bool IsValid, string Message) ValidateReadFileRequest(ReadFileRequest request)
         {
             var CheckConfigModelAI = _settingsManager.CheckConfigModelAI().Result;

@@ -1,7 +1,4 @@
-﻿using ASOFT.CoreAI.Business;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.Loader;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace ASOFT.CoreAI.Business.LibraryKernel
 {

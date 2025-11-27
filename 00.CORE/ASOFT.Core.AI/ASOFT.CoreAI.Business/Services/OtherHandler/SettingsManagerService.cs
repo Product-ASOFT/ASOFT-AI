@@ -11,8 +11,6 @@ using ASOFT.Core.DataAccess.Enums;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
-using Microsoft.Extensions.Configuration;
-using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -24,6 +22,7 @@ namespace ASOFT.CoreAI.Business
         private readonly IONT1030Service _ONT1030Queries;
 
         private readonly ConfigManagerService _configManagerService;
+
         public SettingsManagerService(IASOFTCommonQueries aSOFTCommonQueries,
             IRedisMemoryProvider vectorDatabase, ICIF1640DAL cif1640DAL,
             IONT1030Service ONT1030Queries, ConfigManagerService configManagerService)
@@ -36,6 +35,7 @@ namespace ASOFT.CoreAI.Business
         }
 
         #region Lấy các cấu hình model AI từ bảng ONT1030
+
         /// <summary>
         /// Kiểm tra và lấy cấu hình Model AI
         /// </summary>
@@ -57,6 +57,7 @@ namespace ASOFT.CoreAI.Business
             }
             return ChatHandlerHelper.CreateResponse(Guid.Empty, cachedKey.ToString(), true);
         }
+
         /// <summary>
         /// Lấy cấu hình Model AI từ bảng ONT1030, nếu không có thì lấy từ CIF1640
         /// </summary>
@@ -110,8 +111,11 @@ namespace ASOFT.CoreAI.Business
 
             return result;
         }
-        #endregion
+
+        #endregion Lấy các cấu hình model AI từ bảng ONT1030
+
         #region Lấy các cấu hình từ bảng ONT1021
+
         // Lấy giá trị cấu hình dạng chuỗi từ bảng ONT1021, nếu không có thì lấy từ appsettings.json
 
         // Lấy số bản ghi tối đa cho lịch sử chat và dữ liệu huấn luyện AI
@@ -141,6 +145,7 @@ namespace ASOFT.CoreAI.Business
         {
             return await _configManagerService.GetConfigStringAsync(APIConfigKeys.AI_OCR_BASEURL);
         }
+
         // Lấy URL của ERP
         public async Task<string> GetUrlERPAsync()
         {
@@ -163,6 +168,7 @@ namespace ASOFT.CoreAI.Business
             }
             return urlERP;
         }
-        #endregion
+
+        #endregion Lấy các cấu hình từ bảng ONT1021
     }
 }

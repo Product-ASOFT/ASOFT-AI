@@ -14,6 +14,7 @@ namespace ASOFT.CoreAI.Business
             _configuration = configuration;
             _ONT1021Queries = ONT1021Queries;
         }
+
         public async Task<string> GetConfigStringAsync(string key)
         {
             string value = string.Empty;
@@ -78,6 +79,5 @@ namespace ASOFT.CoreAI.Business
 
             return result;
         }
-
     }
 }

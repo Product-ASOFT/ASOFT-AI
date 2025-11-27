@@ -3,12 +3,7 @@ using ASOFT.CoreAI.Infrastructure;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 
 namespace ASOFT.CoreAI.Business
@@ -36,6 +31,7 @@ namespace ASOFT.CoreAI.Business
             _redisService = redisService;
             _httpContextAccessor = httpContextAccessor;
         }
+
         public async Task<ChatResponseModel> UpLoadFile(List<IFormFile> files, bool IsCompare)
         {
             if (files == null || files.Count == 0)
@@ -71,6 +67,7 @@ namespace ASOFT.CoreAI.Business
             string resultString = string.Join(",", fullPathList);
             return ChatHandlerHelper.CreateResponse(Guid.Empty, resultString);
         }
+
         public async Task<ChatResponseReadFileModel> CreateFile(ReadFileRequest request)
         {
             if (request == null)
@@ -78,7 +75,6 @@ namespace ASOFT.CoreAI.Business
 
             if (string.IsNullOrWhiteSpace(request.TextContent))
                 return ChatHandlerHelper.CreateResponseReadFile("TextContent body is null.", false);
-
 
             var prompt = await _ST2130Queries.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_CREATEFILE);
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
@@ -105,6 +101,7 @@ namespace ASOFT.CoreAI.Business
             string url = await ExportExcelFromAIAsync(result);
             return ChatHandlerHelper.CreateResponseReadFile(url, true);
         }
+
         private Task<string> ExportExcelFromAIAsync(string aiCsvData)
         {
             var fileName = $"KetQuaDoiChieu_{Guid.NewGuid():N}.xlsx";

@@ -19,7 +19,7 @@ public class AgentManagerService
     public AgentManagerService(Kernel kernel,
         IChatHistoryHandler chatHistoryHandler,
         SettingsManagerService settingsManager,
-        IRedisService redisHandler, 
+        IRedisService redisHandler,
         IRedisMemoryProvider redisMemoryProvider,
         AgentPromptService agentPromptService,
         ReadFileOrchestratorService readFileOrchestratorService)
@@ -29,7 +29,7 @@ public class AgentManagerService
         _redisHandler = redisHandler;
         _agentPromptService = agentPromptService;
         _readFileOrchestratorService = readFileOrchestratorService;
-        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS",  _settingsManager.GetKeyReadOCRAsync().Result);
+        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", _settingsManager.GetKeyReadOCRAsync().Result);
     }
 
     #region Api xử lý gọi Agent
@@ -235,7 +235,7 @@ public class AgentManagerService
 
                 case AgentKeys.CRM_AGENT_CRMF2160:
                     return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2160ViewModel>)data, chatHistory, promptTemplate, trainingData);
-                
+
                 case AgentKeys.HRM_AGENT_HRMF1030:
                     return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<HRMF1030ViewModel>)data, chatHistory, promptTemplate, trainingData);
             }
@@ -258,7 +258,7 @@ public class AgentManagerService
             if (string.IsNullOrWhiteSpace(promptTemplate))
                 return "Hiện tại bạn chưa tạo Prompt để đọc file. Vui lòng thiết lập Prompt để tiếp tục.";
 
-            if(request.FilePaths == null || request.FilePaths.Count == 0)
+            if (request.FilePaths == null || request.FilePaths.Count == 0)
                 return "Vui lòng cung cấp đường dẫn file để đọc nội dung.";
 
             var answerOCRs = await _readFileOrchestratorService.ReadFileFromChatBot(request.FilePaths, request.ChatSessionID!.Value);
@@ -269,5 +269,6 @@ public class AgentManagerService
 
         return "Agent chưa cung cấp thông tin phù hợp. Bạn có thể đặt lại câu hỏi cụ thể hơn không?";
     }
+
     #endregion Xử lý tạo câu trả lời với Agent tương ứng
 }
