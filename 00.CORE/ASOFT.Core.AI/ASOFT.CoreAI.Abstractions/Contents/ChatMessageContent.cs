@@ -136,6 +136,7 @@ public class ChatMessageContent : KernelContent
         this.Role = role;
         this._encoding = encoding ?? Encoding.UTF8;
         this.Content = content;
+        this.Metadata = metadata;
     }
 
     /// <summary>

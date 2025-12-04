@@ -74,5 +74,12 @@ namespace ASOFT.CoreAI.Common
             AGENT = 7,
 
         }
+        public enum AIKeyStatus
+        {
+            Valid,
+            InvalidKey,
+            OutOfCredit,
+            UnknownError
+        }
     }
 }

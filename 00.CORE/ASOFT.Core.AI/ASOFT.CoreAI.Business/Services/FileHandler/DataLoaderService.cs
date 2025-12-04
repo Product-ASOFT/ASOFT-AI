@@ -72,8 +72,11 @@ namespace ASOFT.CoreAI.Business
                     if (string.IsNullOrWhiteSpace(content.Text))
                         continue; // bỏ qua đoạn text rỗng
 
-                    float[] embeddingVector = await _embeddingService.CreateEmbeddingAsync(content.Text);
-
+                    float[]? embeddingVector = await _embeddingService.CreateEmbeddingAsync(content.Text);
+                    if(embeddingVector == null)
+                    {
+                        continue;
+                    }
                     records.Add(new TextSnippet
                     {
                         Key = Guid.NewGuid(),
