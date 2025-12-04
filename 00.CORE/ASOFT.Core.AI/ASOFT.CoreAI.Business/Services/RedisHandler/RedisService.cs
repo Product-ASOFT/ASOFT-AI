@@ -19,7 +19,11 @@ namespace ASOFT.CoreAI.Business.Services.RedisHandler
 
         public async Task<List<JObject>> GetDataTrainFormRedis(string question, string indexName, int number)
         {
-            float[] queryEmbedding = await _embeddingService.CreateEmbeddingAsync(question);
+            float[]? queryEmbedding = await _embeddingService.CreateEmbeddingAsync(question);
+            if(queryEmbedding == null)
+            {
+                return new List<JObject>();
+            }
             var result = await _vectorDatabase.SearchByVectorAsync(indexName, AIConstants.FIELD_EMBEDDING, queryEmbedding, number);
             if (result == null || result.IsNull)
             {

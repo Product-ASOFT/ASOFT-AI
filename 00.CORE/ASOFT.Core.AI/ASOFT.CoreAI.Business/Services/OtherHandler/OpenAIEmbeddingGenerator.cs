@@ -3,6 +3,7 @@ using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using OpenAI.Embeddings;
 using System.Text.Json;
+using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -10,20 +11,23 @@ namespace ASOFT.CoreAI.Business
     {
         private readonly IRedisMemoryProvider _vectorDatabase;
         private readonly SettingsManagerService _settingsManagerService;
+        private readonly ConfigManagerService _configManagerService;
 
-        public OpenAIEmbeddingService(IRedisMemoryProvider vectorDatabase, SettingsManagerService settingsManagerService)
+        public OpenAIEmbeddingService(IRedisMemoryProvider vectorDatabase,
+            SettingsManagerService settingsManagerService,
+            ConfigManagerService configManagerService)
         {
             _vectorDatabase = vectorDatabase;
             _settingsManagerService = settingsManagerService;
+            _configManagerService = configManagerService;
         }
 
         // Phương thức để tạo embedding từ mô tả văn bản sử dụng OpenAI API
-        public async Task<float[]> CreateEmbeddingAsync(string description)
+        public async Task<float[]?> CreateEmbeddingAsync(string description)
         {
             var cachedKey = await ParseCachedKey();
             if (cachedKey == null || string.IsNullOrWhiteSpace(cachedKey.ApiKey) || string.IsNullOrWhiteSpace(cachedKey.ModelEmbedding))
             {
-                Console.WriteLine("Model embedding or API key is not configured.");
                 return null;
             }
             EmbeddingClient client = new(cachedKey.ModelEmbedding, cachedKey.ApiKey);
@@ -37,29 +41,14 @@ namespace ASOFT.CoreAI.Business
 
         // Phương thức để phân tích và lấy cấu hình ModelAI từ cache
 
-        private async Task<ModelAIChatConfig> ParseCachedKey()
+        public async Task<ModelAIChatConfig> ParseCachedKey()
         {
-            string cacheKey = AIConstants.ModelAIKey;
-            var cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
-            if (cachedKey == null || string.IsNullOrWhiteSpace(cachedKey))
-            {
-                var configModelAI = await _settingsManagerService.GetModelConfigAI();
-                if (string.IsNullOrEmpty(configModelAI.ModelName) || string.IsNullOrEmpty(configModelAI.ApiKey))
-                {
-                    return new ModelAIChatConfig();
-                }
-                cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
-            }
-            if (cachedKey.StartsWith("{{") && cachedKey.EndsWith("}}"))
-            {
-                cachedKey = cachedKey.Substring(1, cachedKey.Length - 2);
-            }
-            // Deserialize JSON
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            return JsonSerializer.Deserialize<ModelAIChatConfig>(cachedKey, options) ?? new ModelAIChatConfig();
+            var (config, hasConfig, _, keyStatus, _) = await _settingsManagerService.EnsureModelAIConfigCachedAsync();
+
+            if (hasConfig && keyStatus == AIKeyStatus.Valid)
+                return config;
+
+            return new ModelAIChatConfig();
         }
     }
 }

@@ -3,7 +3,10 @@ using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Business.Services.PromptHandler;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
+using Microsoft.OpenApi.Exceptions;
 using System.Text;
+using static ASOFT.CoreAI.Business.SettingsManagerService;
+using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -260,5 +263,30 @@ namespace ASOFT.CoreAI.Business
             resultItems = BuildQueryPrompt.QueryByFilters(itemList, filters);
             return resultItems;
         }
+        public async Task<AIKeyStatus> CheckKeyWithAsync()
+        {
+            try
+            {
+                var result = await _kernel.InvokePromptAsync("ping");
+                return AIKeyStatus.Valid;
+            }
+            catch (OpenApiException ex)
+            {
+                if (ex.Message.Contains("Incorrect API key") ||
+                    ex.Message.Contains("invalid_api_key"))
+                    return AIKeyStatus.InvalidKey;
+
+                if (ex.Message.Contains("insufficient_quota") ||
+                    ex.Message.Contains("billing_hard_limit_reached"))
+                    return AIKeyStatus.OutOfCredit;
+
+                return AIKeyStatus.UnknownError;
+            }
+            catch
+            {
+                return AIKeyStatus.UnknownError;
+            }
+        }
+
     }
 }

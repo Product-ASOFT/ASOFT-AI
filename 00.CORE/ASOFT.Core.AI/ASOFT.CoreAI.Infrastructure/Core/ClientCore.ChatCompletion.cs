@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using ASOFT.CoreAI.Abstractions;
+using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Common.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
@@ -173,11 +174,29 @@ public partial class ClientCore
 
                     this.LogUsage(chatCompletion.Usage);
                 }
-                catch (Exception) when (activity is not null)
+                catch (Exception ex)
                 {
-                    throw;
-                }
+                    // 1) Ghi log
+                    this.Logger?.LogError(ex, "Lỗi khi gọi OpenAI ChatCompletion");
 
+                    // 2) Map lỗi thành message thân thiện
+
+                    // 3) Tạo ChatMessageContent trả về cho caller
+                    var chatMessageContentError = new ChatMessageContent(
+                        role: AuthorRole.Assistant,
+                        content: ex.Message,
+                        metadata: new Dictionary<string, object?>
+                        {
+                            [AIConstants.ErrorType] = "ChatCompletionError",
+                            [AIConstants.RawErrorMessage] = ex.Message
+                        });
+
+                    // 4) Ghi vào activity (nếu cần)
+                    activity?.SetCompletionResponse([chatMessageContentError], 0, 0);
+
+                    // 5) Trả luôn 1 message lỗi, không xử lý function calling nữa
+                    return [chatMessageContentError];
+                }
                 chatMessageContent = this.CreateChatMessageContent(chatCompletion, targetModel, functionCallingConfig.Options?.RetainArgumentTypes ?? false, chatOptions);
                 activity?.SetCompletionResponse([chatMessageContent], chatCompletion.Usage.InputTokenCount, chatCompletion.Usage.OutputTokenCount);
             }

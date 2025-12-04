@@ -7,6 +7,9 @@
         public const string RedisConfig = "Redis:Configuration";
         public const string RedisConfigDatabaseName = "Redis:DatabaseName";
         public const string APIOCRConfig = "APIOCR:URL";
+        public const string ONT1021_ALL_SETTINGS = "ONT1021_ALL_SETTINGS";
+        public const string ErrorType = "ErrorType";
+        public const string RawErrorMessage = "RawErrorMessage";
 
         #region tạo các lệnh Redis
 

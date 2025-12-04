@@ -1,15 +1,8 @@
-﻿// #################################################################
-// # Copyright (C) 2019-2020, asoft JSC.  All Rights Reserved.
-// #
-// # History：
-// #	Date Time	    Updated		    Content
-// #    10/07/2025      Đức Mạnh        Tạo mới
-// ##################################################################
-
-using ASOFT.Core.API.Extensions;
+﻿using ASOFT.Core.API.Extensions;
 using ASOFT.Core.DataAccess;
 using ASOFT.Core.DataAccess.ModelBuilderConfiguration;
 using ASOFT.CoreAI.API.Resources;
+using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Business.Services.BackgroudJobHandler;
@@ -28,39 +21,34 @@ using Kernel = ASOFT.CoreAI.Abstractions.Kernel;
 
 public class AIHostingStartup : IHostingStartup
 {
-    // Constructor public nhận IConnectionMultiplexer từ DI
-
     public void Configure(IWebHostBuilder builder)
     {
         builder.ConfigureServices((ctx, services) =>
         {
-            var configuration = ctx.Configuration;
-
             ConfigureCoreServices(ctx, services);
-
             ConfigureRedisServices(services);
-
             AddAIServices(services);
-
             AddAgent(services);
-
             AddServiceChatHistory(services);
         });
     }
+
+    #region Core services
 
     private static void ConfigureCoreServices(WebHostBuilderContext ctx, IServiceCollection services)
     {
         var configuration = ctx.Configuration;
 
+        // ASP.NET Core MVC + load assembly hiện tại
         services.AddApiMvc(ctx.HostingEnvironment)
                 .AddApplicationPart(typeof(AIHostingStartup).Assembly);
 
         services.AddControllers();
 
-        // Thêm các dịch cho OpenAI
+        // Kernel + OpenAI pipeline chung
         services.AddAsoftKernel();
 
-        services.AddTransient<ChatCompletionAgent>();
+        // Business / Query services
         services.AddScoped<IPermissionHandler, PermissionService>();
         services.AddScoped<IST2130Queries, ST2130Queries>();
         services.AddScoped<IST2131Queries, ST2131Queries>();
@@ -68,8 +56,12 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<IONT1021Service, ONT1021Service>();
         services.AddScoped<IONT1030Service, ONT1030Service>();
         services.AddScoped<IDataLoader, DataLoaderService>();
+
+        // Embedding + Redis
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
         services.AddScoped<IRedisService, RedisService>();
+
+        // Các service nghiệp vụ khác
         services.AddScoped<SettingsManagerService>();
         services.AddScoped<ICIF1640DAL, CIF1640DAL>();
         services.AddScoped<AgentManagerService>();
@@ -79,11 +71,13 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<AgentCompareService>();
         services.AddScoped<ReadFileOrchestratorService>();
         services.AddScoped<AgentPromptService>();
-        services.AddScoped<ReadFileOrchestratorService>();
-        services.AddSingleton<IJobQueue>(sp => new ChannelJobQueue(capacity: 200));
-        services.AddHostedService<ReadFileWorker>();
         services.AddScoped<IReadFileBackgroundWorkflow, ReadFileBackgroundWorkflow>();
 
+        // Job queue + worker
+        services.AddSingleton<IJobQueue>(_ => new ChannelJobQueue(capacity: 200));
+        services.AddHostedService<ReadFileWorker>();
+
+        // Redis IDatabase (lấy từ IConnectionMultiplexer)
         services.AddScoped<IDatabase>(sp =>
         {
             var multiplexer = sp.GetRequiredService<IConnectionMultiplexer>();
@@ -93,13 +87,10 @@ public class AIHostingStartup : IHostingStartup
         // Đăng ký dbset cho entities
         services.AddTransient<IModelBuilderConfiguration<BusinessDbContext>, ModuleCoreAIModelBuilderConfiguration>();
 
-        // Đăng ký các dịch vụ cho MediatR
-        //services.AddCoreApplicationServices();
-
+        // HttpClient cho OCR
         services.AddHttpClient("OCR", client =>
         {
             client.Timeout = TimeSpan.FromMinutes(15);
-
         })
         .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
         {
@@ -108,23 +99,31 @@ public class AIHostingStartup : IHostingStartup
         });
     }
 
+    #endregion
+
+    #region AI services (Chat + Embedding)
+
     private static void AddAIServices(IServiceCollection services)
     {
-        // 1. Đăng ký các dịch vụ cấu hình cho ModelAI
+        // 1. Cấu hình lưu trữ config model
         services.AddScoped<IAIConfigStore, AIConfigStore>();
         services.AddScoped<IRedisMemoryProvider, RedisMemoryProvider>();
         services.AddScoped<IOpenAIClientProvider, OpenAIClientProvider>();
 
-        // 2. Đăng ký dịch vụ chat completion, không truyền model mặc định vì lấy từ IAIConfigStore
+        // 2. ChatCompletion (model lấy từ IAIConfigStore)
         services.AddOpenAIChatCompletion();
 
-        // 3. Đăng ký OpenAIEmbeddingService scoped (như hiện tại)
+        // 3. OpenAIEmbeddingService đã đăng ký qua IOpenAIEmbeddingService ở trên
+        // Nếu cần resolve trực tiếp concrete:
         services.AddScoped<OpenAIEmbeddingService>();
     }
 
+    #endregion
+
+    #region Chat history
+
     private static void AddServiceChatHistory(IServiceCollection services)
     {
-        // Đăng ký dịch vụ lịch sử trò chuyện
         services.AddScoped<IChatSessionRepository, ChatSessionRepository>();
         services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
         services.AddScoped<IChatResponseRepository, ChatResponseRepository>();
@@ -132,10 +131,16 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<IChatHistoryHandler, ChatHistoryHandler>();
     }
 
+    #endregion
+
+    #region Agent
+
     private static void AddAgent(IServiceCollection services)
     {
-        var templateConfig = KernelFunctionYaml.ToPromptTemplateConfig(EmbeddedResource.Read("AgentDefinition.yaml"));
+        var templateConfig = KernelFunctionYaml.ToPromptTemplateConfig(
+            EmbeddedResource.Read("AgentDefinition.yaml"));
 
+        // Chỉ đăng ký 1 lần ChatCompletionAgent bằng factory
         services.AddTransient<ChatCompletionAgent>(sp =>
         {
             return new ChatCompletionAgent(templateConfig, new HandlebarsPromptTemplateFactory())
@@ -144,43 +149,52 @@ public class AIHostingStartup : IHostingStartup
             };
         });
     }
-    public void ConfigureRedisServices(IServiceCollection services)
+
+    #endregion
+
+    #region Redis
+
+    private static void ConfigureRedisServices(IServiceCollection services)
     {
+        // Các service đọc cấu hình Redis
         services.AddScoped<ConfigManagerService>();
         services.AddScoped<IRedisConfigProvider, RedisConfigProvider>();
-        // Đăng ký IConnectionMultiplexer trong DI container
+
+        // IConnectionMultiplexer dùng singleton – logic tạo gom vào 1 hàm cho gọn
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
+            // Cần scope tạm vì RedisConfigProvider là scoped
             using var scope = sp.CreateScope();
             var scopedProvider = scope.ServiceProvider;
 
             var redisConfigProvider = scopedProvider.GetRequiredService<IRedisConfigProvider>();
-
             var redisConfig = redisConfigProvider.GetRedisConfigAsync().GetAwaiter().GetResult();
 
             if (redisConfig == null || string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
                 throw new InvalidOperationException("Redis connection string is missing.");
 
-            var redisOptions = ConfigurationOptions.Parse(redisConfig.ConnectionString);
+            var options = ConfigurationOptions.Parse(redisConfig.ConnectionString);
 
             if (!string.IsNullOrEmpty(redisConfig.UserName))
-                redisOptions.User = redisConfig.UserName;
+                options.User = redisConfig.UserName;
 
             if (!string.IsNullOrEmpty(redisConfig.Password))
-                redisOptions.Password = redisConfig.Password;
+                options.Password = redisConfig.Password;
 
-            if (!string.IsNullOrEmpty(redisConfig.DatabaseName)
-                && int.TryParse(redisConfig.DatabaseName, out var db))
+            if (!string.IsNullOrEmpty(redisConfig.DatabaseName) &&
+                int.TryParse(redisConfig.DatabaseName, out var db))
             {
-                redisOptions.DefaultDatabase = db;
+                options.DefaultDatabase = db;
             }
 
-            redisOptions.SyncTimeout = 30000;
-            redisOptions.AsyncTimeout = 30000;
-            redisOptions.ConnectTimeout = 30000;
-            redisOptions.AbortOnConnectFail = false;
+            options.SyncTimeout = 30000;
+            options.AsyncTimeout = 30000;
+            options.ConnectTimeout = 30000;
+            options.AbortOnConnectFail = false;
 
-            return ConnectionMultiplexer.Connect(redisOptions);
+            return ConnectionMultiplexer.Connect(options);
         });
     }
+
+    #endregion
 }

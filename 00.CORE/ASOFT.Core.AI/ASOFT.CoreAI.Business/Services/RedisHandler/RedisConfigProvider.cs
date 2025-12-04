@@ -18,7 +18,6 @@ namespace ASOFT.CoreAI.Business
             return new RedisViewModel
             {
                 ConnectionString = await _configManagerService.GetConfigStringAsync(APIConfigKeys.REDIS_CONNECTIONSTRING),
-                DefaultExpireDays = await _configManagerService.GetConfigIntAsync(APIConfigKeys.REDIS_DEFAULT_EXPIRE_DAYS, 1),
                 UserName = await _configManagerService.GetConfigStringAsync(APIConfigKeys.REDIS_DATABASE_USERNAME),
                 DatabaseName = await _configManagerService.GetConfigStringAsync(APIConfigKeys.REDIS_DATABASE_NAME),
                 Password = await _configManagerService.GetConfigStringAsync(APIConfigKeys.REDIS_DATABASE_PASSWORD)

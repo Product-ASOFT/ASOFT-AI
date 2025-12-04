@@ -8,9 +8,17 @@
 
 using ASOFT.A00.DataAccess.Interfaces;
 using ASOFT.Core.DataAccess.Enums;
+using ASOFT.CoreAI.Abstractions;
+using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
+using HandlebarsDotNet;
+using Microsoft.OpenApi.Exceptions;
+using Microsoft.SemanticKernel.ChatCompletion;
+using System.Text.Json;
+using System.Threading;
+using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -20,42 +28,45 @@ namespace ASOFT.CoreAI.Business
         private readonly IRedisMemoryProvider _vectorDatabase;
         private readonly ICIF1640DAL _cif1640DAL;
         private readonly IONT1030Service _ONT1030Queries;
-
         private readonly ConfigManagerService _configManagerService;
+        private readonly Kernel _kernel;
 
         public SettingsManagerService(IASOFTCommonQueries aSOFTCommonQueries,
             IRedisMemoryProvider vectorDatabase, ICIF1640DAL cif1640DAL,
-            IONT1030Service ONT1030Queries, ConfigManagerService configManagerService)
+            IONT1030Service ONT1030Queries, ConfigManagerService configManagerService, Kernel kernel)
         {
             _aSOFCommonQueries = aSOFTCommonQueries;
             _vectorDatabase = vectorDatabase;
             _cif1640DAL = cif1640DAL;
             _ONT1030Queries = ONT1030Queries;
             _configManagerService = configManagerService;
+            _kernel = kernel;
         }
 
         #region Lấy các cấu hình model AI từ bảng ONT1030
 
         /// <summary>
-        /// Kiểm tra và lấy cấu hình Model AI
+        /// Kiểm tra và lấy cấu hình Model (dùng cho API/Health check)
         /// </summary>
-        /// <returns></returns>
         public async Task<ChatResponseModel> CheckConfigModelAI()
         {
-            string cacheKey = AIConstants.ModelAIKey;
-            var cachedKey = await _vectorDatabase.IsCheckExistKeyAsync(cacheKey);
-            if (cachedKey == false)
+            try
             {
-                var modelAIConfig = await GetModelConfigAI();
-                if (!string.IsNullOrEmpty(modelAIConfig.ModelName) && !string.IsNullOrEmpty(modelAIConfig.ApiKey))
+                var (config, hasConfig, _, keyStatus, errorMsg) = await EnsureModelAIConfigCachedAsync();
+                if (!hasConfig)
+                    return ChatHandlerHelper.CreateResponse(Guid.Empty, errorMsg!, "500", false);
+
+                if (keyStatus != AIKeyStatus.Valid)
                 {
-                    double day = 1;
-                    string apiKey = await _vectorDatabase.SaveAPIKeyAsync(cacheKey, modelAIConfig, day);
-                    return ChatHandlerHelper.CreateResponse(Guid.Empty, apiKey, true);
+                    return ChatHandlerHelper.CreateResponse(Guid.Empty, errorMsg!, "500", false);
                 }
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin cấu hình Model AI", false);
+                return ChatHandlerHelper.CreateResponse(Guid.NewGuid(), config.ApiKey, "", true);
             }
-            return ChatHandlerHelper.CreateResponse(Guid.Empty, cachedKey.ToString(), true);
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         /// <summary>
@@ -116,8 +127,6 @@ namespace ASOFT.CoreAI.Business
 
         #region Lấy các cấu hình từ bảng ONT1021
 
-        // Lấy giá trị cấu hình dạng chuỗi từ bảng ONT1021, nếu không có thì lấy từ appsettings.json
-
         // Lấy số bản ghi tối đa cho lịch sử chat và dữ liệu huấn luyện AI
         public async Task<(int maxChat, int maxTraining)> GetNumberRecordsAsync()
         {
@@ -170,5 +179,122 @@ namespace ASOFT.CoreAI.Business
         }
 
         #endregion Lấy các cấu hình từ bảng ONT1021
+
+        public async Task<(ModelAIChatConfig Config, bool HasConfig, bool CreatedNew, AIKeyStatus KeyStatus, string? ErrorMessage)> EnsureModelAIConfigCachedAsync()
+        {
+            string cacheKey = AIConstants.ModelAIKey;
+
+            var cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
+            bool createdNew = false;
+
+            // 1. Nếu cache chưa có → load config từ DB và lưu lại cache
+            if (string.IsNullOrWhiteSpace(cachedKey))
+            {
+                var configModelAI = await GetModelConfigAI();
+
+                if (string.IsNullOrEmpty(configModelAI.ModelName) || string.IsNullOrEmpty(configModelAI.ApiKey))
+                {
+                    return (new ModelAIChatConfig(), false, false, AIKeyStatus.InvalidKey, "Không có thông tin cấu hình Model AI");
+                }
+
+                double expireDays = await _configManagerService.GetConfigIntAsync(APIConfigKeys.REDIS_DEFAULT_EXPIRE_DAYS, 1);
+
+                await _vectorDatabase.SaveAPIKeyAsync(cacheKey, configModelAI, expireDays);
+
+                cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
+                createdNew = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(cachedKey))
+            {
+                return (new ModelAIChatConfig(), false, createdNew, AIKeyStatus.InvalidKey, "Không đọc được dữ liệu Model AI từ cache");
+            }
+
+            // Fix trường hợp bị bao bằng {{...}}
+            if (cachedKey.StartsWith("{{") && cachedKey.EndsWith("}}"))
+            {
+                cachedKey = cachedKey.Substring(1, cachedKey.Length - 2);
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var config = JsonSerializer.Deserialize<ModelAIChatConfig>(cachedKey, options)
+                         ?? new ModelAIChatConfig();
+
+            bool hasConfig = !string.IsNullOrEmpty(config.ModelName) && !string.IsNullOrEmpty(config.ApiKey);
+
+            if (!hasConfig)
+            {
+                return (config, false, createdNew, AIKeyStatus.InvalidKey, "Cấu hình Model AI không hợp lệ");
+            }
+
+            // 2. 🔥 KIỂM TRA KEY CÓ DÙNG ĐƯỢC KHÔNG
+            var keyStatus = await CheckKeyWithAsync();
+            string errorMsg = "";
+            if (keyStatus == AIKeyStatus.InvalidKey)
+            {
+                errorMsg = "API Key không hợp lệ. Vui lòng kiểm tra lại API key.";
+            }
+            else if (keyStatus == AIKeyStatus.OutOfCredit)
+            {
+                errorMsg = "API Key của bạn không đủ token để thực hiện câu hỏi. Vui lòng kiểm tra lại API Key";
+            }
+            else if (keyStatus == AIKeyStatus.UnknownError)
+            {
+                errorMsg = "Không thể xác thực API Key truy cập AI vào thời điểm này.Vui lòng kiểm tra lại API Key";
+            }
+            return (config, true, createdNew, keyStatus, errorMsg);
+        }
+        private async Task<AIKeyStatus> CheckKeyWithAsync()
+        {
+            try
+            {
+                var promptTemplate = "{{test}}";
+                var arguments = new KernelArguments
+                {
+                    ["test"] = "ping"
+                };
+                var result = await _kernel.InvokePromptAsync(promptTemplate, arguments, "handlebars", new HandlebarsPromptTemplateFactory());
+                if (result.Metadata is not null && result.Metadata.TryGetValue(AIConstants.ErrorType, out var errorTypeObj))
+                {
+                    // Lấy RawErrorMessage để phân loại chi tiết
+                    string rawError = string.Empty;
+                    if (result.Metadata.TryGetValue(AIConstants.RawErrorMessage, out var rawErrorObj))
+                    {
+                        rawError = rawErrorObj?.ToString() ?? string.Empty;
+                    }
+
+                    var msg = rawError.ToLowerInvariant();
+
+                    if (msg.Contains("invalid_api_key") || msg.Contains("incorrect api key"))
+                        return AIKeyStatus.InvalidKey;
+
+                    if (msg.Contains("insufficient_quota") || msg.Contains("billing_hard_limit_reached"))
+                        return AIKeyStatus.OutOfCredit;
+
+                    return AIKeyStatus.UnknownError;
+                }
+                return AIKeyStatus.Valid;
+            }
+            catch (OpenApiException ex)
+            {
+                if (ex.Message.Contains("Incorrect API key") ||
+                    ex.Message.Contains("invalid_api_key"))
+                    return AIKeyStatus.InvalidKey;
+
+                if (ex.Message.Contains("insufficient_quota") ||
+                    ex.Message.Contains("billing_hard_limit_reached"))
+                    return AIKeyStatus.OutOfCredit;
+
+                return AIKeyStatus.UnknownError;
+            }
+            catch
+            {
+                return AIKeyStatus.UnknownError;
+            }
+        }
     }
 }
