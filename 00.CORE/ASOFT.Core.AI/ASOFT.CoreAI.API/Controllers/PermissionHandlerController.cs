@@ -1,7 +1,6 @@
 ﻿using ASOFT.Core.API.Versions;
 using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 

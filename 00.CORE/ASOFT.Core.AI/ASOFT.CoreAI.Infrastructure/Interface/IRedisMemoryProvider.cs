@@ -15,7 +15,7 @@ namespace ASOFT.CoreAI.Infrastructure
         Task<bool> IsCheckExistKeyAsync(string cacheKey);
 
         // Lấy API Key từ Redis.
-        Task<string> GetApiKeyAsync(string cacheKey);
+        Task<string?> GetApiKeyAsync(string cacheKey);
 
         // Lưu API Key vào Redis với thời gian sống (TTL) nhất định.
         Task<string> SaveAPIKeyAsync(string cacheKey, ModelAIChatConfig config, double hour);
@@ -36,9 +36,9 @@ namespace ASOFT.CoreAI.Infrastructure
         Task CreateIndexAsync(string operationName, string indexName, CancellationToken cancellationToken = default);
 
         // tìm kiếm dữ liệu trong Redis Vector Store theo từ khóa.
-        Task<RedisResult> SearchByVectorAsync(string indexName, string vectorField, float[] queryEmbedding, int number);
+        Task<RedisResult?> SearchByVectorAsync(string indexName, string vectorField, float[] queryEmbedding, int number);
 
-        Task<RedisResult> SearchByKeyOrTextAsync(string indexName, string? keyPrefix = null, int limit = 100, string? keyword = "*");
+        Task<RedisResult?> SearchByKeyOrTextAsync(string indexName, string? keyPrefix = null, int limit = 100, string? keyword = "*");
 
         Task<string?> GetFileCacheAsync(string filePath, string cacheKey);
 
