@@ -20,7 +20,7 @@ namespace ASOFT.CoreAI.Business.Services.RedisHandler
         public async Task<List<JObject>> GetDataTrainFormRedis(string question, string indexName, int number)
         {
             float[]? queryEmbedding = await _embeddingService.CreateEmbeddingAsync(question);
-            if(queryEmbedding == null)
+            if (queryEmbedding == null)
             {
                 return new List<JObject>();
             }
@@ -59,6 +59,10 @@ namespace ASOFT.CoreAI.Business.Services.RedisHandler
         public async Task<List<RedisearchResultItem>> GetDataByReadFileAsync(AgentRequest agentRequest, string indexName, int number)
         {
             var jsonObjects = await _vectorDatabase.SearchByKeyOrTextAsync(indexName, agentRequest.AgentCode, number);
+            if (jsonObjects == null || jsonObjects.IsNull)
+            {
+                return new List<RedisearchResultItem>();
+            }
             List<RedisearchResultItem> items = RedisearchResultParser.Parse(jsonObjects);
             if (items == null || items.Count == 0)
             {
@@ -70,6 +74,10 @@ namespace ASOFT.CoreAI.Business.Services.RedisHandler
         public async Task<List<RedisearchResultItem>> GetDataByReadFileAsync(ReadFileRequest agentRequest, string indexName, int number)
         {
             var jsonObjects = await _vectorDatabase.SearchByKeyOrTextAsync(indexName, agentRequest.AgentCode, number);
+            if (jsonObjects == null)
+            {
+                return new List<RedisearchResultItem>();
+            }
             List<RedisearchResultItem> items = RedisearchResultParser.Parse(jsonObjects);
             if (items == null || items.Count == 0)
             {

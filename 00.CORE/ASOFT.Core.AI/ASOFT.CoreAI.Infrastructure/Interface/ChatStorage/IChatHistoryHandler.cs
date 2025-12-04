@@ -1,6 +1,4 @@
 ﻿using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
 
 namespace ASOFT.CoreAI.Infrastructure
 {

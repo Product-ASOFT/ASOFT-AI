@@ -156,45 +156,14 @@ public class AIHostingStartup : IHostingStartup
 
     private static void ConfigureRedisServices(IServiceCollection services)
     {
-        // Các service đọc cấu hình Redis
         services.AddScoped<ConfigManagerService>();
         services.AddScoped<IRedisConfigProvider, RedisConfigProvider>();
-
-        // IConnectionMultiplexer dùng singleton – logic tạo gom vào 1 hàm cho gọn
-        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        
+        services.AddScoped<IConnectionMultiplexer>(sp =>
         {
-            // Cần scope tạm vì RedisConfigProvider là scoped
-            using var scope = sp.CreateScope();
-            var scopedProvider = scope.ServiceProvider;
-
-            var redisConfigProvider = scopedProvider.GetRequiredService<IRedisConfigProvider>();
-            var redisConfig = redisConfigProvider.GetRedisConfigAsync().GetAwaiter().GetResult();
-
-            if (redisConfig == null || string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
-                throw new InvalidOperationException("Redis connection string is missing.");
-
-            var options = ConfigurationOptions.Parse(redisConfig.ConnectionString);
-
-            if (!string.IsNullOrEmpty(redisConfig.UserName))
-                options.User = redisConfig.UserName;
-
-            if (!string.IsNullOrEmpty(redisConfig.Password))
-                options.Password = redisConfig.Password;
-
-            if (!string.IsNullOrEmpty(redisConfig.DatabaseName) &&
-                int.TryParse(redisConfig.DatabaseName, out var db))
-            {
-                options.DefaultDatabase = db;
-            }
-
-            options.SyncTimeout = 30000;
-            options.AsyncTimeout = 30000;
-            options.ConnectTimeout = 30000;
-            options.AbortOnConnectFail = false;
-
-            return ConnectionMultiplexer.Connect(options);
+            var manager = sp.GetRequiredService<IRedisConfigProvider>();
+            return manager.GetConnectionAsync().GetAwaiter().GetResult();
         });
     }
-
     #endregion
 }
