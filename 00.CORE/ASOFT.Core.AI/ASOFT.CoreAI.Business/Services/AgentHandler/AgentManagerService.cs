@@ -37,7 +37,7 @@ public class AgentManagerService
     public async Task<ChatResponseModel> CallHandlerAgentAsync(AgentRequest request, CancellationToken cancellationToken = default)
     {
         if (request.PluginCodes == null || request.PluginCodes.Count == 0)
-            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Danh sách agent trống.");
+            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Danh sách agent trống.", false);
 
         return await HandleAgentByMediatorAsync(request, cancellationToken);
     }
@@ -62,7 +62,7 @@ public class AgentManagerService
     private async Task<ChatResponseModel> HandleAgentByMediatorAsync(AgentRequest request, CancellationToken cancellationToken = default)
     {
         if (request.PluginCodes == null || !request.PluginCodes.Any())
-            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Không có plugin code nào được cung cấp.");
+            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Không có plugin code nào được cung cấp.", false);
 
         var handlers = GetAgentHandlers(request);
 
@@ -81,7 +81,7 @@ public class AgentManagerService
                 }
             }
         }
-        return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Module không hợp lệ hoặc agent không được hỗ trợ.");
+        return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Module không hợp lệ hoặc agent không được hỗ trợ.", false);
     }
 
     private Dictionary<string, Func<Task<ChatResponseModel>>> GetAgentHandlers(AgentRequest request) => new()
@@ -109,10 +109,10 @@ public class AgentManagerService
     {
         var items = ParseItemsToModelList<T>(request.Items);
 
-        if ((items == null || !items.Any()) && agentCode != AgentKeys.READFILE_AGENT)
-            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, $"Không có {dataName} nào phù hợp với yêu cầu của bạn.");
+        if ((items == null || !items.Any()) && agentCode != AgentKeys.READFILE_AGENT && agentCode != AgentKeys.RESEARCH_AGENT)
+            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, $"Không có {dataName} nào phù hợp với yêu cầu của bạn.", false);
 
-        var pluginData = new Dictionary<string, object> { [agentCode] = items };
+        var pluginData = new Dictionary<string, object> { [agentCode] = items! };
 
         return await HandleByFilterAsync(request, agentCode, pluginData);
     }
@@ -183,7 +183,7 @@ public class AgentManagerService
         if (chatMessages != null && chatMessages.APK != Guid.Empty)
             await _chatHistoryHandler.SaveChatResponseAsync(answer, chatMessages);
 
-        return ChatHandlerHelper.CreateResponse(chatMessages?.ChatSessionID ?? Guid.Empty, answer);
+        return ChatHandlerHelper.CreateResponse(chatMessages?.ChatSessionID ?? Guid.Empty, answer, true);
     }
 
     private async Task<string> GenerateAnswerAsync(

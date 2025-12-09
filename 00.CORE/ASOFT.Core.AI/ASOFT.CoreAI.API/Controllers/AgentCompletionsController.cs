@@ -23,7 +23,6 @@ namespace ASOFT.CoreAI.API.Controllers
         private readonly Kernel _kernel;
         private IST2130Queries _agentPromptQueries;
         private IChatHistoryHandler _chatHistoryHandler;
-        private AgentManagerService _agentManager;
 
         public AgentCompletionsController(ChatCompletionAgent agent, Kernel kernel,
             IST2130Queries agentPromptQueries,
@@ -34,7 +33,6 @@ namespace ASOFT.CoreAI.API.Controllers
             this._kernel = kernel;
             this._agentPromptQueries = agentPromptQueries;
             _chatHistoryHandler = chatHistoryHandler;
-            _agentManager = agentManager;
         }
 
         // Gọi API xử lý chat
@@ -112,7 +110,7 @@ namespace ASOFT.CoreAI.API.Controllers
             #region Lưu câu trả lời vào Database
 
             Guid chatSessionID = Guid.Empty;
-            if (chatMessages != null && chatMessages.APK  != chatSessionID)
+            if (chatMessages != null && chatMessages.APK != chatSessionID)
             {
                 chatSessionID = chatMessages.ChatSessionID;
                 await _chatHistoryHandler.SaveChatResponseAsync(responseMessage, chatMessages);
@@ -120,7 +118,7 @@ namespace ASOFT.CoreAI.API.Controllers
 
             #endregion Lưu câu trả lời vào Database
 
-            return ChatHandlerHelper.CreateResponse(chatSessionID, responseMessage);
+            return ChatHandlerHelper.CreateResponse(chatSessionID, responseMessage, true);
         }
 
         private async IAsyncEnumerable<ChatMessageContent> CompleteAsync(ChatHistory chatHistory, KernelArguments arguments, [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -167,10 +165,9 @@ namespace ASOFT.CoreAI.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(request.Question))
             {
-                return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Câu hỏi không được để trống!");
+                return ChatHandlerHelper.CreateResponse(request.ChatSessionID, "Câu hỏi không được để trống!", false);
             }
-            var typeQuestion = await GetTypeQuestionAsync(request, cancellationToken);
-            return typeQuestion;
+            return await GetTypeQuestionAsync(request, cancellationToken);
         }
 
         // Hàm phân loại câu hỏi để xác định là câu hỏi thường hay câu hỏi AI Plugin
@@ -179,7 +176,7 @@ namespace ASOFT.CoreAI.API.Controllers
             var prompt = await _agentPromptQueries.GetPromptByCode(AgentKeys.TYPE_QUESTION);
             if (prompt == null || string.IsNullOrEmpty(prompt.PromptContent))
             {
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Hiện tại bạn chưa tạo Prompt để phân loại câu hỏi. Vui lòng thiết lập Prompt để tiếp tục.");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Hiện tại bạn chưa tạo Prompt để phân loại câu hỏi. Vui lòng thiết lập Prompt để tiếp tục.", false);
             }
             var chatHistoryModel = _chatHistoryHandler.CreateChatHistoryModel(agentRequest, string.Empty, 10);
             var chatHistory = await _chatHistoryHandler.GetChatHistoryAsync(chatHistoryModel);
@@ -208,9 +205,9 @@ namespace ASOFT.CoreAI.API.Controllers
             }
             catch (Exception)
             {
-                throw;
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Kết nối đến AI bị gián đoạn", false);
             }
-            return ChatHandlerHelper.CreateResponse(Guid.Empty, responseMessage);
+            return ChatHandlerHelper.CreateResponse(agentRequest.ChatSessionID, responseMessage, true);
         }
     }
 }

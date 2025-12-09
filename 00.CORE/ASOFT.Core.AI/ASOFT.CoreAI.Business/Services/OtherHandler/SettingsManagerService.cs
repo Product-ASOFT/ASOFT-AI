@@ -52,12 +52,12 @@ namespace ASOFT.CoreAI.Business
         {
             var (config, hasConfig, _, keyStatus, errorMsg) = await EnsureModelAIConfigCachedAsync();
             if (!hasConfig)
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, errorMsg!, "500", false);
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, errorMsg!, false);
 
             if (keyStatus != AIKeyStatus.Valid)
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, errorMsg!, "500", false);
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, errorMsg!, false);
 
-            return ChatHandlerHelper.CreateResponse(Guid.NewGuid(), config.ApiKey, "", true);
+            return ChatHandlerHelper.CreateResponse(Guid.NewGuid(), config.ApiKey, true);
         }
 
         /// <summary>
