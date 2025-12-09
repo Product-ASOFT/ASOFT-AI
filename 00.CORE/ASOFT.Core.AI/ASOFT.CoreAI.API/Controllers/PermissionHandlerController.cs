@@ -25,7 +25,7 @@ namespace ASOFT.OO.API.Controllers
         public async Task<ChatResponseModel> GetAccessTypeAsync([FromBody] AgentRequest request)
         {
             var result = await _permissionHandler.GetAccessType(request.Permisions);
-            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, result);
+            return ChatHandlerHelper.CreateResponse(request.ChatSessionID, result, true);
         }
 
         // Kiểm tra quyền truy cập của người dùng vào các plugin

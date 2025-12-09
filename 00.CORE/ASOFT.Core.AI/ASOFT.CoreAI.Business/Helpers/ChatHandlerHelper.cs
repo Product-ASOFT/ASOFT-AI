@@ -5,7 +5,7 @@ namespace ASOFT.CoreAI.Business
 {
     public static class ChatHandlerHelper
     {
-        public static ChatResponseModel CreateResponse(Guid? chatSessionId, string message, string? StatusCode = null, bool? status = null)
+        public static ChatResponseModel CreateResponse(Guid? chatSessionId, string message, bool status, string? StatusCode = null)
         {
             return new ChatResponseModel
             {

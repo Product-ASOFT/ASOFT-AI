@@ -35,7 +35,7 @@ namespace ASOFT.CoreAI.Business
         public async Task<ChatResponseModel> UpLoadFile(List<IFormFile> files, bool IsCompare)
         {
             if (files == null || files.Count == 0)
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "No file uploaded");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "No file uploaded", false);
 
             var webRootPath = _hostingEnvironment.WebRootPath;
             var folderPath = Path.Combine(webRootPath, "Attached", "AI");
@@ -65,7 +65,7 @@ namespace ASOFT.CoreAI.Business
             }
 
             string resultString = string.Join(",", fullPathList);
-            return ChatHandlerHelper.CreateResponse(Guid.Empty, resultString);
+            return ChatHandlerHelper.CreateResponse(Guid.Empty, resultString, true);
         }
 
         public async Task<ChatResponseReadFileModel> CreateFile(ReadFileRequest request)

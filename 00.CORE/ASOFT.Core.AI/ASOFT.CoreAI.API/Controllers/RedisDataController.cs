@@ -36,16 +36,16 @@ namespace ASOFT.CoreAI.API.Controllers
         {
             if (request == null || string.IsNullOrWhiteSpace(request.FilePath))
             {
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Invalid request or file path is empty.");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Đường dẫn không tồn tại. Vui lòng kiểm tra lại đường dẫn!", false);
             }
             try
             {
                 await _dataLoader.LoadTrainingDataFromDocument(request, cancellationToken);
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Create data train successfully.");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Tạo dữ liệu thành công!", true);
             }
             catch (Exception ex)
             {
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, $"Error creating training data: {ex.Message}");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, $"Error creating training data: {ex.Message}", false);
             }
         }
 
@@ -53,40 +53,22 @@ namespace ASOFT.CoreAI.API.Controllers
         [ActionName("CheckModelAIConfig")]
         public async Task<ChatResponseModel> CheckModelAIConfigAsync()
         {
-           
+
             return await _settings.CheckConfigModelAI();
         }
-
-        [HttpPost]
-        [ActionName("GetApiKeyFromExternal")]
-        public async Task<ChatResponseModel> GetApiKeyAsync([FromBody] ModelAIChatConfig config)
-        {
-            string cacheKey = $"ModelAIKey";
-            var cachedKey = await _vectorDatabase.IsCheckExistKeyAsync(cacheKey);
-            if (cachedKey)
-            {
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, cachedKey.ToString());
-            }
-            // Lưu key vào Redis với TTL (ví dụ 1 tiếng)
-            double day = 1; // Thời gian lưu trữ key, có thể lấy từ config hoặc tham số
-            string apiKey = await _vectorDatabase.SaveAPIKeyAsync(cacheKey, config, day);
-
-            return ChatHandlerHelper.CreateResponse(Guid.Empty, apiKey);
-        }
-
         [HttpPost]
         [ActionName("GetAnswer")]
         public async Task<ChatResponseModel> GetAnswerAsync([FromBody] AgentRequest agentRequest)
         {
             if (agentRequest == null || string.IsNullOrWhiteSpace(agentRequest.Question))
             {
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin về câu hỏi");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin về câu hỏi", false);
             }
             string indexName = "pdf_content"; // Tên của Index trong Redis Vector Store
             var jsonObjects = await _redisHandler.GetDataTrainFormRedis(agentRequest.Question, indexName, 5);
             if (jsonObjects == null || !jsonObjects.Any())
             {
-                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin dữ liệu được trainning.");
+                return ChatHandlerHelper.CreateResponse(Guid.Empty, "Không có thông tin dữ liệu được trainning.", false);
             }
             // Nếu muốn gán lại cho agentRequest
             agentRequest.Items = jsonObjects;
