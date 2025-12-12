@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 
 namespace ASOFT.Core.DataAccess
 {
@@ -197,5 +198,30 @@ namespace ASOFT.Core.DataAccess
             => await Checker.NotNull(spec, nameof(spec))
                 .Query(EntitySet().ApplySpecificationQueryOptions(spec.QueryOptions))
                 .FirstOrDefaultAsync().ConfigureAwait(false);
+        /// <summary>
+        /// Xóa nhiều entity theo danh sách APK.
+        /// </summary>
+        /// <param name="APKs">Danh sách APK</param>
+        /// <param name="cancellationToken"></param>
+        public virtual async Task RemoveRangeByApkAsync(IEnumerable<Guid> APKs,
+            CancellationToken cancellationToken = default)
+        {
+            var apkList = APKs?.ToList() ?? new List<Guid>();
+            if (!apkList.Any())
+                return;
+
+            var entities = await EntitySet(true)
+                .Where(x => apkList.Contains(EF.Property<Guid>(x, "APK")))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!entities.Any())
+                return;
+
+            EntitySet().RemoveRange(entities);
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
     }
+
 }

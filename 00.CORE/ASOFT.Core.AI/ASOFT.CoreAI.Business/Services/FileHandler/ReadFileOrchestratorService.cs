@@ -58,7 +58,7 @@ namespace ASOFT.CoreAI.Business
                 StatusProcess = StatusProcessCompareOCR.PROCESSING.ToString(),
             };
 
-            var saved = await _ST2131Queries.SaveFileResult(entity);
+            var saved = await _ST2131Queries.SaveData(entity);
             if (!saved)
                 return ChatHandlerHelper.CreateResponseReadFile("Không thể khởi tạo lưu kết quả.", false);
 

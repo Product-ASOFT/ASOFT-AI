@@ -53,6 +53,8 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<IST2130Queries, ST2130Queries>();
         services.AddScoped<IST2131Queries, ST2131Queries>();
         services.AddScoped<IST2136Queries, ST2136Queries>();
+        services.AddScoped<IST2137Queries, ST2137Queries>();
+        services.AddScoped<IST2138Queries, ST2138Queries>();
         services.AddScoped<IONT1021Service, ONT1021Service>();
         services.AddScoped<IONT1030Service, ONT1030Service>();
         services.AddScoped<IDataLoader, DataLoaderService>();
@@ -158,7 +160,7 @@ public class AIHostingStartup : IHostingStartup
     {
         services.AddScoped<ConfigManagerService>();
         services.AddScoped<IRedisConfigProvider, RedisConfigProvider>();
-        
+
         services.AddScoped<IConnectionMultiplexer>(sp =>
         {
             var manager = sp.GetRequiredService<IRedisConfigProvider>();

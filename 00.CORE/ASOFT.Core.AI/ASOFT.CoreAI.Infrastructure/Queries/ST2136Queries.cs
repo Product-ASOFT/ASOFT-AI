@@ -19,29 +19,29 @@ namespace ASOFT.CoreAI.Infrastructure
             _businessContext = Checker.NotNull(businessContext, nameof(businessContext));
         }
 
-        public async Task<bool> DeleteResultDetail(IEnumerable<ST2136> resultDetails, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default)
         {
             return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async tran =>
             {
-                await _businessContext.BulkDeleteAsync(resultDetails);
+                await _businessContext.BulkDeleteAsync(datas);
                 await _businessContext.UnitOfWork.CompleteAsync();
                 return true;
             });
         }
 
-        public async Task<List<ST2136>> GetResultDetail(string BusinessParent, CancellationToken cancellationToken = default)
+        public async Task<List<ST2136>> GetData(string BusinessParent, CancellationToken cancellationToken = default)
         {
             return await _businessContext.QueryAsync(new FilterQuery<ST2136>(m => m.BusinessParent == BusinessParent));
         }
 
-        public Task SaveResultDetail(IEnumerable<ST2136> resultDetails, CancellationToken cancellationToken = default)
+        public Task SaveData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default)
         {
             return _businessContext.UnitOfWork.ExecuteInTransactionAsync(
-                async transactionHolder =>
-                {
-                    await _businessContext.AddRangeAsync(resultDetails, cancellationToken);
-                    await _businessContext.UnitOfWork.CompleteAsync();
-                });
+            async transactionHolder =>
+            {
+                await _businessContext.AddRangeAsync(datas, cancellationToken);
+                await _businessContext.UnitOfWork.CompleteAsync();
+            });
         }
     }
 }
