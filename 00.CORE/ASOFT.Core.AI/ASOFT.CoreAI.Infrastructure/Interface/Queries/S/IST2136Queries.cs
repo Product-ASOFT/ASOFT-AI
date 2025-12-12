@@ -9,8 +9,8 @@ namespace ASOFT.CoreAI.Infrastructure
 {
     public interface IST2136Queries
     {
-        Task<List<ST2136>> GetResultDetail(string BusinessParent, CancellationToken cancellationToken = default);
-        Task SaveResultDetail(IEnumerable<ST2136> resultDetails, CancellationToken cancellationToken = default);
-        Task<bool> DeleteResultDetail(IEnumerable<ST2136> resultDetails, CancellationToken cancellationToken = default);
+        Task<List<ST2136>> GetData(string BusinessParent, CancellationToken cancellationToken = default);
+        Task SaveData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default);
+        Task<bool> DeleteData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default);
     }
 }

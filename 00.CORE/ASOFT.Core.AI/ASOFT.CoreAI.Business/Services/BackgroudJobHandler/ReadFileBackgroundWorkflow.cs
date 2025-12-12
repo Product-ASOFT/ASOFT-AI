@@ -41,7 +41,7 @@ namespace ASOFT.CoreAI.Business
 
         public async Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptContent, CancellationToken ct = default)
         {
-            var entity = await _ST2131.GetFileResult(ST2131APK);
+            var entity = await _ST2131.GetData(ST2131APK);
             if (entity == null) return;
 
             try
@@ -69,14 +69,14 @@ namespace ASOFT.CoreAI.Business
                 if (!string.IsNullOrEmpty(match.MatchRate)) entity.Percentage = match.MatchRate;
                 if (!string.IsNullOrEmpty(match.Conclusion)) entity.Status = match.Conclusion;
 
-                //await _ST2131.UpdateFileResult(entity);
+                //await _ST2131.UpdateData(entity);
                 var voucherNo = request.BEMF2000ViewModel.VoucherNo!;
-                var existingDetails = await _ST2136.GetResultDetail(voucherNo);
+                var existingDetails = await _ST2136.GetData(voucherNo);
 
                 // Xóa dữ liệu cũ nếu có
                 if (existingDetails?.Any() == true)
                 {
-                    await _ST2136.DeleteResultDetail(existingDetails);
+                    await _ST2136.DeleteData(existingDetails);
                 }
 
                 // Lấy kết quả tổng hợp từ AI
@@ -107,7 +107,7 @@ namespace ASOFT.CoreAI.Business
                 }
 
                 // Lưu chi tiết tiêu chí
-                await _ST2136.SaveResultDetail(criteriaList);
+                await _ST2136.SaveData(criteriaList);
 
                 // Lấy các tiêu chí không đạt (khác OK)
                 var failedCriteria = criteriaList.Where(x => x.CriteriaStatus != statusOk).ToList();
@@ -127,17 +127,17 @@ namespace ASOFT.CoreAI.Business
                     entity.Status = statusOk;
                 }
                 // Cập nhật lại kết quả file
-                await _ST2131.UpdateFileResult(entity);
+                await _ST2131.UpdateData(entity);
             }
             catch (OperationCanceledException)
             {
                 entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
-                await _ST2131.UpdateFileResult(entity);
+                await _ST2131.UpdateData(entity);
             }
             catch (Exception ex)
             {
                 entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
-                await _ST2131.UpdateFileResult(entity);
+                await _ST2131.UpdateData(entity);
                 _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);
             }
         }

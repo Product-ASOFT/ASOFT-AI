@@ -10,11 +10,11 @@ namespace ASOFT.CoreAI.Infrastructure
         /// <param name="agent"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> SaveFileResult(ST2131 result, CancellationToken cancellationToken = default);
+        Task<bool> SaveData(ST2131 data, CancellationToken cancellationToken = default);
 
-        Task<bool> CreateFileResult(IEnumerable<ST2131> readFileResults, CancellationToken cancellationToken = default);
+        Task<bool> CreateData(IEnumerable<ST2131> datas, CancellationToken cancellationToken = default);
 
-        Task UpdateFileResult(ST2131 readFileResult, CancellationToken cancellationToken = default);
-        Task<ST2131> GetFileResult(Guid APK);
+        Task UpdateData(ST2131 data, CancellationToken cancellationToken = default);
+        Task<ST2131> GetData(Guid APK);
     }
 }
