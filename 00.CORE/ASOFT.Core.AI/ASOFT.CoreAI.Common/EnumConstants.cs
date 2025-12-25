@@ -43,6 +43,7 @@ namespace ASOFT.CoreAI.Common
             PROCESSING = 0,
             COMPLETED = 1,
             FAILED = 2,
+            UNPROCESSED = 3,
         }
         public enum StatusResultCompare
         {

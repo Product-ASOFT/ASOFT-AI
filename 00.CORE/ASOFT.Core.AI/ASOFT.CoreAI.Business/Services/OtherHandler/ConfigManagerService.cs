@@ -38,33 +38,43 @@ namespace ASOFT.CoreAI.Business
             {
                 (int)IntegrationServiceType.EXTERNAL_SYSTEM_CONNECTION
             };
-
-            var settingsFromDb = await _ONT1021Queries.GetAllAsync(categoryIDs);
-
-            // 3. Lưu vào cache nếu DB có dữ liệu
-            if (settingsFromDb != null && settingsFromDb.Any())
+            try
             {
-                _cache.Set(cacheKey, settingsFromDb,
-                    new MemoryCacheEntryOptions
-                    {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
-                        SlidingExpiration = TimeSpan.FromMinutes(5)
-                    });
+                var settingsFromDb = await _ONT1021Queries.GetAllAsync(categoryIDs);
 
-                // Lấy giá trị config theo key
-                var itemDb = settingsFromDb.FirstOrDefault(x => x.KeyName == key);
-                if (itemDb != null && !string.IsNullOrWhiteSpace(itemDb.KeyValue))
-                    return itemDb.KeyValue.Trim();
+                // 3. Lưu vào cache nếu DB có dữ liệu
+                if (settingsFromDb != null && settingsFromDb.Any())
+                {
+                    _cache.Set(cacheKey, settingsFromDb,
+                        new MemoryCacheEntryOptions
+                        {
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+                            SlidingExpiration = TimeSpan.FromMinutes(5)
+                        });
+
+                    // Lấy giá trị config theo key
+                    var itemDb = settingsFromDb.FirstOrDefault(x => x.KeyName == key);
+                    if (itemDb != null && !string.IsNullOrWhiteSpace(itemDb.KeyValue))
+                        return itemDb.KeyValue.Trim();
+                }
             }
-
-            // 4. Nếu DB không có → lấy từ appsettings
+            catch (Exception)
+            {
+                // 4. TH DB không có tạo module ON
+                return GetConfigAppSetting(key);
+            }
+            // 5. TH có tạo module ON nhưng không có giá trị cấu hình.
+            return GetConfigAppSetting(key);
+        }
+        // Hàm lấy giá trị từ Appsetting
+        private string GetConfigAppSetting(string key)
+        {
+            // Nếu DB không có → lấy từ appsettings
             var cfg = _configuration.GetValue<string>($"AI_CONFIG:{key}");
             if (!string.IsNullOrWhiteSpace(cfg))
                 return cfg.Trim();
-
             return string.Empty;
         }
-
         // Lấy giá trị cấu hình dạng số nguyên từ bảng ONT1021, nếu không có thì lấy từ appsettings.json
         public async Task<int> GetConfigIntAsync(string key, int defaultValue = 5)
         {

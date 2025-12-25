@@ -10,6 +10,6 @@ namespace ASOFT.CoreAI.Infrastructure
     public interface IST2138Queries
     {
         Task SaveData(IEnumerable<ST2138> results, CancellationToken cancellationToken = default);
-        Task<bool> DeleteData(IEnumerable<ST2138> results, CancellationToken cancellationToken = default);
+        Task<bool> DeleteData(Guid apkMater_ST2131, CancellationToken cancellationToken = default);
     }
 }

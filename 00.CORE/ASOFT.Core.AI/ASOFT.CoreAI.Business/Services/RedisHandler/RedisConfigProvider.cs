@@ -52,7 +52,7 @@ namespace ASOFT.CoreAI.Business
 
             using var scope = _scopeFactory.CreateScope();
             var redisConfigProvider = scope.ServiceProvider.GetRequiredService<IRedisConfigProvider>();
-            var redisConfig = await redisConfigProvider.GetRedisConfigAsync();
+            RedisViewModel redisConfig = await redisConfigProvider.GetRedisConfigAsync();
 
             if (redisConfig == null || string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
                 throw new InvalidOperationException("Redis connection string is missing.");

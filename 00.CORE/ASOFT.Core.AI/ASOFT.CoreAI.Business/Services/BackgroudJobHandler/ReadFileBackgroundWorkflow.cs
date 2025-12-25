@@ -52,12 +52,24 @@ namespace ASOFT.CoreAI.Business
                 var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel!.APK);
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
-
                 // Training
                 var trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
 
                 // Compare
                 var aiResult = await _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
+
+                var promptReadFile = await _ST2130.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_READFILE);
+                if (promptReadFile != null && !string.IsNullOrWhiteSpace(promptReadFile.PromptContent))
+                {
+                    await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent);
+                }
+                
+                // Lấy kết quả tổng hợp từ AI
+                var criteriaSummaryResults = await _agentCompareService.SummaryResultJson(aiResult);
+                var criteriaList = criteriaSummaryResults?.Criteria?.ToList();
+
+                if (criteriaList == null || criteriaList.Count == 0)
+                    return; // Không có gì để xử lý
 
                 // Update kết quả
                 entity.TextContentOCR = ocrText;
@@ -65,27 +77,7 @@ namespace ASOFT.CoreAI.Business
                 entity.TextContentAI = !string.IsNullOrWhiteSpace(aiResult) ? aiResult : "Không có kết quả đối chiếu";
                 entity.StatusProcess = StatusProcessCompareOCR.COMPLETED.ToString();
 
-                var match = ExtractMatchInfo.Extract(aiResult);
-                if (!string.IsNullOrEmpty(match.MatchRate)) entity.Percentage = match.MatchRate;
-                if (!string.IsNullOrEmpty(match.Conclusion)) entity.Status = match.Conclusion;
-
-                //await _ST2131.UpdateData(entity);
-                var voucherNo = request.BEMF2000ViewModel.VoucherNo!;
-                var existingDetails = await _ST2136.GetData(voucherNo);
-
-                // Xóa dữ liệu cũ nếu có
-                if (existingDetails?.Any() == true)
-                {
-                    await _ST2136.DeleteData(existingDetails);
-                }
-
-                // Lấy kết quả tổng hợp từ AI
-                var criteriaSummaryResults = await _agentCompareService.SummaryResultJson(entity.TextContentAI);
-                var criteriaList = criteriaSummaryResults?.Criteria?.ToList();
-
-                if (criteriaList == null || criteriaList.Count == 0)
-                    return; // Không có gì để xử lý
-
+                var voucherNo = request.BEMF2000ViewModel.VoucherNo ?? string.Empty;
                 var now = DateTime.Now;
                 var statusOk = StatusResultCompare.OK.ToString();
                 var statusNg = StatusResultCompare.NG.ToString();
@@ -111,19 +103,27 @@ namespace ASOFT.CoreAI.Business
 
                 // Lấy các tiêu chí không đạt (khác OK)
                 var failedCriteria = criteriaList.Where(x => x.CriteriaStatus != statusOk).ToList();
-
+                int numberCritera = criteriaList.Count();
                 if (failedCriteria.Any())
                 {
                     var resultDetailText = string.Join(
                         Environment.NewLine,
                         failedCriteria.Select(x => $"Tiêu chí {x.CriteriaID}: {x.CriteriaName} - {x.CriteriaStatus}")
                     );
+                    double numberNG = failedCriteria.Count();
+                    double percentage = 0;
+                    if (numberCritera > 0)
+                    {
+                        percentage = (numberCritera - numberNG) / numberCritera * 100;
+                    }
+                    entity.Percentage = string.Format("{0}%", percentage.ToString("0.00"));
 
                     entity.TextConditionFail = resultDetailText;
                     entity.Status = statusNg;
                 }
                 else
                 {
+                    entity.Percentage = "100%";
                     entity.Status = statusOk;
                 }
                 // Cập nhật lại kết quả file
@@ -131,11 +131,15 @@ namespace ASOFT.CoreAI.Business
             }
             catch (OperationCanceledException)
             {
+                entity.Status = StatusResultCompare.NG.ToString();
+                entity.Percentage = "0%";
                 entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
                 await _ST2131.UpdateData(entity);
             }
             catch (Exception ex)
             {
+                entity.Status = StatusResultCompare.NG.ToString();
+                entity.Percentage = "0%";
                 entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
                 await _ST2131.UpdateData(entity);
                 _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);

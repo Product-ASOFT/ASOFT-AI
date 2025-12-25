@@ -17,6 +17,7 @@ namespace ASOFT.CoreAI.Entities
         public string? CriteriaStatus { get; set; }
         public string? Description { get; set; }
         public DateTime? CreateDate { get; set; }
+        public string? FileName { get; set; }
         public string? CreateUserID { get; set; }
         public string? LastModifyUserID { get; set; }
         public DateTime? LastModifyDate { get; set; }

@@ -11,6 +11,6 @@ namespace ASOFT.CoreAI.Infrastructure
     {
         Task<List<ST2136>> GetData(string BusinessParent, CancellationToken cancellationToken = default);
         Task SaveData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default);
-        Task<bool> DeleteData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default);
+        Task<bool> DeleteData(Guid APKMaster, CancellationToken cancellationToken = default);
     }
 }

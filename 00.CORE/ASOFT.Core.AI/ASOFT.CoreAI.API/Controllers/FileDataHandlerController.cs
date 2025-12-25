@@ -1,7 +1,6 @@
 ﻿using ASOFT.Core.API.Versions;
 using ASOFT.CoreAI.Business;
 using ASOFT.CoreAI.Entities;
-using ASOFT.CoreAI.Entities;
 using ASOFT.OO.API.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +15,7 @@ namespace ASOFT.CoreAI.API.Controllers
     {
         private readonly ReadFileOrchestratorService _orchestrator;
         private readonly FilePathService _filePathService;
-        public FileDataHandlerController( ReadFileOrchestratorService orchestrator, FilePathService filePathService)
+        public FileDataHandlerController(ReadFileOrchestratorService orchestrator, FilePathService filePathService)
         {
             _orchestrator = orchestrator;
             _filePathService = filePathService;

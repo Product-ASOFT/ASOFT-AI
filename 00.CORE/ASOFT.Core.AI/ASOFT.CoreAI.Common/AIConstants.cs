@@ -41,6 +41,7 @@
             public const string HRM_AGENT_HRMF2220 = "HRM_AGENT_HRMF2220";
             public const string HRM_AGENT_HRMF1030 = "HRM_AGENT_HRMF1030";
             public const string BEM_AGENT_BEMF2000_SUMMARY = "BEM_AGENT_BEMF2000_SUMMARY";
+            public const string BEM_AGENT_BEMF2000_READFILE = "BEM_AGENT_BEMF2000_READFILE";
         }
         public static class AgentTypeKeys
         {

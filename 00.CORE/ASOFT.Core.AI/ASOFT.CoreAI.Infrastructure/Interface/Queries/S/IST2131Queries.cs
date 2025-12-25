@@ -16,5 +16,8 @@ namespace ASOFT.CoreAI.Infrastructure
 
         Task UpdateData(ST2131 data, CancellationToken cancellationToken = default);
         Task<ST2131> GetData(Guid APK);
+        Task<ST2131> GetDataByAPKMaster(Guid APKMaster);
+
+        Task<bool> DeleteData(ST2131 data, CancellationToken cancellationToken = default);
     }
 }

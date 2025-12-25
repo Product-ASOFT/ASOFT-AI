@@ -19,16 +19,22 @@ namespace ASOFT.CoreAI.Infrastructure
             _businessContext = Checker.NotNull(businessContext, nameof(businessContext));
         }
 
-        public async Task<bool> DeleteData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteData(Guid APKMaster, CancellationToken cancellationToken = default)
         {
+            var dataDelete = await GetDataByAPKMaster(APKMaster, cancellationToken);
+            if (dataDelete == null || !dataDelete.Any())
+                return true;
             return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async tran =>
             {
-                await _businessContext.BulkDeleteAsync(datas);
+                await _businessContext.BulkDeleteAsync(dataDelete);
                 await _businessContext.UnitOfWork.CompleteAsync();
                 return true;
             });
         }
-
+        private async Task<List<ST2136>> GetDataByAPKMaster(Guid APKMaster, CancellationToken cancellationToken = default)
+        {
+            return await _businessContext.QueryAsync(new FilterQuery<ST2136>(m => m.APKMaster == APKMaster));
+        }
         public async Task<List<ST2136>> GetData(string BusinessParent, CancellationToken cancellationToken = default)
         {
             return await _businessContext.QueryAsync(new FilterQuery<ST2136>(m => m.BusinessParent == BusinessParent));
