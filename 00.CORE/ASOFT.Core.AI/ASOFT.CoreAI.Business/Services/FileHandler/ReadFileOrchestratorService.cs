@@ -10,35 +10,38 @@ namespace ASOFT.CoreAI.Business
     {
         private readonly IST2130Queries _ST2130Queries;
         private readonly IST2131Queries _ST2131Queries;
-        private readonly AgentCompareService _compareService;
-        private readonly FilePathService _filePathService;
-        private readonly ITrainingDataService _trainingService;
+        private readonly IST2136Queries _ST2136Queries;
+        private readonly IST2137Queries _ST2137Queries;
+        private readonly IST2138Queries _ST2138Queries;
         private readonly IOCRService _ocrService;
         private readonly SettingsManagerService _settingsManager;
         private readonly IJobQueue _jobQueue;
 
         public ReadFileOrchestratorService(IST2130Queries ST2130Queries,
-            IST2131Queries ST2131Queries, AgentCompareService compareService,
-            FilePathService filePathService, ITrainingDataService trainingDataService,
+            IST2131Queries ST2131Queries, IST2136Queries ST2136Queries,
+            IST2137Queries ST2137Queries, IST2138Queries ST2138Queries,
             IOCRService ocrService, SettingsManagerService settingsManager,
             AgentPromptService agentPromptService, IJobQueue jobQueue)
         {
             _ST2130Queries = ST2130Queries;
             _ST2131Queries = ST2131Queries;
-            _compareService = compareService;
-            _filePathService = filePathService;
-            _trainingService = trainingDataService;
+            _ST2136Queries = ST2136Queries;
+            _ST2137Queries = ST2137Queries;
+            _ST2138Queries = ST2138Queries;
             _ocrService = ocrService;
             _settingsManager = settingsManager;
             _jobQueue = jobQueue;
         }
-
+        // Hàm xử lý chính đọc file và đối chiếu
         public async Task<ChatResponseReadFileModel> HandleAsync(ReadFileRequest request)
         {
             // 1) Validate
             var (isValid, validationMessage) = ValidateReadFileRequest(request);
             if (!isValid)
                 return ChatHandlerHelper.CreateResponseReadFile(validationMessage, false);
+
+            // Xóa dữ liệu đối chiếu trước đó 
+            await DeleteData(request.BEMF2000ViewModel!);
 
             // 2) (Tuỳ chọn) Kiểm tra tồn tại prompt sớm để fail fast (hoặc để workflow kiểm tra)
             string typeCompare = GetAgentKeyByTypeCompare(request.BEMF2000ViewModel!.PaymentRequestType);
@@ -68,7 +71,7 @@ namespace ASOFT.CoreAI.Business
             // 5) Trả về ngay cho UI
             return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {entity.APK}. Hệ thống đang xử lý nền.", true);
         }
-
+        // Hàm đọc file từ chatbot
         public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths, Guid APK)
         {
             string configKeyOCR = await _settingsManager.GetKeyReadOCRAsync();
@@ -88,7 +91,7 @@ namespace ASOFT.CoreAI.Business
             }
             return new List<ResultReadFileModel>();
         }
-
+        // Hàm lấy key agent theo loại đối chiếu
         private string GetAgentKeyByTypeCompare(string typeCompare)
         {
             return typeCompare switch
@@ -101,7 +104,7 @@ namespace ASOFT.CoreAI.Business
                 _ => throw new NotImplementedException(),
             };
         }
-
+        // Hàm validate request đọc file
         private (bool IsValid, string Message) ValidateReadFileRequest(ReadFileRequest request)
         {
             var CheckConfigModelAI = _settingsManager.CheckConfigModelAI().Result;
@@ -125,5 +128,27 @@ namespace ASOFT.CoreAI.Business
 
             return (true, string.Empty);
         }
+        // Hàm xóa dữ liệu đối chiếu cũ (nếu có)
+        private async Task DeleteData(BEMF2000ViewModel BEMF2000ViewModel)
+        {
+            try
+            {
+                var ST2131_Delete = await _ST2131Queries.GetDataByAPKMaster(BEMF2000ViewModel.APK);
+                if (ST2131_Delete == null)
+                {
+                    return;
+                }
+                await _ST2137Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng master dữ liệu đọc từ file đính kèm
+                await _ST2138Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng detail dữ liệu đọc từ file đính kèm
+                await _ST2136Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng chi tiết  kết quả đối chiếu từ AI
+                await _ST2131Queries.DeleteData(ST2131_Delete); // Xóa dữ liệu bảng chính kết quả đối chiếu từ AI
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            return;
+        }
+        
     }
 }

@@ -9,12 +9,13 @@ namespace ASOFT.CoreAI.Entities
 {
     public class ST2137 : BaseEntity
     {
-        public Guid? APKMaster_ST2131 { get; set; }
+        public Guid APKMaster_ST2131 { get; set; }
         public string SectionType { get; set; } = null!;
         public int SectionOrder { get; set; }
         public string? SectionTitle { get; set; }
-        public decimal TotalAmount { get; set; }
+        public decimal? TotalAmount { get; set; }
         public string? TotalCurrency { get; set; }
+        public string? Signature { get; set; }
 
     }
 }

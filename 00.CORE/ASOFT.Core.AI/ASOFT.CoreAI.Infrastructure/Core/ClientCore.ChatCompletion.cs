@@ -151,7 +151,7 @@ public partial class ClientCore
         // Convert the incoming execution settings to OpenAI settings.
         OpenAIPromptExecutionSettings chatExecutionSettings = this.GetSpecializedExecutionSettings(executionSettings);
         chatExecutionSettings.MaxTokens = 6000; // Default value for max tokens if not specified.
-        chatExecutionSettings.Temperature = 0.4;
+        chatExecutionSettings.Temperature = 1;
         ValidateMaxTokens(chatExecutionSettings.MaxTokens);
 
         for (int requestIndex = 0; ; requestIndex++)

@@ -57,5 +57,29 @@ namespace ASOFT.CoreAI.Infrastructure
         {
             return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.APK == APK));
         }
+        public async Task<ST2131> GetDataByAPKMaster(Guid APKMaster)
+        {
+            return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.APKMaster == APKMaster));
+        }
+        public async Task<bool> DeleteData(ST2131 data, CancellationToken cancellationToken = default)
+        {
+           return await DeleteData(new List<ST2131> { data }, cancellationToken);
+        }
+        public async Task<bool> DeleteData(IEnumerable<ST2131> datas, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
+                {
+                    await _businessContext.BulkDeleteAsync(datas);
+                    await _businessContext.UnitOfWork.CompleteAsync();
+                    return true;
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }
