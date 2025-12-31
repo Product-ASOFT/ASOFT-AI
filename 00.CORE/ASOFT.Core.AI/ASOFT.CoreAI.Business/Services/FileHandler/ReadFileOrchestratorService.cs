@@ -55,7 +55,7 @@ namespace ASOFT.CoreAI.Business
                 APK = Guid.NewGuid(),
                 APKMaster = request.BEMF2000ViewModel.APK,
                 AttachName = "Thông tin kết quả đối chiếu",
-                CreateUserID = request.UserId,
+                CreateUserID = request.BEMF2000ViewModel.CreateUserID,
                 CreateDate = DateTime.Now,
                 DivisionID = request.BEMF2000ViewModel.DivisionID,
                 StatusProcess = StatusProcessCompareOCR.PROCESSING.ToString(),

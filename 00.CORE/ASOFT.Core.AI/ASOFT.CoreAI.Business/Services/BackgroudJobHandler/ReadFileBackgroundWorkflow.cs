@@ -38,7 +38,6 @@ namespace ASOFT.CoreAI.Business
             _logger = logger;
             _agentCompareService = agentCompareService;
         }
-
         public async Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptContent, CancellationToken ct = default)
         {
             var entity = await _ST2131.GetData(ST2131APK);
@@ -46,104 +45,163 @@ namespace ASOFT.CoreAI.Business
 
             try
             {
-                if (request == null) throw new Exception("Không tìm thấy request.");
+                ValidateRequest(request);
 
-                // OCR
-                var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel!.APK);
+                // =========================
+                // 1. OCR
+                // =========================
+                var (ocrText, ocrResults) = await _ocrService.ReadAsync(
+                    request.AttachFiles!,
+                    request.BEMF2000ViewModel!.APK
+                );
+
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
-                // Training
-                var trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
 
-                // Compare
-                var aiResult = await _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
+                // =========================
+                // 2. Training data
+                // =========================
+                var trainingData = await _trainingService.GetTrainingDataAsync(
+                    request,
+                    AgentKeys.BEM_AGENT_BEMF2000
+                );
 
-                var promptReadFile = await _ST2130.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_READFILE);
-                if (promptReadFile != null && !string.IsNullOrWhiteSpace(promptReadFile.PromptContent))
-                {
-                    await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent);
-                }
-                
-                // Lấy kết quả tổng hợp từ AI
-                var criteriaSummaryResults = await _agentCompareService.SummaryResultJson(aiResult);
-                var criteriaList = criteriaSummaryResults?.Criteria?.ToList();
+                // =========================
+                // 3. Compare AI
+                // =========================
+                var aiResult = await _compareService.CompareAsync(
+                    request,
+                    promptContent,
+                    ocrText,
+                    ocrResults,
+                    trainingData
+                );
 
-                if (criteriaList == null || criteriaList.Count == 0)
-                    return; // Không có gì để xử lý
+                // =========================
+                // 4. Format OCR Text (nếu có prompt)
+                // =========================
+                await FormatOCRIfNeeded(aiResult, entity);
 
-                // Update kết quả
-                entity.TextContentOCR = ocrText;
-                entity.AttachID = request.AttachFiles!.Select(x => x.AttachID).FirstOrDefault();
-                entity.TextContentAI = !string.IsNullOrWhiteSpace(aiResult) ? aiResult : "Không có kết quả đối chiếu";
-                entity.StatusProcess = StatusProcessCompareOCR.COMPLETED.ToString();
+                // =========================
+                // 5. Parse & xử lý kết quả tiêu chí
+                // =========================
+                var criteriaList = await BuildCriteriaList(entity, request, aiResult);
+                if (!criteriaList.Any()) return;
 
-                var voucherNo = request.BEMF2000ViewModel.VoucherNo ?? string.Empty;
-                var now = DateTime.Now;
-                var statusOk = StatusResultCompare.OK.ToString();
-                var statusNg = StatusResultCompare.NG.ToString();
-                var statusBlank = StatusResultCompare.BLANK.ToString();
-
-                // Gán thông tin chung + chuẩn hóa status BLANK -> NG
-                foreach (var item in criteriaList)
-                {
-                    item.APK = Guid.NewGuid();
-                    item.APKMaster = entity.APK;
-                    item.BusinessParent = voucherNo;
-                    item.CreateDate = now;
-                    item.CreateUserID = entity.CreateUserID;
-
-                    if (item.CriteriaStatus == statusBlank)
-                    {
-                        item.CriteriaStatus = statusNg;
-                    }
-                }
-
-                // Lưu chi tiết tiêu chí
+                // =========================
+                // 6. Lưu chi tiết tiêu chí
+                // =========================
                 await _ST2136.SaveData(criteriaList);
 
-                // Lấy các tiêu chí không đạt (khác OK)
-                var failedCriteria = criteriaList.Where(x => x.CriteriaStatus != statusOk).ToList();
-                int numberCritera = criteriaList.Count();
-                if (failedCriteria.Any())
-                {
-                    var resultDetailText = string.Join(
-                        Environment.NewLine,
-                        failedCriteria.Select(x => $"Tiêu chí {x.CriteriaID}: {x.CriteriaName} - {x.CriteriaStatus}")
-                    );
-                    double numberNG = failedCriteria.Count();
-                    double percentage = 0;
-                    if (numberCritera > 0)
-                    {
-                        percentage = (numberCritera - numberNG) / numberCritera * 100;
-                    }
-                    entity.Percentage = string.Format("{0}%", percentage.ToString("0.00"));
+                // =========================
+                // 7. Tổng hợp kết quả
+                // =========================
+                UpdateCompareResult(entity, request, ocrText, aiResult, criteriaList);
 
-                    entity.TextConditionFail = resultDetailText;
-                    entity.Status = statusNg;
-                }
-                else
-                {
-                    entity.Percentage = "100%";
-                    entity.Status = statusOk;
-                }
-                // Cập nhật lại kết quả file
                 await _ST2131.UpdateData(entity);
             }
             catch (OperationCanceledException)
             {
-                entity.Status = StatusResultCompare.NG.ToString();
-                entity.Percentage = "0%";
-                entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
+                MarkFailed(entity);
                 await _ST2131.UpdateData(entity);
             }
             catch (Exception ex)
             {
-                entity.Status = StatusResultCompare.NG.ToString();
-                entity.Percentage = "0%";
-                entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
+                MarkFailed(entity);
                 await _ST2131.UpdateData(entity);
                 _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);
             }
+        }
+        private void ValidateRequest(ReadFileRequest request)
+        {
+            if (request == null)
+                throw new Exception("Không tìm thấy request.");
+        }
+        private async Task FormatOCRIfNeeded(string aiResult, ST2131 entity)
+        {
+            var promptReadFile = await _ST2130.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_READFILE);
+
+            if (!string.IsNullOrWhiteSpace(promptReadFile?.PromptContent))
+            {
+                await _agentCompareService.FormatOCRText(
+                    aiResult,
+                    entity,
+                    promptReadFile.PromptContent
+                );
+            }
+        }
+        private async Task<List<ST2136>> BuildCriteriaList(ST2131 entity, ReadFileRequest request, string aiResult)
+        {
+            var summary = await _agentCompareService.SummaryResultJson(aiResult);
+            var criteriaList = summary?.Criteria?.ToList() ?? new();
+
+            if (!criteriaList.Any()) return criteriaList;
+
+            var now = DateTime.Now;
+            var voucherNo = request.BEMF2000ViewModel?.VoucherNo ?? string.Empty;
+
+            foreach (var item in criteriaList)
+            {
+                item.APK = Guid.NewGuid();
+                item.APKMaster = entity.APK;
+                item.BusinessParent = voucherNo;
+                item.CreateDate = now;
+                item.CreateUserID = entity.CreateUserID;
+
+                // Chuẩn hóa BLANK -> NG
+                if (item.CriteriaStatus == StatusResultCompare.BLANK.ToString())
+                {
+                    item.CriteriaStatus = StatusResultCompare.NG.ToString();
+                }
+            }
+            return criteriaList;
+        }
+        private static void UpdateCompareResult(ST2131 entity, ReadFileRequest request, string ocrText, string aiResult, List<ST2136> criteriaList)
+        {
+            var statusOk = StatusResultCompare.OK.ToString();
+            var statusNg = StatusResultCompare.NG.ToString();
+
+            entity.TextContentOCR = ocrText;
+            entity.AttachID = request.AttachFiles!.Select(x => x.AttachID).FirstOrDefault();
+            entity.TextContentAI = string.IsNullOrWhiteSpace(aiResult)
+                ? "Không có kết quả đối chiếu"
+                : aiResult;
+            entity.StatusProcess = StatusProcessCompareOCR.COMPLETED.ToString();
+
+            var failedCriteria = criteriaList
+                .Where(x => x.CriteriaStatus != statusOk)
+                .ToList();
+
+            if (failedCriteria.Any())
+            {
+                entity.TextConditionFail = string.Join(
+                    Environment.NewLine,
+                    failedCriteria.Select(x =>
+                        $"Tiêu chí {x.CriteriaID}: {x.CriteriaName} - {x.CriteriaStatus}")
+                );
+
+                var total = criteriaList.Count;
+                var failed = failedCriteria.Count;
+                var percentage = total > 0
+                    ? (double)(total - failed) / total * 100
+                    : 0;
+
+                entity.Percentage = $"{percentage:0.00}%";
+                entity.Status = statusNg;
+            }
+            else
+            {
+                entity.TextConditionFail = string.Empty;
+                entity.Percentage = "100%";
+                entity.Status = statusOk;
+            }
+        }
+        private static void MarkFailed(ST2131 entity)
+        {
+            entity.TextConditionFail = string.Empty;
+            entity.Status = StatusResultCompare.NG.ToString();
+            entity.Percentage = "0%";
+            entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
         }
     }
 }
