@@ -95,7 +95,6 @@ namespace ASOFT.CoreAI.Business
 
             return aiText.Substring(startIndex);
         }
-
         public static string StripOutsideJson(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -134,7 +133,6 @@ namespace ASOFT.CoreAI.Business
             await ConvertAiJsonToST2137_2138(resultJson, sT2131);
             return resultJson;
         }
-
         public async Task ConvertAiJsonToST2137_2138(string aiJson, ST2131 sT2131)
         {
             var result = JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson);
