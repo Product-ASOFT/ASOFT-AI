@@ -29,7 +29,7 @@ namespace ASOFT.CoreAI.Entities
 
     public class AiSectionDetail
     {
-        public int OrderNo { get; set; }
+        public string OrderNo { get; set; }
         public string? VoucherNo { get; set; }
         public string? VoucherName { get; set; }
         public decimal? Amount { get; set; }
@@ -44,14 +44,15 @@ namespace ASOFT.CoreAI.Entities
         public DateTime? AcceptanceDate { get; set; }
         public DateTime? HandoverDate { get; set; }
         public DateTime? PackingListDate { get; set; }
+        public DateTime? BillDate { get; set; }
         public string? RingiNo { get; set; }
         public string? ContractNo { get; set; }
         public string? DeclarationNo { get; set; }
         public string? BillNo { get; set; }
         public string? PackingListNo { get; set; }
+        public string? Description { get; set; }
         public string? GoodsName { get; set; }
         public decimal? Quantity { get; set; }
-        public string? ExtraJson { get; set; }
-        public string? OCRRawText { get; set; }
+        public string? ApprovalLast { get; set; }
     }
 }

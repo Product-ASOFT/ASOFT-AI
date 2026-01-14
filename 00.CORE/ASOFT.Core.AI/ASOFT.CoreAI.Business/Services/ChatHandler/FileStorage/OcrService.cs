@@ -77,54 +77,51 @@ namespace ASOFT.CoreAI.Business
             var useLocal = await _settings.GetIsUseServiceReadOCRAsync();
             int order = 0;
 
-            await Parallel.ForEachAsync(files, async (attach, ct) =>
-            {
-                //    foreach (var attach in files)
-                //{
-                var result = InitResultModel(attach, Interlocked.Increment(ref order));
-                if (!File.Exists(result.FilePath))
+
+            await Parallel.ForEachAsync( files,new ParallelOptions { MaxDegreeOfParallelism = 7 },
+                async (attach, ct) =>
                 {
+                    var result = InitResultModel(attach, Interlocked.Increment(ref order));
+
+                    if (!File.Exists(result.FilePath))
+                    {
+                        results.Add(result);
+                        return;
+                    }
+
+                    var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
+                    if (string.IsNullOrEmpty(mimeType))
+                    {
+                        results.Add(result);
+                        return;
+                    }
+
+                    var fileInfo = new FileInfo(result.FilePath);
+                    var cacheKey = $"FileCache_{apk}:{fileInfo.Name.ToLowerInvariant()}:{fileInfo.Length}";
+
+                    var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
+                    if (!string.IsNullOrEmpty(cached))
+                    {
+                        result.TextContent = cached;
+                        results.Add(result);
+                        return;
+                    }
+
+                    try
+                    {
+                        result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
+                        if (!string.IsNullOrWhiteSpace(result.TextContent))
+                            await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.HasErrorReadFile = true;
+                        result.TextContent = "[ERROR] " + ex.Message;
+                    }
+
                     results.Add(result);
-                    return;
-                    //continue;
-                }
+                });
 
-                var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
-                if (string.IsNullOrEmpty(mimeType))
-                {
-                    results.Add(result);
-                    return;
-                    //continue;
-                }
-
-                var fileInfo = new FileInfo(result.FilePath);
-                var fileName = string.Concat(Path.GetFileNameWithoutExtension(fileInfo.FullName), fileInfo.Extension);
-                var cacheKey = $"FileCache_{apk}:{fileName.ToLowerInvariant()}:{fileInfo.Length}";
-
-                // Try cache
-                var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
-                if (!string.IsNullOrEmpty(cached))
-                {
-                    result.TextContent = cached;
-                    results.Add(result);
-                    return;
-                    //continue;
-                }
-
-                try
-                {
-                    result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
-                    if (!string.IsNullOrWhiteSpace(result.TextContent))
-                        await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey);
-                }
-                catch (Exception ex)
-                {
-                    result.HasErrorReadFile = false;
-                    result.TextContent = "[ERROR] " + ex.Message;
-                }
-
-                results.Add(result);
-            });
             //}
 
             return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
