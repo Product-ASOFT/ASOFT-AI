@@ -35,7 +35,7 @@ namespace ASOFT.CoreAI.Business
             List<ResultReadFileModel>? ocrResults,
             IEnumerable<RedisearchResultItem> trainingData)
         {
-            request.Question = "Hãy đối chiếu dữ liệu đọc được từ OCR với dữ liệu ở người dùng cung cấp (datas) cho tôi";
+            request.Question = "Hãy đối chiếu dữ liệu do người dùng cung cấp theo các tiêu chí dưới đây";
             var useLocal = await _settings.GetIsUseServiceReadOCRAsync();
             var detail = request!.BEMF2000ViewModel ?? new BEMF2000ViewModel();
 
@@ -95,10 +95,63 @@ namespace ASOFT.CoreAI.Business
 
             return aiText.Substring(startIndex);
         }
-        public static string StripOutsideJson(string input)
+        public async Task<string> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent)
+        {
+            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContent, ocrText).ConfigureAwait(false);
+            if (resultJson == null)
+                return string.Empty;
+            string resultJsonFormat = StripOutsideJson(resultJson);
+            await ConvertAiJsonToST2137_2138(resultJsonFormat, sT2131);
+            return resultJson;
+        }
+        private bool IsValidJson(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            input = input.Trim();
+
+            // Trường hợp JSON bị bọc trong dấu "
+            if ((input.StartsWith("\"") && input.EndsWith("\"")) ||
+                (input.StartsWith("'") && input.EndsWith("'")))
+            {
+                try
+                {
+                    input = System.Text.Json.JsonSerializer.Deserialize<string>(input);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            if (string.IsNullOrEmpty(input))
+                return false;
+            try
+            {
+                using var doc = JsonDocument.Parse(input,
+                    new JsonDocumentOptions
+                    {
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip
+                    });
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public string StripOutsideJson(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
                 return string.Empty;
+
+            input = input.Trim();
+
+            if (IsValidJson(input))
+                return input;
 
             int start = input.IndexOf('{');
             if (start == -1)
@@ -110,7 +163,7 @@ namespace ASOFT.CoreAI.Business
             for (int i = start; i < input.Length; i++)
             {
                 if (input[i] == '{') bracket++;
-                if (input[i] == '}') bracket--;
+                else if (input[i] == '}') bracket--;
 
                 if (bracket == 0)
                 {
@@ -122,17 +175,11 @@ namespace ASOFT.CoreAI.Business
             if (end == -1)
                 return string.Empty;
 
-            return input.Substring(start, end - start + 1);
+            var json = input.Substring(start, end - start + 1);
+
+            return IsValidJson(json) ? json : string.Empty;
         }
-        public async Task<string> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent)
-        {
-            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContent, ocrText).ConfigureAwait(false);
-            if (resultJson == null)
-                return string.Empty;
-            resultJson = StripOutsideJson(resultJson);
-            await ConvertAiJsonToST2137_2138(resultJson, sT2131);
-            return resultJson;
-        }
+
         public async Task ConvertAiJsonToST2137_2138(string aiJson, ST2131 sT2131)
         {
             var result = JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson);
@@ -186,12 +233,14 @@ namespace ASOFT.CoreAI.Business
                         ContractNo = d.ContractNo,
                         PackingListNo = d.PackingListNo,
                         BillNo = d.BillNo,
+                        BillDate = d.BillDate,
                         DeclarationNo = d.DeclarationNo,
                         GoodsName = d.GoodsName,
                         Quantity = d.Quantity,
-                        ExtraJson = NormalizeExtraJson(d.ExtraJson),
+                        ApprovalLast = d.ApprovalLast,
                         CreateDate = DateTime.Now,
-                        CreateUserID = sT2131.CreateUserID
+                        CreateUserID = sT2131.CreateUserID,
+                        Description = d.Description,
                     };
                     details.Add(detail);
                 }

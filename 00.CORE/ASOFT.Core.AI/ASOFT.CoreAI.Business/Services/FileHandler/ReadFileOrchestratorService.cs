@@ -44,10 +44,10 @@ namespace ASOFT.CoreAI.Business
             await DeleteData(request.BEMF2000ViewModel!);
 
             // 2) (Tuỳ chọn) Kiểm tra tồn tại prompt sớm để fail fast (hoặc để workflow kiểm tra)
-            string typeCompare = GetAgentKeyByTypeCompare(request.BEMF2000ViewModel!.PaymentRequestType);
+            string typeCompare = request.BEMF2000ViewModel!.PaymentRequestTypeID;
             var prompt = await _ST2130Queries.GetPromptByTypeCompare(AgentKeys.BEM_AGENT_BEMF2000, typeCompare);
             if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
-                return ChatHandlerHelper.CreateResponseReadFile("Không tồn tại Prompt!", false);
+                return ChatHandlerHelper.CreateResponseReadFile("Chưa thiết lập thông tin prompt!", false);
 
             // 3) Tạo record PROCESSING
             var entity = new ST2131
@@ -69,7 +69,7 @@ namespace ASOFT.CoreAI.Business
             await _jobQueue.EnqueueAsync(new ReadFileJob(entity.APK, request, prompt.PromptContent));
 
             // 5) Trả về ngay cho UI
-            return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {entity.APK}. Hệ thống đang xử lý nền.", true);
+            return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {request.BEMF2000ViewModel.VoucherNo}. Hệ thống đang xử lý nền.", true);
         }
         // Hàm đọc file từ chatbot
         public async Task<List<ResultReadFileModel>> ReadFileFromChatBot(List<string> FilePaths, Guid APK)
@@ -120,7 +120,7 @@ namespace ASOFT.CoreAI.Business
             if (request.BEMF2000ViewModel == null)
                 return (false, "Chưa có thông tin về phiếu DNTT");
 
-            if (string.IsNullOrWhiteSpace(request.BEMF2000ViewModel.PaymentRequestType))
+            if (string.IsNullOrWhiteSpace(request.BEMF2000ViewModel.PaymentRequestTypeID))
                 return (false, "Chưa có thông tin về loại phiếu DNTT cần đối chiếu!");
 
             if (request.AttachFiles == null || !request.AttachFiles.Any(x => !string.IsNullOrWhiteSpace(x.AttachURL)))
@@ -149,6 +149,6 @@ namespace ASOFT.CoreAI.Business
             }
             return;
         }
-        
+
     }
 }

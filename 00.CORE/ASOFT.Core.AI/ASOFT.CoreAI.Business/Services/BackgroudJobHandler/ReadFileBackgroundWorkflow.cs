@@ -46,59 +46,41 @@ namespace ASOFT.CoreAI.Business
             try
             {
                 ValidateRequest(request);
-
-                // =========================
                 // 1. OCR
-                // =========================
-                var (ocrText, ocrResults) = await _ocrService.ReadAsync(
-                    request.AttachFiles!,
-                    request.BEMF2000ViewModel!.APK
-                );
+                var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel!.APK);
 
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
 
-                // =========================
                 // 2. Training data
-                // =========================
-                var trainingData = await _trainingService.GetTrainingDataAsync(
-                    request,
-                    AgentKeys.BEM_AGENT_BEMF2000
-                );
+                var trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
 
-                // =========================
                 // 3. Compare AI
-                // =========================
-                var aiResult = await _compareService.CompareAsync(
-                    request,
-                    promptContent,
-                    ocrText,
-                    ocrResults,
-                    trainingData
-                );
+                // Khởi tạo task song song
+                Task<string> compareTask = _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
 
-                // =========================
-                // 4. Format OCR Text (nếu có prompt)
-                // =========================
-                await FormatOCRIfNeeded(aiResult, entity);
+                Task formatTask = string.IsNullOrWhiteSpace(promptContent) ? Task.CompletedTask : FormatOCRIfNeeded(ocrText, entity);
 
-                // =========================
-                // 5. Parse & xử lý kết quả tiêu chí
-                // =========================
+                // Chờ cả 2 hoàn thành
+                await Task.WhenAll(compareTask, formatTask);
+
+                // Lấy kết quả AI
+                string aiResult = await compareTask;
+
+                // 4. Parse & xử lý kết quả tiêu chí
                 var criteriaList = await BuildCriteriaList(entity, request, aiResult);
                 if (!criteriaList.Any()) return;
 
-                // =========================
-                // 6. Lưu chi tiết tiêu chí
-                // =========================
+                // 5. Lưu chi tiết tiêu chí
                 await _ST2136.SaveData(criteriaList);
 
-                // =========================
-                // 7. Tổng hợp kết quả
-                // =========================
+                // 6. Tổng hợp kết quả
                 UpdateCompareResult(entity, request, ocrText, aiResult, criteriaList);
 
                 await _ST2131.UpdateData(entity);
+
+                //// 7. Format OCR Text (nếu có prompt)
+                //await FormatOCRIfNeeded(ocrText, entity);
             }
             catch (OperationCanceledException)
             {

@@ -101,6 +101,6 @@
                 return string.Empty;
             }
         }
-        public string PaymentRequestType { get; set; } = null!;
+        public string PaymentRequestTypeID { get; set; }
     }
 }
