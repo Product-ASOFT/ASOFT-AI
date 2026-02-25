@@ -91,7 +91,21 @@ namespace ASOFT.CoreAI.Business
             }
             return result;
         }
+        public async Task<double> GetConfigDoubleAsync(string key, int defaultValue = 5)
+        {
+            double result = defaultValue;
 
+            string raw = await GetConfigStringAsync(key);
+            if (!string.IsNullOrEmpty(raw))
+            {
+                double parsed;
+                if (double.TryParse(raw, out parsed))
+                {
+                    result = parsed;
+                }
+            }
+            return result;
+        }
         // Lấy giá trị cấu hình dạng boolean từ bảng ONT1021, nếu không có thì lấy từ appsettings.json
         public async Task<bool> GetConfigBoolAsync(string key, bool defaultValue = false)
         {

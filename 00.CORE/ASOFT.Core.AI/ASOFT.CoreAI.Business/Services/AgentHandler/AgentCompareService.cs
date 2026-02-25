@@ -1,11 +1,14 @@
 ﻿using ASOFT.A00.Entities;
+using ASOFT.Core.Common.InjectionChecker;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
+using JsonException = Newtonsoft.Json.JsonException;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -15,17 +18,20 @@ namespace ASOFT.CoreAI.Business
         private readonly SettingsManagerService _settings;
         private readonly IST2137Queries _ST2137Queries;
         private readonly IST2138Queries _ST2138Queries;
+        private readonly ILogger _logger;
 
         public AgentCompareService(AgentPromptService agentPromptService,
             SettingsManagerService settings,
             IST2137Queries ST2137Queries,
-            IST2138Queries ST2138Queries)
+            IST2138Queries ST2138Queries,
+            ILoggerFactory logger)
         {
             _agentPromptService = agentPromptService;
             _agentPromptService = agentPromptService;
             _settings = settings;
             _ST2137Queries = ST2137Queries;
             _ST2138Queries = ST2138Queries;
+            _logger = Checker.NotNull(logger, nameof(logger)).CreateLogger(GetType());
         }
 
         public async Task<string> CompareAsync(
@@ -65,21 +71,60 @@ namespace ASOFT.CoreAI.Business
 
         public async Task<CriteriaSummaryResult?> SummaryResultJson(string result)
         {
+            // 1. Cắt block summary nếu có
             result = ExtractSummaryBlock(result);
-            var promptContent = await _agentPromptService.GetPromptTemplate(AgentKeys.BEM_AGENT_BEMF2000_SUMMARY);
-            if (promptContent == null)
+
+            // 2. Lấy prompt
+            var promptContent =
+                await _agentPromptService.GetPromptTemplate(
+                    AgentKeys.BEM_AGENT_BEMF2000_SUMMARY);
+
+            if (string.IsNullOrWhiteSpace(promptContent))
                 return null;
-            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContent, result).ConfigureAwait(false);
-            if (resultJson == null)
+
+            // 3. Gửi prompt cho LLM
+            var resultJson =
+                await _agentPromptService
+                    .SendPromptWithSumaryResultAsync(promptContent, result)
+                    .ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(resultJson))
                 return null;
+
+            // 4. Strip text ngoài JSON (```json ... ```, text giải thích...)
             var resultJsonFormat = StripOutsideJson(resultJson);
-            //var resultJsonFormat = StripOutsideJson(result);
-            var objectResult = System.Text.Json.JsonSerializer.Deserialize<CriteriaSummaryResult>(resultJsonFormat,
-            new JsonSerializerOptions
+
+            if (string.IsNullOrWhiteSpace(resultJsonFormat))
+                return null;
+
+            resultJsonFormat = resultJsonFormat.Trim();
+
+            // 5. CHECK CÓ PHẢI JSON KHÔNG
+            if (!IsValidJson(resultJsonFormat))
             {
-                PropertyNameCaseInsensitive = true
-            });
-            return objectResult!;
+                // Log để bắt bệnh LLM
+                 _logger.LogError("LLM trả dữ liệu không phải JSON: {Raw}", resultJsonFormat);
+                return null;
+            }
+
+            // 6. Deserialize an toàn
+            try
+            {
+                var objectResult =
+                    System.Text.Json.JsonSerializer.Deserialize<CriteriaSummaryResult>(
+                        resultJsonFormat,
+                        new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+
+                return objectResult;
+            }
+            catch (JsonException ex)
+            {
+                 _logger.LogError(ex, "Lỗi parse JSON: {Json}", resultJsonFormat);
+                return null;
+            }
         }
 
         private static string ExtractSummaryBlock(string aiText)
@@ -102,7 +147,7 @@ namespace ASOFT.CoreAI.Business
                 return string.Empty;
             string resultJsonFormat = StripOutsideJson(resultJson);
             await ConvertAiJsonToST2137_2138(resultJsonFormat, sT2131);
-            return resultJson;
+            return resultJsonFormat;
         }
         private bool IsValidJson(string input)
         {
@@ -259,21 +304,6 @@ namespace ASOFT.CoreAI.Business
                 throw;
             }
 
-        }
-        private string? NormalizeExtraJson(string? extraJson)
-        {
-            if (string.IsNullOrWhiteSpace(extraJson))
-                return null;
-
-            try
-            {
-                var token = JToken.Parse(extraJson);
-                return token.ToString(Formatting.None);
-            }
-            catch
-            {
-                return extraJson;
-            }
         }
     }
 }

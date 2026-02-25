@@ -770,7 +770,7 @@ namespace ASOFT.CoreAI.Business
         *Chỉ dùng nội bộ để phân tích, không trình bày lại trừ khi được hỏi.*
         {{#if trainingData}}
         {{#each trainingData}}
-        - {{this.text}}
+        - {{this.Text}}
         {{/each}}
         {{else}}
         - (Không có dữ liệu huấn luyện được cung cấp)

@@ -14,7 +14,7 @@ namespace ASOFT.CoreAI.Business;
 /// <summary>
 /// Represents a Handlebars prompt template.
 /// </summary>
-internal sealed class HandlebarsPromptTemplate : IPromptTemplate
+public sealed class HandlebarsPromptTemplate : IPromptTemplate
 {
     /// <summary>
     /// Default options for built-in Handlebars helpers.
@@ -28,7 +28,7 @@ internal sealed class HandlebarsPromptTemplate : IPromptTemplate
     /// <param name="promptConfig">Prompt template configuration</param>
     /// <param name="allowDangerouslySetContent">Flag indicating whether to allow potentially dangerous content to be inserted into the prompt</param>
     /// <param name="options">Handlebars prompt template options</param>
-    internal HandlebarsPromptTemplate(PromptTemplateConfig promptConfig, bool allowDangerouslySetContent = false, HandlebarsPromptTemplateOptions? options = null)
+    public HandlebarsPromptTemplate(PromptTemplateConfig promptConfig, bool allowDangerouslySetContent = false, HandlebarsPromptTemplateOptions? options = null)
     {
         this._allowDangerouslySetContent = allowDangerouslySetContent;
         this._loggerFactory ??= NullLoggerFactory.Instance;

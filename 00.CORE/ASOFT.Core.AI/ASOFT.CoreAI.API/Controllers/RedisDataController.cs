@@ -51,7 +51,6 @@ namespace ASOFT.CoreAI.API.Controllers
         [ActionName("CheckModelAIConfig")]
         public async Task<ChatResponseModel> CheckModelAIConfigAsync()
         {
-
             return await _settings.CheckConfigModelAI();
         }
         [HttpPost]

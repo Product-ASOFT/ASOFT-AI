@@ -1,6 +1,7 @@
 ﻿using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Business.Services.PromptHandler;
+using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Microsoft.OpenApi.Exceptions;
@@ -14,11 +15,17 @@ namespace ASOFT.CoreAI.Business
     {
         private IST2130Queries _agentPromptQueries;
         private readonly Kernel _kernel;
+        private SettingsManagerService _settingsManagerService;
+        private IChatResponseHandlerService _chatResponseHandlerService;
 
-        public AgentPromptService(IST2130Queries agentPromptQueries, Kernel kernel)
+        public AgentPromptService(IST2130Queries agentPromptQueries,
+            Kernel kernel, SettingsManagerService settingsManagerService,
+            IChatResponseHandlerService chatResponseHandlerService)
         {
             _agentPromptQueries = agentPromptQueries;
             _kernel = kernel;
+            _settingsManagerService = settingsManagerService;
+            _chatResponseHandlerService = chatResponseHandlerService;
         }
 
         public async Task<string> GetPromptTemplate(string agentKey)
@@ -42,12 +49,13 @@ namespace ASOFT.CoreAI.Business
         {
             try
             {
+                string question = request.Question ?? string.Empty;
                 var arguments = new KernelArguments
                 {
                     ["UserId"] = request.UserId,
                     ["UserName"] = request.UserName,
                     ["CurrentTime"] = DateTime.Now,
-                    ["question"] = request.Question,
+                    ["question"] = question,
                     ["ocrFiles"] = awnserOCRs,
                     ["datas"] = datas,
                     ["details"] = !details.Any() ? null : details.Select(x => new
@@ -59,10 +67,7 @@ namespace ASOFT.CoreAI.Business
                         x.RingiNo, // Số Ringi
                     }),
                     ["evaluationText"] = resultCreateFile,
-                    ["trainingData"] = trainingData.Where(x => !string.IsNullOrEmpty(x.Text)).Select(x => new
-                    {
-                        x.Text,
-                    }),
+
                     ["chatHistory"] = chatHistory.Select(x => new
                     {
                         x.ResponseText,
@@ -71,7 +76,14 @@ namespace ASOFT.CoreAI.Business
                         x.UserID
                     })
                 };
-                return await HandleChatWithModelAI(arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+                if (trainingData != null)
+                {
+                    arguments["trainingData"] = trainingData.Where(x => !string.IsNullOrEmpty(x.Text)).Select(x => new
+                    {
+                        x.Text,
+                    });
+                }
+                return await HandleChatWithModelAI(question, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -90,12 +102,13 @@ namespace ASOFT.CoreAI.Business
         {
             try
             {
+                string question = request.Question ?? string.Empty;
                 var arguments = new KernelArguments
                 {
                     ["UserId"] = request.UserId,
                     ["UserName"] = request.UserName,
                     ["CurrentTime"] = DateTime.Now,
-                    ["question"] = request.Question,
+                    ["question"] = question,
                     ["content"] = awnserOCRs,
                     ["datas"] = datas,
                     ["details"] = !details.Any() ? null : details.Select(x => new
@@ -107,10 +120,6 @@ namespace ASOFT.CoreAI.Business
                         x.RingiNo, // Số Ringi
                     }),
                     ["evaluationText"] = resultCreateFile,
-                    ["trainingData"] = trainingData.Where(x => !string.IsNullOrEmpty(x.Text)).Select(x => new
-                    {
-                        x.Text,
-                    }),
                     ["chatHistory"] = chatHistory.Select(x => new
                     {
                         x.ResponseText,
@@ -119,7 +128,14 @@ namespace ASOFT.CoreAI.Business
                         x.UserID
                     })
                 };
-                return await HandleChatWithModelAI(arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+                if (trainingData != null)
+                {
+                    arguments["trainingData"] = trainingData.Where(x => !string.IsNullOrEmpty(x.Text)).Select(x => new
+                    {
+                        x.Text,
+                    });
+                }
+                return await HandleChatWithModelAI(question, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -160,7 +176,7 @@ namespace ASOFT.CoreAI.Business
                     x.UserID
                 })
             };
-            return await HandleChatWithModelAI(arguments, request.IsStreaming, promptTemplate, cancellationToken).ConfigureAwait(false);
+            return await HandleChatWithModelAI(request.Question, arguments, request.IsStreaming, promptTemplate, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<string> SendPromptWithDocsAsync<T>(
@@ -190,44 +206,61 @@ namespace ASOFT.CoreAI.Business
                     x.UserID
                 })
             };
-            return await HandleChatWithModelAI(arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+            return await HandleChatWithModelAI(request.Question, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
         }
 
-        private async Task<string> HandleChatWithModelAI(KernelArguments arguments, bool isStreaming, string promptTemplate, CancellationToken cancellationToken)
+        private async Task<string> HandleChatWithModelAI(string tileDefault, KernelArguments arguments, bool isStreaming, string promptTemplate, CancellationToken cancellationToken)
         {
+            var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
+            string resultResponse = string.Empty;
             if (isStreaming)
             {
-                var resultStream = _kernel.InvokePromptStreamingAsync(
-                    promptTemplate,
-                    arguments,
-                    "handlebars",
-                    new HandlebarsPromptTemplateFactory(),
-                    cancellationToken);
+                if (configLLM.IsUse)
+                {
+                    var response = await _chatResponseHandlerService.InvokePromptAsync(tileDefault, promptTemplate, arguments);
+                    resultResponse = response.Text ?? string.Empty;
+                }
+                else
+                {
+                    var resultStream = _kernel.InvokePromptStreamingAsync(
+                   promptTemplate,
+                   arguments,
+                   "handlebars",
+                   new HandlebarsPromptTemplateFactory(),
+                   cancellationToken);
 
-                var sb = new StringBuilder();
-                await foreach (var msg in resultStream)
-                    sb.Append(msg);
-
-                return sb.ToString();
+                    var sb = new StringBuilder();
+                    await foreach (var msg in resultStream)
+                        sb.Append(msg);
+                    resultResponse = sb.ToString();
+                }
             }
             else
             {
                 try
                 {
-                    var result = await _kernel.InvokePromptAsync(
-                    promptTemplate,
-                    arguments,
-                    "handlebars",
-                    new HandlebarsPromptTemplateFactory(),
-                    cancellationToken);
-
-                    return result.ToString();
+                    if (configLLM.IsUse)
+                    {
+                        var response = await _chatResponseHandlerService.InvokePromptAsync(tileDefault, promptTemplate, arguments);
+                        resultResponse = response.Text ?? string.Empty;
+                    }
+                    else
+                    {
+                        var result = await _kernel.InvokePromptAsync(
+                        promptTemplate,
+                        arguments,
+                        "handlebars",
+                        new HandlebarsPromptTemplateFactory(),
+                        cancellationToken);
+                        resultResponse = result.ToString();
+                    }
                 }
                 catch (Exception)
                 {
                     throw;
                 }
             }
+            return resultResponse;
         }
 
         public async Task<string> SendPromptWithSumaryResultAsync(string promptTemplate, string result)
@@ -236,7 +269,8 @@ namespace ASOFT.CoreAI.Business
             {
                 ["result"] = result,
             };
-            return await HandleChatWithModelAI(arguments, false, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+            string titleDefault = "Bạn là trợ lý AI tóm tắt và tổng hợp kết quả.";
+            return await HandleChatWithModelAI(titleDefault, arguments, false, promptTemplate, CancellationToken.None).ConfigureAwait(false);
         }
 
         #endregion Xử lý gửi câu hỏi,lịch sử chat, thông tin training, thông tin dữ liệu từ Database sang ModelAI

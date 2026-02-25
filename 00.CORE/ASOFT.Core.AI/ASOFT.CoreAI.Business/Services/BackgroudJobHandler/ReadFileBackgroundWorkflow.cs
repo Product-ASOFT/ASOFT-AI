@@ -18,6 +18,7 @@ namespace ASOFT.CoreAI.Business
         private readonly AgentCompareService _compareService;
         private readonly ILogger<ReadFileBackgroundWorkflow> _logger;
         private readonly AgentCompareService _agentCompareService;
+        private readonly SettingsManagerService _settingsManagerService;
 
         public ReadFileBackgroundWorkflow(
             IST2131Queries ST2131,
@@ -27,7 +28,8 @@ namespace ASOFT.CoreAI.Business
             ITrainingDataService trainingService,
             AgentCompareService compareService,
             ILogger<ReadFileBackgroundWorkflow> logger,
-            AgentCompareService agentCompareService)
+            AgentCompareService agentCompareService,
+            SettingsManagerService settingsManagerService)
         {
             _ST2131 = ST2131;
             _ST2130 = ST2130;
@@ -37,6 +39,7 @@ namespace ASOFT.CoreAI.Business
             _compareService = compareService;
             _logger = logger;
             _agentCompareService = agentCompareService;
+            _settingsManagerService = settingsManagerService;
         }
         public async Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptContent, CancellationToken ct = default)
         {
@@ -53,9 +56,15 @@ namespace ASOFT.CoreAI.Business
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
 
                 // 2. Training data
-                var trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
+                var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
+                IEnumerable<RedisearchResultItem>? trainingData = null;
+                if (configLLM == null || configLLM.IsUse == false)
+                {
+                    trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
+                }
+                //string aiResult = await _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
 
-                // 3. Compare AI
+                #region 3. Compare AI comment lại tiến trình xử lý song song
                 // Khởi tạo task song song
                 Task<string> compareTask = _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
 
@@ -64,13 +73,20 @@ namespace ASOFT.CoreAI.Business
                 // Chờ cả 2 hoàn thành
                 await Task.WhenAll(compareTask, formatTask);
 
-                // Lấy kết quả AI
+                //Lấy kết quả AI
                 string aiResult = await compareTask;
-
+                #endregion
+                entity.TextContentOCR = ocrText;
+                entity.TextContentAI = aiResult;
                 // 4. Parse & xử lý kết quả tiêu chí
                 var criteriaList = await BuildCriteriaList(entity, request, aiResult);
-                if (!criteriaList.Any()) return;
-
+                if (!criteriaList.Any())
+                {
+                    _logger.LogError("Không có kết quả được tổng hợp");
+                    MarkFailed(entity);
+                    await _ST2131.UpdateData(entity);
+                    return;
+                }
                 // 5. Lưu chi tiết tiêu chí
                 await _ST2136.SaveData(criteriaList);
 
@@ -79,8 +95,8 @@ namespace ASOFT.CoreAI.Business
 
                 await _ST2131.UpdateData(entity);
 
-                //// 7. Format OCR Text (nếu có prompt)
-                //await FormatOCRIfNeeded(ocrText, entity);
+                //7.Format OCR Text(nếu có prompt)
+                await FormatOCRIfNeeded(ocrText, entity);
             }
             catch (OperationCanceledException)
             {
@@ -105,11 +121,7 @@ namespace ASOFT.CoreAI.Business
 
             if (!string.IsNullOrWhiteSpace(promptReadFile?.PromptContent))
             {
-                await _agentCompareService.FormatOCRText(
-                    aiResult,
-                    entity,
-                    promptReadFile.PromptContent
-                );
+                await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent);
             }
         }
         private async Task<List<ST2136>> BuildCriteriaList(ST2131 entity, ReadFileRequest request, string aiResult)
@@ -158,15 +170,11 @@ namespace ASOFT.CoreAI.Business
             {
                 entity.TextConditionFail = string.Join(
                     Environment.NewLine,
-                    failedCriteria.Select(x =>
-                        $"Tiêu chí {x.CriteriaID}: {x.CriteriaName} - {x.CriteriaStatus}")
-                );
+                    failedCriteria.Select(x => $"Tiêu chí {x.CriteriaID}: {x.CriteriaName} - {x.CriteriaStatus}"));
 
                 var total = criteriaList.Count;
                 var failed = failedCriteria.Count;
-                var percentage = total > 0
-                    ? (double)(total - failed) / total * 100
-                    : 0;
+                var percentage = total > 0 ? (double)(total - failed) / total * 100 : 0;
 
                 entity.Percentage = $"{percentage:0.00}%";
                 entity.Status = statusNg;

@@ -23,16 +23,20 @@ namespace ASOFT.CoreAI.API.Controllers
         private readonly Kernel _kernel;
         private IST2130Queries _agentPromptQueries;
         private IChatHistoryHandler _chatHistoryHandler;
+        private IChatResponseHandlerService _chatResponseHandlerService;
+        private SettingsManagerService _settingsManagerService;
 
         public AgentCompletionsController(ChatCompletionAgent agent, Kernel kernel,
-            IST2130Queries agentPromptQueries,
-            IChatHistoryHandler chatHistoryHandler, AgentManagerService agentManager)
+            IST2130Queries agentPromptQueries, SettingsManagerService settingsManagerService,
+            IChatHistoryHandler chatHistoryHandler, AgentManagerService agentManager, IChatResponseHandlerService chatResponseHandlerService)
         {
             this._agent = agent;
             this._chatHistory = [];
             this._kernel = kernel;
             this._agentPromptQueries = agentPromptQueries;
             _chatHistoryHandler = chatHistoryHandler;
+            _chatResponseHandlerService = chatResponseHandlerService;
+            _settingsManagerService = settingsManagerService;
         }
 
         // Gọi API xử lý chat
@@ -52,7 +56,6 @@ namespace ASOFT.CoreAI.API.Controllers
             {
                 ["question"] = request.Question
             };
-
             #region tạo thông tin request cho lịch sử chat
 
             string typeChat = EnumConstants.TypeChat.Normal.ToString();
@@ -86,27 +89,37 @@ namespace ASOFT.CoreAI.API.Controllers
 
             requestCompletion.ChatHistory.AddUserMessage(request.Question);
             string responseMessage = string.Empty;
-            var sb = new StringBuilder();
-            if (request.IsStreaming)
-            {
-                var streamingMessages = this.CompleteSteamingAsync(requestCompletion.ChatHistory, arguments, cancellationToken);
 
-                await foreach (var messageContent in streamingMessages)
-                {
-                    sb.Append(messageContent.Content);
-                }
-                responseMessage = sb.ToString();
+            var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
+            if (configLLM != null && configLLM.IsUse)
+            {
+                string titleDefault = "Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
+                var resultResponse = await _chatResponseHandlerService.InvokeAsync(titleDefault, request.Question);
+                responseMessage = resultResponse.Text ?? string.Empty;
             }
             else
             {
-                var chatMessageContents = this.CompleteAsync(requestCompletion.ChatHistory, arguments, cancellationToken);
-                await foreach (var messageContent in chatMessageContents)
+                var sb = new StringBuilder();
+                if (request.IsStreaming)
                 {
-                    sb.Append(messageContent.Content);
-                }
-                responseMessage = sb.ToString();
-            }
+                    var streamingMessages = this.CompleteSteamingAsync(requestCompletion.ChatHistory, arguments, cancellationToken);
 
+                    await foreach (var messageContent in streamingMessages)
+                    {
+                        sb.Append(messageContent.Content);
+                    }
+                    responseMessage = sb.ToString();
+                }
+                else
+                {
+                    var chatMessageContents = this.CompleteAsync(requestCompletion.ChatHistory, arguments, cancellationToken);
+                    await foreach (var messageContent in chatMessageContents)
+                    {
+                        sb.Append(messageContent.Content);
+                    }
+                    responseMessage = sb.ToString();
+                }
+            }
             #region Lưu câu trả lời vào Database
 
             Guid chatSessionID = Guid.Empty;
@@ -194,14 +207,24 @@ namespace ASOFT.CoreAI.API.Controllers
             string responseMessage = string.Empty;
             try
             {
-                var result = await _kernel.InvokePromptAsync(
-                     promptTemplate: prompt.PromptContent,
-                     arguments: arguments,
-                     templateFormat: "handlebars",
-                     promptTemplateFactory: new HandlebarsPromptTemplateFactory(),
-                     cancellationToken: cancellationToken
-                );
-                responseMessage = result.ToString();
+                var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
+                if (configLLM != null && configLLM.IsUse)
+                {
+                    string titleDefault = " Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
+                    var result = await _chatResponseHandlerService.InvokePromptAsync(titleDefault, prompt.PromptContent, arguments);
+                    responseMessage = result.Text ?? string.Empty;
+                }
+                else
+                {
+                    var result = await _kernel.InvokePromptAsync(
+                         promptTemplate: prompt.PromptContent,
+                         arguments: arguments,
+                         templateFormat: "handlebars",
+                         promptTemplateFactory: new HandlebarsPromptTemplateFactory(),
+                         cancellationToken: cancellationToken
+                    );
+                    responseMessage = result.ToString();
+                }
             }
             catch (Exception)
             {

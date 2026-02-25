@@ -16,6 +16,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using Kernel = ASOFT.CoreAI.Abstractions.Kernel;
+using ASOFT.CoreAI.Abstractions.PromptTemplate;
 
 [assembly: HostingStartup(typeof(AIHostingStartup))]
 
@@ -111,6 +112,7 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<IAIConfigStore, AIConfigStore>();
         services.AddScoped<IRedisMemoryProvider, RedisMemoryProvider>();
         services.AddScoped<IOpenAIClientProvider, OpenAIClientProvider>();
+        services.AddScoped<IChatResponseHandlerService, ChatResponseHandlerService>();
 
         // 2. ChatCompletion (model lấy từ IAIConfigStore)
         services.AddOpenAIChatCompletion();
