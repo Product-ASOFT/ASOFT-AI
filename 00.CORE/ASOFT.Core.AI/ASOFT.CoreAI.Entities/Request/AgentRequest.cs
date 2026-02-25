@@ -25,5 +25,6 @@ namespace ASOFT.CoreAI.Entities
         public List<string>? FileNames { get; set; }
         public BEMF2000ViewModel? BEMF2000ViewModel { get; set; } = null;
         public List<BEMF2001ViewModel>? BEMF2001ViewModel { get; set; } = null;
+        public string? RoleName { get; set; }
     }
 }

@@ -77,54 +77,62 @@ namespace ASOFT.CoreAI.Business
             var useLocal = await _settings.GetIsUseServiceReadOCRAsync();
             int order = 0;
 
+            try
+            {
+                await Parallel.ForEachAsync(files, new ParallelOptions { MaxDegreeOfParallelism = 7 },
+                   async (attach, ct) =>
+                   {
+                       var result = InitResultModel(attach, Interlocked.Increment(ref order));
 
-            await Parallel.ForEachAsync( files,new ParallelOptions { MaxDegreeOfParallelism = 7 },
-                async (attach, ct) =>
-                {
-                    var result = InitResultModel(attach, Interlocked.Increment(ref order));
+                       if (!File.Exists(result.FilePath))
+                       {
+                           results.Add(result);
+                           return;
+                       }
 
-                    if (!File.Exists(result.FilePath))
-                    {
-                        results.Add(result);
-                        return;
-                    }
+                       var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
+                       if (string.IsNullOrEmpty(mimeType))
+                       {
+                           results.Add(result);
+                           return;
+                       }
 
-                    var mimeType = MimeTypesMap.GetMimeType(result.FilePath);
-                    if (string.IsNullOrEmpty(mimeType))
-                    {
-                        results.Add(result);
-                        return;
-                    }
+                       //var fileInfo = new FileInfo(result.FilePath);
+                       //var cacheKey = $"FileCache_{apk}:{fileInfo.Name.ToLowerInvariant()}:{fileInfo.Length}";
 
-                    var fileInfo = new FileInfo(result.FilePath);
-                    var cacheKey = $"FileCache_{apk}:{fileInfo.Name.ToLowerInvariant()}:{fileInfo.Length}";
+                       //var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
+                       //if (!string.IsNullOrEmpty(cached))
+                       //{
+                       //    result.TextContent = cached;
+                       //    results.Add(result);
+                       //    return;
+                       //}
 
-                    var cached = await _redis.GetFileCacheAsync(result.FilePath, cacheKey);
-                    if (!string.IsNullOrEmpty(cached))
-                    {
-                        result.TextContent = cached;
-                        results.Add(result);
-                        return;
-                    }
+                       try
+                       {
+                           result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
+                           //if (!string.IsNullOrWhiteSpace(result.TextContent))
+                           //    await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey);
+                       }
+                       catch (Exception ex)
+                       {
+                           result.HasErrorReadFile = true;
+                           result.TextContent = "[ERROR] " + ex.Message;
+                           throw new Exception("Lỗi trả về được thông tin đọc từ file đính kèm" + ex.Message);
+                       }
 
-                    try
-                    {
-                        result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
-                        if (!string.IsNullOrWhiteSpace(result.TextContent))
-                            await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey);
-                    }
-                    catch (Exception ex)
-                    {
-                        result.HasErrorReadFile = true;
-                        result.TextContent = "[ERROR] " + ex.Message;
-                    }
+                       results.Add(result);
+                   });
 
-                    results.Add(result);
-                });
+                return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
+            }
+            catch (Exception ex)
+            {
 
-            //}
+                throw new Exception("Lỗi không đọc được file đính kèm" + ex.Message);
+            }
 
-            return results.Where(x => !x.HasErrorReadFile).OrderBy(x => x.NumberOrder).ToList();
+
         }
 
         // Khởi tạo model kết quả

@@ -96,5 +96,14 @@
         public const string REDIS_DATABASE_USERNAME = "Redis:Username"; // key cấu hình tên Username Redis
         public const string REDIS_DATABASE_PASSWORD = "Redis:Password"; // key cấu hình tên Password Redis
         public const string AI_MODEL_EMBEDDING = "ModelEmbedding:ModelName"; // key cấu hình model Embedding
+        public const string AI_AI_LLM_BASEURL = "AI_LLM:BaseUrl"; // key cấu hình gọi API
+        public const string AI_AI_LLM_ISUSE = "AI_LLM:IsUse"; // key cấu hình có/không sử dụng API LLM 
+        public const string AI_AI_LLM_MAXTOKEN = "AI_LLM:MaxToken"; // key cấu hình max token
+        public const string AI_AI_LLM_TEMPERATURE = "AI_LLM:Temperature"; // key cấu hình mức độ trả lời ngẫu nhiên
+    }
+    public static class AIRoleName
+    {
+        public const string ROLE_USER = "user";
+        public const string ROLE_SYSTEM = "system";
     }
 }

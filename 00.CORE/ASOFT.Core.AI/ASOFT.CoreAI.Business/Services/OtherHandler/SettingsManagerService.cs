@@ -12,6 +12,7 @@ using ASOFT.CoreAI.Abstractions;
 using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.System;
 using ASOFT.CoreAI.Infrastructure;
 using HandlebarsDotNet;
 using Microsoft.OpenApi.Exceptions;
@@ -173,71 +174,78 @@ namespace ASOFT.CoreAI.Business
 
         public async Task<(ModelAIChatConfig Config, bool HasConfig, bool CreatedNew, AIKeyStatus KeyStatus, string? ErrorMessage)> EnsureModelAIConfigCachedAsync()
         {
-            string cacheKey = AIConstants.ModelAIKey;
-
-            var cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
-            bool createdNew = false;
-
-            // 1. Nếu cache chưa có → load config từ DB và lưu lại cache
-            if (string.IsNullOrWhiteSpace(cachedKey))
+            var configLLM = await GetConfigLLMsAsync();
+            if (configLLM != null && configLLM.IsUse)
             {
-                var configModelAI = await GetModelConfigAI();
+                return (new ModelAIChatConfig(), true, true, AIKeyStatus.Valid, "");
+            }
+            else
+            {
+                string cacheKey = AIConstants.ModelAIKey;
 
-                if (string.IsNullOrEmpty(configModelAI.ModelName) || string.IsNullOrEmpty(configModelAI.ApiKey))
+                var cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
+                bool createdNew = false;
+
+                // 1. Nếu cache chưa có → load config từ DB và lưu lại cache
+                if (string.IsNullOrWhiteSpace(cachedKey))
                 {
-                    return (new ModelAIChatConfig(), false, false, AIKeyStatus.InvalidKey, "Không có thông tin cấu hình Model AI");
+                    var configModelAI = await GetModelConfigAI();
+
+                    if (string.IsNullOrEmpty(configModelAI.ModelName) || string.IsNullOrEmpty(configModelAI.ApiKey))
+                    {
+                        return (new ModelAIChatConfig(), false, false, AIKeyStatus.InvalidKey, "Không có thông tin cấu hình Model AI");
+                    }
+
+                    double expireDays = await _configManagerService.GetConfigIntAsync(APIConfigKeys.REDIS_DEFAULT_EXPIRE_DAYS, 1);
+
+                    await _vectorDatabase.SaveAPIKeyAsync(cacheKey, configModelAI, expireDays);
+
+                    cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
+                    createdNew = true;
                 }
 
-                double expireDays = await _configManagerService.GetConfigIntAsync(APIConfigKeys.REDIS_DEFAULT_EXPIRE_DAYS, 1);
+                if (string.IsNullOrWhiteSpace(cachedKey))
+                {
+                    return (new ModelAIChatConfig(), false, createdNew, AIKeyStatus.InvalidKey, "Không đọc được dữ liệu Model AI từ cache");
+                }
 
-                await _vectorDatabase.SaveAPIKeyAsync(cacheKey, configModelAI, expireDays);
+                // Fix trường hợp bị bao bằng {{...}}
+                if (cachedKey.StartsWith("{{") && cachedKey.EndsWith("}}"))
+                {
+                    cachedKey = cachedKey.Substring(1, cachedKey.Length - 2);
+                }
 
-                cachedKey = await _vectorDatabase.GetApiKeyAsync(cacheKey);
-                createdNew = true;
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var config = JsonSerializer.Deserialize<ModelAIChatConfig>(cachedKey, options)
+                             ?? new ModelAIChatConfig();
+
+                bool hasConfig = !string.IsNullOrEmpty(config.ModelName) && !string.IsNullOrEmpty(config.ApiKey);
+
+                if (!hasConfig)
+                {
+                    return (config, false, createdNew, AIKeyStatus.InvalidKey, "Cấu hình Model AI không hợp lệ");
+                }
+
+                var keyStatus = await CheckKeyWithAsync();
+                string errorMsg = "";
+                if (keyStatus == AIKeyStatus.InvalidKey)
+                {
+                    errorMsg = "API Key không hợp lệ. Vui lòng kiểm tra lại API key.";
+                }
+                else if (keyStatus == AIKeyStatus.OutOfCredit)
+                {
+                    errorMsg = "API Key của bạn không đủ token để thực hiện câu hỏi. Vui lòng kiểm tra lại API Key";
+                }
+                else if (keyStatus == AIKeyStatus.UnknownError)
+                {
+                    errorMsg = "Không thể xác thực API Key truy cập AI vào thời điểm này.Vui lòng kiểm tra lại API Key";
+                }
+                return (config, true, createdNew, keyStatus, errorMsg);
             }
-
-            if (string.IsNullOrWhiteSpace(cachedKey))
-            {
-                return (new ModelAIChatConfig(), false, createdNew, AIKeyStatus.InvalidKey, "Không đọc được dữ liệu Model AI từ cache");
-            }
-
-            // Fix trường hợp bị bao bằng {{...}}
-            if (cachedKey.StartsWith("{{") && cachedKey.EndsWith("}}"))
-            {
-                cachedKey = cachedKey.Substring(1, cachedKey.Length - 2);
-            }
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var config = JsonSerializer.Deserialize<ModelAIChatConfig>(cachedKey, options)
-                         ?? new ModelAIChatConfig();
-
-            bool hasConfig = !string.IsNullOrEmpty(config.ModelName) && !string.IsNullOrEmpty(config.ApiKey);
-
-            if (!hasConfig)
-            {
-                return (config, false, createdNew, AIKeyStatus.InvalidKey, "Cấu hình Model AI không hợp lệ");
-            }
-
-            // 2. 🔥 KIỂM TRA KEY CÓ DÙNG ĐƯỢC KHÔNG
-            var keyStatus = await CheckKeyWithAsync();
-            string errorMsg = "";
-            if (keyStatus == AIKeyStatus.InvalidKey)
-            {
-                errorMsg = "API Key không hợp lệ. Vui lòng kiểm tra lại API key.";
-            }
-            else if (keyStatus == AIKeyStatus.OutOfCredit)
-            {
-                errorMsg = "API Key của bạn không đủ token để thực hiện câu hỏi. Vui lòng kiểm tra lại API Key";
-            }
-            else if (keyStatus == AIKeyStatus.UnknownError)
-            {
-                errorMsg = "Không thể xác thực API Key truy cập AI vào thời điểm này.Vui lòng kiểm tra lại API Key";
-            }
-            return (config, true, createdNew, keyStatus, errorMsg);
         }
         private async Task<AIKeyStatus> CheckKeyWithAsync()
         {
@@ -286,6 +294,17 @@ namespace ASOFT.CoreAI.Business
             {
                 return AIKeyStatus.UnknownError;
             }
+        }
+        // Lấy URL của API LLMs
+        public async Task<LLMViewModel> GetConfigLLMsAsync()
+        {
+            return new LLMViewModel()
+            {
+                BaseUrl = await _configManagerService.GetConfigStringAsync(APIConfigKeys.AI_AI_LLM_BASEURL),
+                IsUse = await _configManagerService.GetConfigBoolAsync(APIConfigKeys.AI_AI_LLM_ISUSE),
+                Temperature = await _configManagerService.GetConfigDoubleAsync(APIConfigKeys.AI_AI_LLM_TEMPERATURE),
+                MaxToken = await _configManagerService.GetConfigIntAsync(APIConfigKeys.AI_AI_LLM_MAXTOKEN),
+            };
         }
     }
 }
