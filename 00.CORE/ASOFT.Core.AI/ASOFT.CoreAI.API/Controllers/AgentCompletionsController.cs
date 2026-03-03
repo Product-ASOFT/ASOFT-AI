@@ -93,8 +93,8 @@ namespace ASOFT.CoreAI.API.Controllers
             var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
             if (configLLM != null && configLLM.IsUse)
             {
-                string titleDefault = "Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
-                var resultResponse = await _chatResponseHandlerService.InvokeAsync(titleDefault, request.Question);
+                string promptSystem = "Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
+                var resultResponse = await _chatResponseHandlerService.InvokeAsync(promptSystem, request.Question);
                 responseMessage = resultResponse.Text ?? string.Empty;
             }
             else
@@ -210,8 +210,8 @@ namespace ASOFT.CoreAI.API.Controllers
                 var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
                 if (configLLM != null && configLLM.IsUse)
                 {
-                    string titleDefault = " Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
-                    var result = await _chatResponseHandlerService.InvokePromptAsync(titleDefault, prompt.PromptContent, arguments);
+                    string promptSystem = " Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
+                    var result = await _chatResponseHandlerService.InvokePromptAsync(promptSystem, prompt.PromptContent, arguments);
                     responseMessage = result.Text ?? string.Empty;
                 }
                 else

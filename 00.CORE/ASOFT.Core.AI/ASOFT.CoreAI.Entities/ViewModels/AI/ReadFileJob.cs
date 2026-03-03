@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public sealed record ReadFileJob(Guid ST2131APK, ReadFileRequest request, string promptContent);
+    public sealed record ReadFileJob(Guid ST2131APK, ReadFileRequest request, string promptSystem, string promptContent);
 }

@@ -12,7 +12,7 @@ namespace ASOFT.CoreAI.Infrastructure
 {
     public interface IChatResponseHandlerService
     {
-        Task<ItemChatResponse> InvokeAsync(string titleDefault, string question);
-        Task<ItemChatResponse> InvokePromptAsync(string titleDefault, string promptContent, KernelArguments? arguments = null);
+        Task<ItemChatResponse> InvokeAsync(string promptSystem, string question);
+        Task<ItemChatResponse> InvokePromptAsync(string promptSystem, string promptContent, KernelArguments? arguments = null);
     }
 }

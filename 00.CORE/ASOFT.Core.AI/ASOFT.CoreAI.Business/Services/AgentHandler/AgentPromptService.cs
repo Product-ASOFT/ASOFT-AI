@@ -37,9 +37,14 @@ namespace ASOFT.CoreAI.Business
 
             return prompt.PromptContent;
         }
+        public async Task<ST2130> GetPromptByCode(string agentKey)
+        {
+            return await _agentPromptQueries.GetPromptByCode(agentKey);
+        }
 
         public async Task<string> SendPromptWithReadFile<T>(
         ReadFileRequest request,
+        string promptSystem,
         string promptTemplate,
         List<ResultReadFileModel>? awnserOCRs,
         IEnumerable<ChatHistoryResponseModel> chatHistory,
@@ -83,7 +88,7 @@ namespace ASOFT.CoreAI.Business
                         x.Text,
                     });
                 }
-                return await HandleChatWithModelAI(question, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+                return await HandleChatWithModelAI(promptSystem, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -93,6 +98,7 @@ namespace ASOFT.CoreAI.Business
 
         public async Task<string> SendPromptWithLocalsAsync<T>(
         ReadFileRequest request,
+        string promptSystem,
         string promptTemplate,
         string awnserOCRs,
         IEnumerable<ChatHistoryResponseModel> chatHistory,
@@ -135,7 +141,7 @@ namespace ASOFT.CoreAI.Business
                         x.Text,
                     });
                 }
-                return await HandleChatWithModelAI(question, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+                return await HandleChatWithModelAI(promptSystem, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -209,7 +215,7 @@ namespace ASOFT.CoreAI.Business
             return await HandleChatWithModelAI(request.Question, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
         }
 
-        private async Task<string> HandleChatWithModelAI(string tileDefault, KernelArguments arguments, bool isStreaming, string promptTemplate, CancellationToken cancellationToken)
+        private async Task<string> HandleChatWithModelAI(string promptSystem, KernelArguments arguments, bool isStreaming, string promptTemplate, CancellationToken cancellationToken)
         {
             var configLLM = await _settingsManagerService.GetConfigLLMsAsync();
             string resultResponse = string.Empty;
@@ -217,7 +223,7 @@ namespace ASOFT.CoreAI.Business
             {
                 if (configLLM.IsUse)
                 {
-                    var response = await _chatResponseHandlerService.InvokePromptAsync(tileDefault, promptTemplate, arguments);
+                    var response = await _chatResponseHandlerService.InvokePromptAsync(promptSystem, promptTemplate, arguments);
                     resultResponse = response.Text ?? string.Empty;
                 }
                 else
@@ -241,7 +247,7 @@ namespace ASOFT.CoreAI.Business
                 {
                     if (configLLM.IsUse)
                     {
-                        var response = await _chatResponseHandlerService.InvokePromptAsync(tileDefault, promptTemplate, arguments);
+                        var response = await _chatResponseHandlerService.InvokePromptAsync(promptSystem, promptTemplate, arguments);
                         resultResponse = response.Text ?? string.Empty;
                     }
                     else
@@ -263,14 +269,14 @@ namespace ASOFT.CoreAI.Business
             return resultResponse;
         }
 
-        public async Task<string> SendPromptWithSumaryResultAsync(string promptTemplate, string result)
+        public async Task<string> SendPromptWithSumaryResultAsync(string promptSystem, string promptTemplate, string result)
         {
             var arguments = new KernelArguments
             {
                 ["result"] = result,
             };
-            string titleDefault = "Bạn là trợ lý AI tóm tắt và tổng hợp kết quả.";
-            return await HandleChatWithModelAI(titleDefault, arguments, false, promptTemplate, CancellationToken.None).ConfigureAwait(false);
+            //string titleDefault = "Bạn là trợ lý AI tóm tắt và tổng hợp kết quả.";
+            return await HandleChatWithModelAI(promptSystem, arguments, false, promptTemplate, CancellationToken.None).ConfigureAwait(false);
         }
 
         #endregion Xử lý gửi câu hỏi,lịch sử chat, thông tin training, thông tin dữ liệu từ Database sang ModelAI
