@@ -31,7 +31,7 @@ namespace ASOFT.CoreAI.Business
             _clientFactory = clientFactory;
             _logger = Checker.NotNull(logger, nameof(logger)).CreateLogger(GetType());
         }
-        public async Task<ItemChatResponse> InvokeAsync(string titleDefault, string question)
+        public async Task<ItemChatResponse> InvokeAsync(string promptSystem, string question)
         {
             // 1. Lấy cấu hình LLM
             var llmConfig = await _settingsManagerService.GetConfigLLMsAsync();
@@ -58,7 +58,7 @@ namespace ASOFT.CoreAI.Business
                     new
                     {
                         role = AIRoleName.ROLE_SYSTEM,
-                        content = titleDefault
+                        content = promptSystem
                     },
                     new
                     {
@@ -104,7 +104,6 @@ namespace ASOFT.CoreAI.Business
                         Text = "LLM phản hồi không thành công"
                     };
                 }
-
                 // 6. Đọc response body
                 var content = await response.Content.ReadAsStringAsync(cts.Token);
                 sw.Stop();
@@ -209,7 +208,7 @@ namespace ASOFT.CoreAI.Business
             }
         }
 
-        public async Task<ItemChatResponse> InvokePromptAsync(string titleDefault, string promptContent, KernelArguments? arguments = null)
+        public async Task<ItemChatResponse> InvokePromptAsync(string promptSystem, string promptContent, KernelArguments? arguments = null)
         {
             var result = new ItemChatResponse();
             try
@@ -220,7 +219,7 @@ namespace ASOFT.CoreAI.Business
                     result.Text = "Không tồn tại Prompt!";
                     return result;
                 }
-                result = await InvokeAsync(titleDefault, promptRender);
+                result = await InvokeAsync(promptSystem, promptRender);
             }
             catch (Exception)
             {

@@ -9,6 +9,6 @@ namespace ASOFT.CoreAI.Infrastructure.Interface
 {
     public interface IReadFileBackgroundWorkflow
     {
-        Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptContent, CancellationToken ct = default);
+        Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptSystem, string promptContent, CancellationToken ct = default);
     }
 }

@@ -66,7 +66,7 @@ namespace ASOFT.CoreAI.Business
                 return ChatHandlerHelper.CreateResponseReadFile("Không thể khởi tạo lưu kết quả.", false);
 
             // 4) Đẩy job chạy nền (worker sẽ tự OCR → compare → cập nhật)
-            await _jobQueue.EnqueueAsync(new ReadFileJob(entity.APK, request, prompt.PromptContent));
+            await _jobQueue.EnqueueAsync(new ReadFileJob(entity.APK, request, prompt.Description, prompt.PromptContent));
 
             // 5) Trả về ngay cho UI
             return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {request.BEMF2000ViewModel.VoucherNo}. Hệ thống đang xử lý nền.", true);

@@ -5,6 +5,8 @@ using ASOFT.CoreAI.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
@@ -36,7 +38,8 @@ namespace ASOFT.CoreAI.Business
 
         public async Task<string> CompareAsync(
             ReadFileRequest request,
-            string prompt,
+            string promptSystem,
+            string promptTemplate,
             string? ocrTextMerged,
             List<ResultReadFileModel>? ocrResults,
             IEnumerable<RedisearchResultItem> trainingData)
@@ -49,7 +52,8 @@ namespace ASOFT.CoreAI.Business
             {
                 return await _agentPromptService.SendPromptWithLocalsAsync(
                     request,
-                    prompt,
+                    promptSystem,
+                    promptTemplate,
                     ocrTextMerged ?? string.Empty,
                     Enumerable.Empty<ChatHistoryResponseModel>(),
                     trainingData,
@@ -60,7 +64,8 @@ namespace ASOFT.CoreAI.Business
 
             return await _agentPromptService.SendPromptWithReadFile(
                 request,
-                prompt,
+                promptSystem,
+                promptTemplate,
                 ocrResults ?? new List<ResultReadFileModel>(),
                 Enumerable.Empty<ChatHistoryResponseModel>(),
                 trainingData,
@@ -72,21 +77,17 @@ namespace ASOFT.CoreAI.Business
         public async Task<CriteriaSummaryResult?> SummaryResultJson(string result)
         {
             // 1. Cắt block summary nếu có
-            result = ExtractSummaryBlock(result);
+            //result = ExtractSummaryBlock(result);
 
             // 2. Lấy prompt
-            var promptContent =
-                await _agentPromptService.GetPromptTemplate(
-                    AgentKeys.BEM_AGENT_BEMF2000_SUMMARY);
+            var prompt = await _agentPromptService.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_SUMMARY);
 
-            if (string.IsNullOrWhiteSpace(promptContent))
+            if (string.IsNullOrWhiteSpace(prompt.PromptContent) || string.IsNullOrWhiteSpace(prompt.Description))
                 return null;
 
             // 3. Gửi prompt cho LLM
-            var resultJson =
-                await _agentPromptService
-                    .SendPromptWithSumaryResultAsync(promptContent, result)
-                    .ConfigureAwait(false);
+            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(prompt.Description, prompt.PromptContent, result);
+
 
             if (string.IsNullOrWhiteSpace(resultJson))
                 return null;
@@ -103,7 +104,7 @@ namespace ASOFT.CoreAI.Business
             if (!IsValidJson(resultJsonFormat))
             {
                 // Log để bắt bệnh LLM
-                 _logger.LogError("LLM trả dữ liệu không phải JSON: {Raw}", resultJsonFormat);
+                _logger.LogError("LLM trả dữ liệu không phải JSON: {Raw}", resultJsonFormat);
                 return null;
             }
 
@@ -122,7 +123,7 @@ namespace ASOFT.CoreAI.Business
             }
             catch (JsonException ex)
             {
-                 _logger.LogError(ex, "Lỗi parse JSON: {Json}", resultJsonFormat);
+                _logger.LogError(ex, "Lỗi parse JSON: {Json}", resultJsonFormat);
                 return null;
             }
         }
@@ -140,13 +141,21 @@ namespace ASOFT.CoreAI.Business
 
             return aiText.Substring(startIndex);
         }
-        public async Task<string> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent)
+        public async Task<string> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem)
         {
-            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContent, ocrText).ConfigureAwait(false);
+            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContentSystem, promptContent, ocrText);
             if (resultJson == null)
                 return string.Empty;
             string resultJsonFormat = StripOutsideJson(resultJson);
-            await ConvertAiJsonToST2137_2138(resultJsonFormat, sT2131);
+            try
+            {
+                await ConvertAiJsonToST2137_2138(resultJsonFormat, sT2131);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang ST2137/2138: {Json}", resultJsonFormat);
+                return string.Empty;
+            }
             return resultJsonFormat;
         }
         private bool IsValidJson(string input)
@@ -227,7 +236,12 @@ namespace ASOFT.CoreAI.Business
 
         public async Task ConvertAiJsonToST2137_2138(string aiJson, ST2131 sT2131)
         {
-            var result = JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson);
+            var settings = new JsonSerializerSettings
+            {
+                Culture = CultureInfo.GetCultureInfo("vi-VN"),
+                DateParseHandling = DateParseHandling.DateTime
+            };
+            var result = JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson, settings);
             if (result == null)
                 return;
 

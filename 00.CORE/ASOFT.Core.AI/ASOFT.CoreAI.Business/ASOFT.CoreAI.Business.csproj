@@ -16,6 +16,8 @@
     <PackageReference Include="Handlebars.Net.Helpers" Version="2.5.2" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="IronOcr" Version="2025.7.19" />
+    <PackageReference Include="itext7" Version="9.5.0" />
+    <PackageReference Include="itext7.bouncy-castle-adapter" Version="9.5.0" />
     <PackageReference Include="Markdig" Version="0.43.0" />
     <PackageReference Include="MediaTypeMap.Core" Version="2.3.3" />
     <PackageReference Include="Mime-Detective" Version="25.4.25" />

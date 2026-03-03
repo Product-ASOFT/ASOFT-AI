@@ -3,8 +3,10 @@ using ASOFT.CoreAI.Infrastructure;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
+using iText.Kernel.Pdf;
 
 namespace ASOFT.CoreAI.Business
 {
@@ -86,6 +88,7 @@ namespace ASOFT.CoreAI.Business
 
             var result = await _agentPromptService.SendPromptWithReadFile(
                 request,
+                prompt.Description,
                 prompt.PromptContent,
                 new List<ResultReadFileModel>(),
                 Enumerable.Empty<ChatHistoryResponseModel>(),
@@ -152,6 +155,72 @@ namespace ASOFT.CoreAI.Business
             var req = _httpContextAccessor.HttpContext!.Request;
             var baseUrl = $"{req.Scheme}://{req.Host}{req.PathBase}";
             return Task.FromResult($"{baseUrl}/downloads/{fileName}");
+        }
+        public  List<AttachFileModel> SplitEveryNPages_KeepOriginal(AttachFileModel attachFileModel, int pagesPerFile = 4)
+        {
+            string sourcePdfPath = attachFileModel.AttachURL!;
+            if (string.IsNullOrWhiteSpace(sourcePdfPath))
+                throw new ArgumentException("sourcePdfPath is null/empty.", nameof(sourcePdfPath));
+
+            if (!File.Exists(sourcePdfPath))
+                throw new FileNotFoundException("Source file not found.", sourcePdfPath);
+
+            string extension = Path.GetExtension(sourcePdfPath);
+            if (!string.Equals(extension, ".pdf", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("File is not a PDF.");
+
+            if (pagesPerFile <= 0)
+                throw new ArgumentOutOfRangeException(nameof(pagesPerFile), "pagesPerFile must be > 0.");
+
+            var outputPaths = new List<AttachFileModel>();
+
+            var sourceDir = Path.GetDirectoryName(sourcePdfPath)!;
+            var baseName = Path.GetFileNameWithoutExtension(sourcePdfPath);
+
+            using var sourcePdf = new PdfDocument(new PdfReader(sourcePdfPath));
+            int totalPages = sourcePdf.GetNumberOfPages();
+
+            int part = 1;
+            for (int start = 1; start <= totalPages; start += pagesPerFile)
+            {
+                int end = Math.Min(start + pagesPerFile - 1, totalPages);
+
+                string outFileName = $"{baseName}_part{part:000}.pdf";
+                string outPath = Path.Combine(sourceDir, outFileName);
+
+                outPath = EnsureUniquePath(outPath);
+
+                using (var newPdf = new PdfDocument(new PdfWriter(outPath)))
+                {
+                    sourcePdf.CopyPagesTo(start, end, newPdf);
+                }
+
+                outputPaths.Add(new AttachFileModel
+                {
+                    AttachName = outFileName,
+                    AttachURL = outPath,
+                    APK = attachFileModel.APK,
+                    AttachID = attachFileModel.AttachID
+                });
+                part++;
+            }
+            return outputPaths;
+        }
+        private  string EnsureUniquePath(string path)
+        {
+            if (!File.Exists(path)) return path;
+
+            string dir = Path.GetDirectoryName(path)!;
+            string name = Path.GetFileNameWithoutExtension(path);
+            string ext = Path.GetExtension(path);
+
+            int i = 1;
+            while (true)
+            {
+                string candidate = Path.Combine(dir, $"{name}({i}){ext}");
+                if (!File.Exists(candidate)) return candidate;
+                i++;
+            }
         }
     }
 }

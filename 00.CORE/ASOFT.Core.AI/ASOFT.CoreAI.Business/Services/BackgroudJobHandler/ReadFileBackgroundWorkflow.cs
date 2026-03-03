@@ -19,7 +19,7 @@ namespace ASOFT.CoreAI.Business
         private readonly ILogger<ReadFileBackgroundWorkflow> _logger;
         private readonly AgentCompareService _agentCompareService;
         private readonly SettingsManagerService _settingsManagerService;
-
+        private readonly FilePathService _filePathService;
         public ReadFileBackgroundWorkflow(
             IST2131Queries ST2131,
             IST2130Queries ST2130,
@@ -29,7 +29,8 @@ namespace ASOFT.CoreAI.Business
             AgentCompareService compareService,
             ILogger<ReadFileBackgroundWorkflow> logger,
             AgentCompareService agentCompareService,
-            SettingsManagerService settingsManagerService)
+            SettingsManagerService settingsManagerService,
+            FilePathService filePathService)
         {
             _ST2131 = ST2131;
             _ST2130 = ST2130;
@@ -40,8 +41,9 @@ namespace ASOFT.CoreAI.Business
             _logger = logger;
             _agentCompareService = agentCompareService;
             _settingsManagerService = settingsManagerService;
+            _filePathService = filePathService;
         }
-        public async Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptContent, CancellationToken ct = default)
+        public async Task RunAsync(Guid ST2131APK, ReadFileRequest request, string promptSytem, string promptContent, CancellationToken ct = default)
         {
             var entity = await _ST2131.GetData(ST2131APK);
             if (entity == null) return;
@@ -49,8 +51,22 @@ namespace ASOFT.CoreAI.Business
             try
             {
                 ValidateRequest(request);
+                var filePathsSplit = new List<AttachFileModel>();
+                foreach (var item in request.AttachFiles!)
+                {
+                    var split = _filePathService.SplitEveryNPages_KeepOriginal(item);
+                    if (split != null && split.Any())
+                    {
+                        filePathsSplit.AddRange(split);
+                    }
+                    else
+                    {
+                        filePathsSplit.Add(item);
+                    }
+                }
+
                 // 1. OCR
-                var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel!.APK);
+                var (ocrText, ocrResults) = await _ocrService.ReadAsync(filePathsSplit, request.BEMF2000ViewModel!.APK);
 
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
@@ -62,19 +78,29 @@ namespace ASOFT.CoreAI.Business
                 {
                     trainingData = await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
                 }
-                //string aiResult = await _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
+                // Dữ liệu được lấy từ file đính kèm
+                string textJson = string.Empty;
+                foreach (var item in ocrResults)
+                {
+                    string text = item.FileName + item.TextContent;
+                    //7.Format OCR Text(nếu có prompt)
+                    textJson += await FormatOCRIfNeeded(text, entity);
+                }
+
+                //string aiResult = await _compareService.CompareAsync(request,promptSytem, promptContent, ocrText, ocrResults, trainingData);
+                string aiResult = await _compareService.CompareAsync(request, promptSytem, promptContent, textJson, ocrResults, trainingData);
 
                 #region 3. Compare AI comment lại tiến trình xử lý song song
-                // Khởi tạo task song song
-                Task<string> compareTask = _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
+                //// Khởi tạo task song song
+                //Task<string> compareTask = _compareService.CompareAsync(request, promptContent, ocrText, ocrResults, trainingData);
 
-                Task formatTask = string.IsNullOrWhiteSpace(promptContent) ? Task.CompletedTask : FormatOCRIfNeeded(ocrText, entity);
+                //Task formatTask = string.IsNullOrWhiteSpace(promptContent) ? Task.CompletedTask : FormatOCRIfNeeded(ocrText, entity);
 
-                // Chờ cả 2 hoàn thành
-                await Task.WhenAll(compareTask, formatTask);
+                //// Chờ cả 2 hoàn thành
+                //await Task.WhenAll(compareTask, formatTask);
 
-                //Lấy kết quả AI
-                string aiResult = await compareTask;
+                ////Lấy kết quả AI
+                //string aiResult = await compareTask;
                 #endregion
                 entity.TextContentOCR = ocrText;
                 entity.TextContentAI = aiResult;
@@ -95,8 +121,8 @@ namespace ASOFT.CoreAI.Business
 
                 await _ST2131.UpdateData(entity);
 
-                //7.Format OCR Text(nếu có prompt)
-                await FormatOCRIfNeeded(ocrText, entity);
+                ////7.Format OCR Text(nếu có prompt)
+                //await FormatOCRIfNeeded(ocrText, entity);
             }
             catch (OperationCanceledException)
             {
@@ -115,14 +141,15 @@ namespace ASOFT.CoreAI.Business
             if (request == null)
                 throw new Exception("Không tìm thấy request.");
         }
-        private async Task FormatOCRIfNeeded(string aiResult, ST2131 entity)
+        private async Task<string> FormatOCRIfNeeded(string aiResult, ST2131 entity)
         {
             var promptReadFile = await _ST2130.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_READFILE);
 
             if (!string.IsNullOrWhiteSpace(promptReadFile?.PromptContent))
             {
-                await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent);
+                return await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent, promptReadFile.Description);
             }
+            return string.Empty;
         }
         private async Task<List<ST2136>> BuildCriteriaList(ST2131 entity, ReadFileRequest request, string aiResult)
         {
