@@ -37,7 +37,7 @@ namespace ASOFT.CoreAI.Business.Services.BackgroudJobHandler
                 {
                     using var scope = _sp.CreateScope();
                     var wf = scope.ServiceProvider.GetRequiredService<IReadFileBackgroundWorkflow>();
-                    await wf.RunAsync(job.ST2131APK, job.request, job.promptSystem, job.promptContent, stoppingToken);
+                    await wf.RunAsync(job.ST2131APK, job.request, job.ST2130s, stoppingToken);
                 }
                 catch (Exception ex)
                 {

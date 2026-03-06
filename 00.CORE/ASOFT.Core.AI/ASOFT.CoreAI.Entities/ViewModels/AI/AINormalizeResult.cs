@@ -33,6 +33,7 @@ namespace ASOFT.CoreAI.Entities
         public string? VoucherNo { get; set; }
         public string? VoucherName { get; set; }
         public decimal? Amount { get; set; }
+        public decimal? AmountCustomSheet { get; set; }
         public string? Currency { get; set; }
         public string? SupplierName { get; set; }
         public DateTime? VoucherDate { get; set; }
@@ -54,5 +55,23 @@ namespace ASOFT.CoreAI.Entities
         public string? GoodsName { get; set; }
         public decimal? Quantity { get; set; }
         public string? ApprovalLast { get; set; }
+        public DateTime? CompleteCheckDate { get; set; }
+    }
+
+    public class AISectionCompare
+    {
+        public int NoOrder { get; set; }
+        public string? SectionType { get; set; }
+        public string? SupplierName { get; set; }
+        public decimal? Amount { get; set; }
+        public string? VoucherNo { get; set; }
+        public string? Currency { get; set; }
+        public string? DeliveryTerm { get; set; }
+        public string? PaymentTerm { get; set; }
+        public string? FileName { get; set; }
+        public DateTime? CompleteCheckDate { get; set; }
+        public DateTime? VoucherDate { get; set; }
+        public string? Signature { get; set; }
+        public decimal? AmountCustomSheet { get; set; }
     }
 }

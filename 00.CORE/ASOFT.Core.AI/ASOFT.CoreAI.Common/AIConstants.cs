@@ -42,6 +42,22 @@
             public const string HRM_AGENT_HRMF1030 = "HRM_AGENT_HRMF1030";
             public const string BEM_AGENT_BEMF2000_SUMMARY = "BEM_AGENT_BEMF2000_SUMMARY";
             public const string BEM_AGENT_BEMF2000_READFILE = "BEM_AGENT_BEMF2000_READFILE";
+
+          
+        }
+        public static class AgentCriteriaKeys
+        {
+            // Criteria keys
+            public const string CRITERIA_SUPPLIER_NAME = "CRITERIA_SUPPLIER_NAME";
+            public const string CRITERIA_INVOICE_NO = "CRITERIA_INVOICE_NO";
+            public const string CRITERIA_INVOICE_DATE = "CRITERIA_INVOICE_DATE";
+            public const string CRITERIA_AMOUNT = "CRITERIA_AMOUNT";
+            public const string CRITERIA_AMOUNT_CUSTOMSHEET = "CRITERIA_AMOUNT_CUSTOMSHEET";
+            public const string CRITERIA_CURRENCY = "CRITERIA_CURRENCY";
+            public const string CRITERIA_INCOTERM = "CRITERIA_INCOTERM";
+            public const string CRITERIA_PAYMENT_DEADLINE = "CRITERIA_PAYMENT_DEADLINE";
+            public const string CRITERIA_CHECK_COMPLETED_DATE = "CRITERIA_CHECK_COMPLETED_DATE";
+            public const string CRITERIA_SIGNATURE_STAMP = "CRITERIA_SIGNATURE_STAMP";
         }
         public static class AgentTypeKeys
         {

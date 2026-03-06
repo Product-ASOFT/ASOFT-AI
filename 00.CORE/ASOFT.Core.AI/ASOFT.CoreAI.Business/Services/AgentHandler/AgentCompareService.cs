@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static ASOFT.CoreAI.Common.AIConstants;
+using static ASOFT.CoreAI.Common.EnumConstants;
 using JsonException = Newtonsoft.Json.JsonException;
 
 namespace ASOFT.CoreAI.Business
@@ -42,9 +43,10 @@ namespace ASOFT.CoreAI.Business
             string promptTemplate,
             string? ocrTextMerged,
             List<ResultReadFileModel>? ocrResults,
-            IEnumerable<RedisearchResultItem> trainingData)
+            List<AISectionCompare> aiSectionCompares,
+            IEnumerable<RedisearchResultItem>? trainingData = null)
         {
-            request.Question = "Hãy đối chiếu dữ liệu do người dùng cung cấp theo các tiêu chí dưới đây";
+            request.Question = "Hãy dùng thông tin dưới đây để so sánh tiêu chí";
             var useLocal = await _settings.GetIsUseServiceReadOCRAsync();
             var detail = request!.BEMF2000ViewModel ?? new BEMF2000ViewModel();
 
@@ -56,9 +58,9 @@ namespace ASOFT.CoreAI.Business
                     promptTemplate,
                     ocrTextMerged ?? string.Empty,
                     Enumerable.Empty<ChatHistoryResponseModel>(),
-                    trainingData,
                     new List<BEMF2000ViewModel> { detail },
-                    request.BEMF2001ViewModels ?? new List<BEMF2001ViewModel>()
+                    request.BEMF2001ViewModels ?? new List<BEMF2001ViewModel>(),
+                    aiSectionCompares
                 ).ConfigureAwait(false);
             }
 
@@ -128,6 +130,46 @@ namespace ASOFT.CoreAI.Business
             }
         }
 
+        public ST2136? ParseCriteriaResult(ST2131 entity, ReadFileRequest request, string json, int criteriaID)
+        {
+            try
+            {
+                json = StripOutsideJson(json);
+                var settings = new JsonSerializerSettings
+                {
+                    Culture = CultureInfo.GetCultureInfo("vi-VN"),
+                    DateParseHandling = DateParseHandling.DateTime
+                };
+                var result = JsonConvert.DeserializeObject<CriteriaSummaryResult>(json, settings);
+                if (result != null && result.Criteria != null)
+                {
+                    var criteria = result.Criteria;
+                    var ST2136 = new ST2136
+                    {
+                        APK = Guid.NewGuid(),
+                        APKMaster = entity.APK,
+                        CriteriaName = criteria.CriteriaName,
+                        CriteriaStatus = criteria.CriteriaStatus,
+                        CreateDate = DateTime.Now,
+                        CreateUserID = entity.CreateUserID,
+                        BusinessParent = request.BEMF2000ViewModel!.VoucherNo,
+                        Description = criteria.Description,
+                        CriteriaID = criteriaID
+                    };
+                    if (criteria.CriteriaStatus == StatusResultCompare.BLANK.ToString())
+                    {
+                        ST2136.CriteriaStatus = StatusResultCompare.NG.ToString();
+                    }
+                    return ST2136;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang ST2136: {Json}", json);
+                return null;
+            }
+        }
         private static string ExtractSummaryBlock(string aiText)
         {
             var match = Regex.Match(aiText, @"tổng\s*hợp", RegexOptions.IgnoreCase);
@@ -141,22 +183,26 @@ namespace ASOFT.CoreAI.Business
 
             return aiText.Substring(startIndex);
         }
-        public async Task<string> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem)
+        public async Task<List<AISectionCompare>?> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem)
         {
             var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContentSystem, promptContent, ocrText);
             if (resultJson == null)
-                return string.Empty;
+                return null;
             string resultJsonFormat = StripOutsideJson(resultJson);
             try
             {
-                await ConvertAiJsonToST2137_2138(resultJsonFormat, sT2131);
+                var aiNormalizeResult = ConvertAiJsonToST2137_2138(resultJsonFormat);
+                if (aiNormalizeResult == null)
+                {
+                    return null;
+                }
+                return await SaveInfomationFileAsync(aiNormalizeResult, sT2131);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang ST2137/2138: {Json}", resultJsonFormat);
-                return string.Empty;
+                return null;
             }
-            return resultJsonFormat;
         }
         private bool IsValidJson(string input)
         {
@@ -234,7 +280,7 @@ namespace ASOFT.CoreAI.Business
             return IsValidJson(json) ? json : string.Empty;
         }
 
-        public async Task ConvertAiJsonToST2137_2138(string aiJson, ST2131 sT2131)
+        public AiNormalizeResult? ConvertAiJsonToST2137_2138(string aiJson)
         {
             var settings = new JsonSerializerSettings
             {
@@ -243,11 +289,20 @@ namespace ASOFT.CoreAI.Business
             };
             var result = JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson, settings);
             if (result == null)
-                return;
-
+                return null;
+            return result;
+        }
+        /// <summary>
+        /// Lưu thông tin đã được chuẩn hóa từ AI vào database theo cấu trúc ST2137 (Master) và ST2138 (Detail)
+        /// </summary>
+        /// <param name="result"></param>
+        /// <param name="sT2131"></param>
+        /// <returns></returns>
+        private async Task<List<AISectionCompare>> SaveInfomationFileAsync(AiNormalizeResult result, ST2131 sT2131)
+        {
             var masters = new List<ST2137>();
             var details = new List<ST2138>();
-
+            var lstAISectionCompare = new List<AISectionCompare>();
             foreach (var section in result.Sections)
             {
                 var masterApk = Guid.NewGuid();
@@ -266,6 +321,7 @@ namespace ASOFT.CoreAI.Business
                     CreateUserID = sT2131.CreateUserID,
                 };
                 masters.Add(master);
+                int orderNo = 1;
                 foreach (var d in section.Details)
                 {
                     var detail = new ST2138
@@ -302,10 +358,27 @@ namespace ASOFT.CoreAI.Business
                         Description = d.Description,
                     };
                     details.Add(detail);
+                    var AISectionCompare = new AISectionCompare
+                    {
+                        NoOrder = orderNo++,
+                        SectionType = master.SectionType,
+                        SupplierName = d.SupplierName,
+                        VoucherNo = d.VoucherNo,
+                        Amount = d.Amount,
+                        Currency = d.Currency,
+                        CompleteCheckDate = d.CompleteCheckDate,
+                        DeliveryTerm = d.DeliveryTerm,
+                        Signature = section.Master.Signature,
+                        PaymentTerm = d.PaymentTerm,
+                        VoucherDate = d.VoucherDate,
+                        FileName = d.FileName,
+                        AmountCustomSheet = master.SectionType == "CUSTOMSHEET" ? d.Amount : 0,
+                    };
+                    lstAISectionCompare.Add(AISectionCompare);
                 }
             }
             if (masters.Count == 0 || details.Count == 0)
-                return;
+                return lstAISectionCompare;
             try
             {
                 // Lưu dữ liệu ở lần đối chiếu mới
@@ -314,10 +387,9 @@ namespace ASOFT.CoreAI.Business
             }
             catch (Exception)
             {
-
                 throw;
             }
-
+            return lstAISectionCompare;
         }
     }
 }

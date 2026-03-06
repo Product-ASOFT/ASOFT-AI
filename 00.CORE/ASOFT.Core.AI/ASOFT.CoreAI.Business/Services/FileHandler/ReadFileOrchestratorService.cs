@@ -43,10 +43,10 @@ namespace ASOFT.CoreAI.Business
             // Xóa dữ liệu đối chiếu trước đó 
             await DeleteData(request.BEMF2000ViewModel!);
 
-            // 2) (Tuỳ chọn) Kiểm tra tồn tại prompt sớm để fail fast (hoặc để workflow kiểm tra)
+            //// 2) (Tuỳ chọn) Kiểm tra tồn tại prompt sớm để fail fast (hoặc để workflow kiểm tra)
             string typeCompare = request.BEMF2000ViewModel!.PaymentRequestTypeID;
-            var prompt = await _ST2130Queries.GetPromptByTypeCompare(AgentKeys.BEM_AGENT_BEMF2000, typeCompare);
-            if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
+            var agentPrompts = await _ST2130Queries.GetPromptsByAgentCodeAndTypeCompare(AgentKeys.BEM_AGENT_BEMF2000, typeCompare);
+            if (agentPrompts == null || !agentPrompts.Any())
                 return ChatHandlerHelper.CreateResponseReadFile("Chưa thiết lập thông tin prompt!", false);
 
             // 3) Tạo record PROCESSING
@@ -66,7 +66,7 @@ namespace ASOFT.CoreAI.Business
                 return ChatHandlerHelper.CreateResponseReadFile("Không thể khởi tạo lưu kết quả.", false);
 
             // 4) Đẩy job chạy nền (worker sẽ tự OCR → compare → cập nhật)
-            await _jobQueue.EnqueueAsync(new ReadFileJob(entity.APK, request, prompt.Description, prompt.PromptContent));
+            await _jobQueue.EnqueueAsync(new ReadFileJob(entity.APK, request, agentPrompts));
 
             // 5) Trả về ngay cho UI
             return ChatHandlerHelper.CreateResponseReadFile($"Đã nhận yêu cầu. Mã kết quả: {request.BEMF2000ViewModel.VoucherNo}. Hệ thống đang xử lý nền.", true);

@@ -55,7 +55,7 @@ namespace ASOFT.CoreAI.Infrastructure
                 throw;
             }
         }
-        public async Task<bool> CreateListAgentPrompt( IEnumerable<ST2130> agents, CancellationToken cancellationToken = default)
+        public async Task<bool> CreateListAgentPrompt(IEnumerable<ST2130> agents, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -70,6 +70,24 @@ namespace ASOFT.CoreAI.Infrastructure
             {
                 throw;
             }
+        }
+
+        public async Task<ST2130> GetPromptByTypePrompt(string agentCode, string typeCompare, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _agentPromptContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2130>(m => m.AgentCode == agentCode && m.TypeCompare == typeCompare));
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task<List<ST2130>> GetPromptsByAgentCodeAndTypeCompare(string agentCode, string typeCompare, CancellationToken cancellationToken = default)
+        {
+            return await _agentPromptContext.QueryAsync(new FilterQuery<ST2130>(m => m.AgentCode == agentCode && m.TypeCompare == typeCompare));
         }
     }
 }

@@ -176,7 +176,8 @@ namespace ASOFT.CoreAI.Business
 
             var sourceDir = Path.GetDirectoryName(sourcePdfPath)!;
             var baseName = Path.GetFileNameWithoutExtension(sourcePdfPath);
-
+            var extentsion = Path.GetExtension(sourcePdfPath);
+            var fileNameOrigin = Path.GetFileName(sourcePdfPath);
             using var sourcePdf = new PdfDocument(new PdfReader(sourcePdfPath));
             int totalPages = sourcePdf.GetNumberOfPages();
 
@@ -185,7 +186,7 @@ namespace ASOFT.CoreAI.Business
             {
                 int end = Math.Min(start + pagesPerFile - 1, totalPages);
 
-                string outFileName = $"{baseName}_part{part:000}.pdf";
+                string outFileName = $"{baseName}_part{part:000}" + extentsion;
                 string outPath = Path.Combine(sourceDir, outFileName);
 
                 outPath = EnsureUniquePath(outPath);
@@ -197,6 +198,7 @@ namespace ASOFT.CoreAI.Business
 
                 outputPaths.Add(new AttachFileModel
                 {
+                    AttachNameOrigin = fileNameOrigin,
                     AttachName = outFileName,
                     AttachURL = outPath,
                     APK = attachFileModel.APK,
