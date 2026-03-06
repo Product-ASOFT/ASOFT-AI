@@ -36,5 +36,8 @@ namespace ASOFT.CoreAI.Infrastructure
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<bool> CreateListAgentPrompt(IEnumerable<ST2130> agents, CancellationToken cancellationToken = default);
+
+        Task<ST2130> GetPromptByTypePrompt(string agentCode, string typeCompare, CancellationToken cancellationToken = default);
+        Task<List<ST2130>> GetPromptsByAgentCodeAndTypeCompare(string agentCode, string typeCompare, CancellationToken cancellationToken = default);
     }
 }

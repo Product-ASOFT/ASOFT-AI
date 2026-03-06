@@ -48,7 +48,7 @@ namespace ASOFT.CoreAI.Business
         string promptTemplate,
         List<ResultReadFileModel>? awnserOCRs,
         IEnumerable<ChatHistoryResponseModel> chatHistory,
-        IEnumerable<RedisearchResultItem> trainingData,
+        IEnumerable<RedisearchResultItem>? trainingData,
         List<T> datas,
         List<BEMF2001ViewModel> details, string? resultCreateFile = null)
         {
@@ -102,9 +102,10 @@ namespace ASOFT.CoreAI.Business
         string promptTemplate,
         string awnserOCRs,
         IEnumerable<ChatHistoryResponseModel> chatHistory,
-        IEnumerable<RedisearchResultItem> trainingData,
         List<T> datas,
-        List<BEMF2001ViewModel> details, string? resultCreateFile = null)
+        List<BEMF2001ViewModel> details,
+        List<AISectionCompare> aiSectionCompares,
+        IEnumerable<RedisearchResultItem>? trainingData = null)
         {
             try
             {
@@ -115,7 +116,6 @@ namespace ASOFT.CoreAI.Business
                     ["UserName"] = request.UserName,
                     ["CurrentTime"] = DateTime.Now,
                     ["question"] = question,
-                    ["content"] = awnserOCRs,
                     ["datas"] = datas,
                     ["details"] = !details.Any() ? null : details.Select(x => new
                     {
@@ -125,22 +125,8 @@ namespace ASOFT.CoreAI.Business
                         x.InvoiceDate, // Ngày hóa đơn (định dạng)
                         x.RingiNo, // Số Ringi
                     }),
-                    ["evaluationText"] = resultCreateFile,
-                    ["chatHistory"] = chatHistory.Select(x => new
-                    {
-                        x.ResponseText,
-                        x.Message,
-                        x.CreateDate,
-                        x.UserID
-                    })
+                    ["dataFiles"] = aiSectionCompares
                 };
-                if (trainingData != null)
-                {
-                    arguments["trainingData"] = trainingData.Where(x => !string.IsNullOrEmpty(x.Text)).Select(x => new
-                    {
-                        x.Text,
-                    });
-                }
                 return await HandleChatWithModelAI(promptSystem, arguments, request.IsStreaming, promptTemplate, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception)

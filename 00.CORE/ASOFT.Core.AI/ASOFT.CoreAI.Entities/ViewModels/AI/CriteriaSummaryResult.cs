@@ -9,7 +9,7 @@ namespace ASOFT.CoreAI.Entities
 
     public class CriteriaSummaryResult
     {
-        public List<ST2136> Criteria { get; set; }
+        public ST2136 Criteria { get; set; }
         public string OverallResult { get; set; }
         public string OverallReason { get; set; }
     }
