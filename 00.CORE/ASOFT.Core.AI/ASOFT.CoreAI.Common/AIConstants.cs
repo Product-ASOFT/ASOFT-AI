@@ -122,4 +122,19 @@
         public const string ROLE_USER = "user";
         public const string ROLE_SYSTEM = "system";
     }
+    public static class SECTIONTYPE
+    {
+        public const string INVOICE = "INVOICE"; // Hóa đơn
+        public const string CUSTOMSHEET = "CUSTOMSHEET"; // Tờ khai
+        public const string PO = "PO"; // Đơn đặt hàng
+        public const string CONTRACT = "CONTRACT"; // Hợp đồng
+        public const string RINGI = "RINGI"; // Ringi - Quy trình phê duyệt nội bộ của công ty Nhật Bản
+        public const string INSPECTION = "INSPECTION"; // Biên bản nghiệm thu 
+        public const string HANDOVER = "HANDOVER"; // Biên bản bàn giao
+        public const string STATEMENT = "STATEMENT"; // Bảng kê hóa đơn
+        public const string BILL = "BILL"; // Bill
+        public const string COMMERCIALINVOICE = "COMMERCIALINVOICE"; // Hóa đơn thương mại
+        public const string PACKINGLIST = "PACKINGLIST"; // Packing list
+        public const string OTHER = "OTHER"; // Các loại khác
+    }
 }
