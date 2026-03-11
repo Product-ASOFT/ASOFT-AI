@@ -156,7 +156,7 @@ namespace ASOFT.CoreAI.Business
             var baseUrl = $"{req.Scheme}://{req.Host}{req.PathBase}";
             return Task.FromResult($"{baseUrl}/downloads/{fileName}");
         }
-        public  List<AttachFileModel> SplitEveryNPages_KeepOriginal(AttachFileModel attachFileModel, int pagesPerFile = 4)
+        public  List<AttachFileModel> SplitEveryNPages_KeepOriginal(AttachFileModel attachFileModel, int pagesPerFile = 3)
         {
             string sourcePdfPath = attachFileModel.AttachURL!;
             if (string.IsNullOrWhiteSpace(sourcePdfPath))

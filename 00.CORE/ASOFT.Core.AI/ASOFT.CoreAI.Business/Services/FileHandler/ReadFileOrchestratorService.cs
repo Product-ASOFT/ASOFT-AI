@@ -91,19 +91,7 @@ namespace ASOFT.CoreAI.Business
             }
             return new List<ResultReadFileModel>();
         }
-        // Hàm lấy key agent theo loại đối chiếu
-        private string GetAgentKeyByTypeCompare(string typeCompare)
-        {
-            return typeCompare switch
-            {
-                "WAREHOUSE" => AgentTypeKeys.BEM_AGENT_BEMF2000_WAREHOUSE,
-                "MACHINE" => AgentTypeKeys.BEM_AGENT_BEMF2000_MACHINE,
-                "SERVICE" => AgentTypeKeys.BEM_AGENT_BEMF2000_SERVICE,
-                "BUILD" => AgentTypeKeys.BEM_AGENT_BEMF2000_BUILD,
-                "OTHER" => AgentTypeKeys.BEM_AGENT_BEMF2000_OTHER,
-                _ => throw new NotImplementedException(),
-            };
-        }
+       
         // Hàm validate request đọc file
         private (bool IsValid, string Message) ValidateReadFileRequest(ReadFileRequest request)
         {

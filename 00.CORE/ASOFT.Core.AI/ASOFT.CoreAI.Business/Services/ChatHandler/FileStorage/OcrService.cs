@@ -58,7 +58,6 @@ namespace ASOFT.CoreAI.Business
                 if (string.IsNullOrWhiteSpace(r?.TextContent))
                     continue;
 
-                sb.AppendLine($"📄 File {index}: **{r.FileName}**");
                 sb.AppendLine(r.TextContent);
                 sb.AppendLine();
             }

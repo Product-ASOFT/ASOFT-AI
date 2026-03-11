@@ -1,5 +1,6 @@
 ﻿using ASOFT.A00.Entities;
 using ASOFT.Core.Common.InjectionChecker;
+using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using Microsoft.Extensions.Logging;
@@ -170,20 +171,7 @@ namespace ASOFT.CoreAI.Business
                 return null;
             }
         }
-        private static string ExtractSummaryBlock(string aiText)
-        {
-            var match = Regex.Match(aiText, @"tổng\s*hợp", RegexOptions.IgnoreCase);
-            var startIndex = match.Success ? match.Index : -1;
-            if (startIndex < 0)
-                return string.Empty;
-
-            var nextIndex = aiText.IndexOf("## 4.", startIndex, StringComparison.OrdinalIgnoreCase);
-            if (nextIndex > startIndex)
-                return aiText.Substring(startIndex, nextIndex - startIndex);
-
-            return aiText.Substring(startIndex);
-        }
-        public async Task<List<AISectionCompare>?> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem)
+        public async Task<List<AISectionCompare>?> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem, string fileName)
         {
             var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContentSystem, promptContent, ocrText);
             if (resultJson == null)
@@ -196,7 +184,7 @@ namespace ASOFT.CoreAI.Business
                 {
                     return null;
                 }
-                return await SaveInfomationFileAsync(aiNormalizeResult, sT2131);
+                return await SaveInfomationFileAsync(aiNormalizeResult, sT2131, fileName);
             }
             catch (Exception ex)
             {
@@ -298,7 +286,7 @@ namespace ASOFT.CoreAI.Business
         /// <param name="result"></param>
         /// <param name="sT2131"></param>
         /// <returns></returns>
-        private async Task<List<AISectionCompare>> SaveInfomationFileAsync(AiNormalizeResult result, ST2131 sT2131)
+        private async Task<List<AISectionCompare>> SaveInfomationFileAsync(AiNormalizeResult result, ST2131 sT2131, string fileName)
         {
             var masters = new List<ST2137>();
             var details = new List<ST2138>();
@@ -336,7 +324,7 @@ namespace ASOFT.CoreAI.Business
                         Currency = d.Currency,
                         SupplierName = d.SupplierName,
                         VoucherDate = d.VoucherDate,
-                        FileName = d.FileName,
+                        FileName = fileName,
                         PaymentTerm = d.PaymentTerm,
                         DeliveryTerm = d.DeliveryTerm,
                         ClearanceStatus = d.ClearanceStatus,
@@ -358,12 +346,22 @@ namespace ASOFT.CoreAI.Business
                         Description = d.Description,
                     };
                     details.Add(detail);
+                    string? voucherNo = d.VoucherNo;
+                    DateTime? voucherDate = d.VoucherDate;
+                    if (master.SectionType == SECTIONTYPE.PO || master.SectionType == SECTIONTYPE.CONTRACT || master.SectionType == SECTIONTYPE.INSPECTION)
+                    {
+                        voucherNo = d.ContractNo;
+                        if (master.SectionType == SECTIONTYPE.INSPECTION)
+                        {
+                            voucherDate = d.AcceptanceDate;
+                        }
+                    }
                     var AISectionCompare = new AISectionCompare
                     {
                         NoOrder = orderNo++,
                         SectionType = master.SectionType,
                         SupplierName = d.SupplierName,
-                        VoucherNo = d.VoucherNo,
+                        VoucherNo = voucherNo,
                         Amount = d.Amount,
                         Currency = d.Currency,
                         CompleteCheckDate = d.CompleteCheckDate,
@@ -371,7 +369,7 @@ namespace ASOFT.CoreAI.Business
                         Signature = section.Master.Signature,
                         PaymentTerm = d.PaymentTerm,
                         VoucherDate = d.VoucherDate,
-                        FileName = d.FileName,
+                        FileName = fileName,
                         AmountCustomSheet = master.SectionType == "CUSTOMSHEET" ? d.Amount : 0,
                     };
                     lstAISectionCompare.Add(AISectionCompare);

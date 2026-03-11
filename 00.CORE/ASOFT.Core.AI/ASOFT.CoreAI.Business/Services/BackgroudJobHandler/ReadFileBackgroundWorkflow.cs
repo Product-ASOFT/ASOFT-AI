@@ -71,7 +71,7 @@ namespace ASOFT.CoreAI.Business
 
                 // 1. OCR
                 var (ocrText, ocrResults) = await _ocrService.ReadAsync(files, request.BEMF2000ViewModel!.APK);
-                
+
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
 
@@ -79,7 +79,7 @@ namespace ASOFT.CoreAI.Business
                 var trainingData = await GetTrainingDataIfNeeded(request);
 
                 // 3. Build AI sections từ OCR (dùng cho compare)
-                  var aiSectionCompares = await BuildAiSectionComparesAsync(ocrResults, entity);
+                var aiSectionCompares = await BuildAiSectionComparesAsync(ocrResults, entity);
 
                 // 4. Build criteria list
                 var criteriaList = await BuildCriteriaListAsync(request: request, entity: entity, promptList: promptList, aiSectionCompares: aiSectionCompares, ocrResults: ocrResults, ct: ct);
@@ -148,8 +148,7 @@ namespace ASOFT.CoreAI.Business
             var result = new List<AISectionCompare>();
             foreach (var item in ocrResults)
             {
-                var text = $"**** Tên File: {(item.FileName ?? "")} ****\n{(item.TextContent ?? "")}";
-                var formatResult = await FormatOCRIfNeeded(text, entity);
+                var formatResult = await FormatOCRIfNeeded(item.TextContent, entity, item.FileName);
                 if (formatResult != null && formatResult.Count > 0)
                     result.AddRange(formatResult);
             }
@@ -194,13 +193,13 @@ namespace ASOFT.CoreAI.Business
             if (request == null)
                 throw new Exception("Không tìm thấy request.");
         }
-        private async Task<List<AISectionCompare>?> FormatOCRIfNeeded(string aiResult, ST2131 entity)
+        private async Task<List<AISectionCompare>?> FormatOCRIfNeeded(string aiResult, ST2131 entity, string fileName)
         {
             var promptReadFile = await _ST2130.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_READFILE);
 
             if (!string.IsNullOrWhiteSpace(promptReadFile?.PromptContent))
             {
-                return await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent, promptReadFile.Description);
+                return await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent, promptReadFile.Description, fileName);
             }
             return null;
         }
