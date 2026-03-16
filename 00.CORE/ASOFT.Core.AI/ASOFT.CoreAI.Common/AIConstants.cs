@@ -10,6 +10,8 @@
         public const string ONT1021_ALL_SETTINGS = "ONT1021_ALL_SETTINGS";
         public const string ErrorType = "ErrorType";
         public const string RawErrorMessage = "RawErrorMessage";
+        public const string OUTMEMORY = "OutMemory";
+
 
         #region tạo các lệnh Redis
 
