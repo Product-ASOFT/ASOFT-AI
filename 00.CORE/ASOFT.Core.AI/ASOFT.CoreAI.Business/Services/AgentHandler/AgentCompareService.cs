@@ -131,39 +131,25 @@ namespace ASOFT.CoreAI.Business
             }
         }
 
-        public ST2136? ParseCriteriaResult(ST2131 entity, ReadFileRequest request, string json, int criteriaID)
+        public ST2136? ParseCriteriaResult(ST2131 entity, ReadFileRequest request, string json, int criteriaID, string criteriaInfoName)
         {
             try
             {
-                json = StripOutsideJson(json);
-                var settings = new JsonSerializerSettings
+                var parsedResult = BuildCriteriaResult(json, criteriaInfoName);
+
+                return new ST2136
                 {
-                    Culture = CultureInfo.GetCultureInfo("vi-VN"),
-                    DateParseHandling = DateParseHandling.DateTime
+                    APK = Guid.NewGuid(),
+                    APKMaster = entity.APK,
+                    CriteriaName = parsedResult.CriteriaName,
+                    CriteriaStatus = parsedResult.CriteriaStatus,
+                    CreateDate = DateTime.Now,
+                    CreateUserID = entity.CreateUserID,
+                    BusinessParent = request.BEMF2000ViewModel!.VoucherNo,
+                    Description = parsedResult.Description,
+                    CriteriaID = criteriaID,
+                    FileName = parsedResult.FileName,
                 };
-                var result = JsonConvert.DeserializeObject<CriteriaSummaryResult>(json, settings);
-                if (result != null && result.Criteria != null)
-                {
-                    var criteria = result.Criteria;
-                    var ST2136 = new ST2136
-                    {
-                        APK = Guid.NewGuid(),
-                        APKMaster = entity.APK,
-                        CriteriaName = criteria.CriteriaName,
-                        CriteriaStatus = criteria.CriteriaStatus,
-                        CreateDate = DateTime.Now,
-                        CreateUserID = entity.CreateUserID,
-                        BusinessParent = request.BEMF2000ViewModel!.VoucherNo,
-                        Description = criteria.Description,
-                        CriteriaID = criteriaID
-                    };
-                    if (criteria.CriteriaStatus == StatusResultCompare.BLANK.ToString())
-                    {
-                        ST2136.CriteriaStatus = StatusResultCompare.NG.ToString();
-                    }
-                    return ST2136;
-                }
-                return null;
             }
             catch (Exception ex)
             {
@@ -171,6 +157,49 @@ namespace ASOFT.CoreAI.Business
                 return null;
             }
         }
+
+        private ParsedCriteriaResult BuildCriteriaResult(string json, string defaultCriteriaName)
+        {
+            if (json == AIConstants.OUTMEMORY)
+            {
+                return ParsedCriteriaResult.Fail(defaultCriteriaName, StatusResultCompare.NG.ToString(), "Không đủ bộ nhớ để xử lý đối chiếu tiêu chí này");
+            }
+            var cleanedJson = StripOutsideJson(json);
+
+            try
+            {
+                var settings = new JsonSerializerSettings
+                {
+                    Culture = CultureInfo.GetCultureInfo("vi-VN"),
+                    DateParseHandling = DateParseHandling.DateTime
+                };
+
+                var result = JsonConvert.DeserializeObject<CriteriaSummaryResult>(cleanedJson, settings);
+                var criteria = result?.Criteria;
+
+                if (criteria == null)
+                {
+                    return ParsedCriteriaResult.Fail(defaultCriteriaName, StatusResultCompare.NG.ToString(), "Không có thông tin. Vui lòng thử lại");
+                }
+
+                var finalStatus = criteria.CriteriaStatus == StatusResultCompare.BLANK.ToString()
+                    ? StatusResultCompare.NG.ToString()
+                    : criteria.CriteriaStatus;
+
+                return new ParsedCriteriaResult
+                {
+                    CriteriaName = string.IsNullOrWhiteSpace(criteria.CriteriaName) ? defaultCriteriaName : criteria.CriteriaName,
+                    CriteriaStatus = finalStatus,
+                    Description = criteria.Description,
+                    FileName = criteria.FileName,
+                };
+            }
+            catch (Exception)
+            {
+                return ParsedCriteriaResult.Fail(defaultCriteriaName, StatusResultCompare.NG.ToString(), "Không thể xử lý kết quả đối chiếu. Vui lòng thử lại.");
+            }
+        }
+
         public async Task<List<AISectionCompare>?> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem, string fileName)
         {
             var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContentSystem, promptContent, ocrText);

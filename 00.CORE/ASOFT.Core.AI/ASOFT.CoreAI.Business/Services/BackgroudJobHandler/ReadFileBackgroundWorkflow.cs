@@ -21,18 +21,58 @@ namespace ASOFT.CoreAI.Business
         private readonly SettingsManagerService _settingsManagerService;
         private readonly FilePathService _filePathService;
 
-        private static readonly IReadOnlyList<string> _criteriaKeys = new[]
-        {
-            AgentCriteriaKeys.CRITERIA_SUPPLIER_NAME,
-            AgentCriteriaKeys.CRITERIA_INVOICE_NO,
-            AgentCriteriaKeys.CRITERIA_INVOICE_DATE,
-            AgentCriteriaKeys.CRITERIA_AMOUNT,
-            AgentCriteriaKeys.CRITERIA_AMOUNT_CUSTOMSHEET,
-            AgentCriteriaKeys.CRITERIA_CURRENCY,
-            AgentCriteriaKeys.CRITERIA_PAYMENT_DEADLINE,
-            AgentCriteriaKeys.CRITERIA_CHECK_COMPLETED_DATE,
-            AgentCriteriaKeys.CRITERIA_INCOTERM,
-            AgentCriteriaKeys.CRITERIA_SIGNATURE_STAMP,
+        private static readonly IReadOnlyList<AgentCriteriaInfo> _criteriaInfos = new[]
+         {
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_SUPPLIER_NAME,
+                Name = "Tên nhà cung cấp"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_INVOICE_NO,
+                Name = "Số hóa đơn"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_INVOICE_DATE,
+                Name = "Ngày hóa đơn"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_AMOUNT,
+                Name = "Số tiền"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_AMOUNT_CUSTOMSHEET,
+                Name = "Số tiền tờ khai"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_CURRENCY,
+                Name = "Loại tiền"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_PAYMENT_DEADLINE,
+                Name = "Hạn thanh toán"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_CHECK_COMPLETED_DATE,
+                Name = "Ngày hoàn thành kiểm tra"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_INCOTERM,
+                Name = "Điều kiện giao hàng"
+            },
+            new AgentCriteriaInfo
+            {
+                Key = AgentCriteriaKeys.CRITERIA_SIGNATURE_STAMP,
+                Name = "Chữ ký và Con dấu"
+            }
         };
         public ReadFileBackgroundWorkflow(
             IST2131Queries ST2131,
@@ -161,11 +201,11 @@ namespace ASOFT.CoreAI.Business
 
             var criteriaList = new List<ST2136>();
             int criteriaIndex = 1;
-            foreach (var criteriaKey in _criteriaKeys)
+            foreach (var criteriaKey in _criteriaInfos)
             {
                 ct.ThrowIfCancellationRequested();
 
-                var promptCriteria = promptList.FirstOrDefault(x => x.TypePrompt == criteriaKey);
+                var promptCriteria = promptList.FirstOrDefault(x => x.TypePrompt == criteriaKey.Key);
                 if (promptCriteria == null) continue;
 
                 var aiResultCompare = await _compareService.CompareAsync(
@@ -177,8 +217,7 @@ namespace ASOFT.CoreAI.Business
                     aiSectionCompares);
 
                 if (string.IsNullOrWhiteSpace(aiResultCompare)) continue;
-
-                var criteria = _agentCompareService.ParseCriteriaResult(entity, request, aiResultCompare, criteriaIndex);
+                var criteria = _agentCompareService.ParseCriteriaResult(entity, request, aiResultCompare, criteriaIndex, criteriaKey.Name);
                 if (criteria != null)
                 {
                     criteriaIndex++;
