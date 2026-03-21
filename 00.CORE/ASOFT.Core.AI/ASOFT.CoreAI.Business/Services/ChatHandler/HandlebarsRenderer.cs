@@ -1,26 +1,71 @@
-﻿using ASOFT.CoreAI.Abstractions;
+﻿using System.Net;
+using ASOFT.CoreAI.Abstractions;
 using HandlebarsDotNet;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ASOFT.CoreAI.Business.Services.ChatHandler
+public static class HandlebarsRenderer
 {
-    public static class HandlebarsRenderer
+    private static bool _helpersRegistered = false;
+    private static readonly object _lock = new();
+
+
+    private static void EnsureHelpersRegistered(KernelArguments arguments)
     {
-        public static string RenderPrompt(string template, KernelArguments arguments)
+        if (_helpersRegistered) return;
+
+        lock (_lock)
         {
-            var compiledTemplate = Handlebars.Compile(template);
+            if (_helpersRegistered) return;
 
-            var data = arguments.ToDictionary(x => x.Key, x => x.Value);
+            Handlebars.RegisterHelper("eq", (context, arguments) =>
+            {
+                if (arguments.Length < 2)
+                    return false;
 
+                var left = arguments[0];
+                var right = arguments[1];
 
-            var result = compiledTemplate(data);
+                if (left == null && right == null) return true;
+                if (left == null || right == null) return false;
 
-            return WebUtility.HtmlDecode(result);
+                return string.Equals(
+                    left.ToString()?.Trim(),
+                    right.ToString()?.Trim(),
+                    StringComparison.OrdinalIgnoreCase
+                );
+            });
+
+            Handlebars.RegisterHelper("ne", (context, arguments) =>
+            {
+                if (arguments.Length < 2)
+                    return true;
+
+                var left = arguments[0];
+                var right = arguments[1];
+
+                if (left == null && right == null) return false;
+                if (left == null || right == null) return true;
+
+                return !string.Equals(
+                    left.ToString()?.Trim(),
+                    right.ToString()?.Trim(),
+                    StringComparison.OrdinalIgnoreCase
+                );
+            });
+
+            _helpersRegistered = true;
         }
+    }
+
+    public static string RenderPrompt(string template, KernelArguments arguments)
+    {
+        EnsureHelpersRegistered(arguments);
+
+        var compiledTemplate = Handlebars.Compile(template);
+
+        var data = arguments.ToDictionary(x => x.Key, x => x.Value);
+
+        var result = compiledTemplate(data);
+
+        return WebUtility.HtmlDecode(result);
     }
 }

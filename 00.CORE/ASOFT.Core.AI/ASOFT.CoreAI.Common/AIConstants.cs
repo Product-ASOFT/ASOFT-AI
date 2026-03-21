@@ -118,6 +118,7 @@
         public const string AI_AI_LLM_ISUSE = "AI_LLM:IsUse"; // key cấu hình có/không sử dụng API LLM 
         public const string AI_AI_LLM_MAXTOKEN = "AI_LLM:MaxToken"; // key cấu hình max token
         public const string AI_AI_LLM_TEMPERATURE = "AI_LLM:Temperature"; // key cấu hình mức độ trả lời ngẫu nhiên
+        public const string OTHER_PAGESPLIT = "Other:PageSplit"; // Thông tin số page sẽ cắt trong file PDF
     }
     public static class AIRoleName
     {
