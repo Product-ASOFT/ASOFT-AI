@@ -306,5 +306,10 @@ namespace ASOFT.CoreAI.Business
                 MaxToken = await _configManagerService.GetConfigIntAsync(APIConfigKeys.AI_AI_LLM_MAXTOKEN),
             };
         }
+
+        public async Task<int> GetPageSplit()
+        {
+            return await _configManagerService.GetConfigIntAsync(APIConfigKeys.OTHER_PAGESPLIT);
+        }
     }
 }

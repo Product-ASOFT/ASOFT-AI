@@ -69,6 +69,7 @@ namespace ASOFT.CoreAI.Entities
         public string? DeliveryTerm { get; set; }
         public string? PaymentTerm { get; set; }
         public string? FileName { get; set; }
+        public string? ClearanceStatus { get; set; }
         public DateTime? CompleteCheckDate { get; set; }
         public DateTime? VoucherDate { get; set; }
         public string? Signature { get; set; }

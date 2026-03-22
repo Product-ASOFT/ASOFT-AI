@@ -156,8 +156,12 @@ namespace ASOFT.CoreAI.Business
             var baseUrl = $"{req.Scheme}://{req.Host}{req.PathBase}";
             return Task.FromResult($"{baseUrl}/downloads/{fileName}");
         }
-        public  List<AttachFileModel> SplitEveryNPages_KeepOriginal(AttachFileModel attachFileModel, int pagesPerFile = 3)
+        public List<AttachFileModel> SplitEveryNPages_KeepOriginal(AttachFileModel attachFileModel, int pagesPerFile = 4)
         {
+            if (pagesPerFile <= 0)
+            {
+                pagesPerFile = 4;
+            }
             string sourcePdfPath = attachFileModel.AttachURL!;
             if (string.IsNullOrWhiteSpace(sourcePdfPath))
                 throw new ArgumentException("sourcePdfPath is null/empty.", nameof(sourcePdfPath));
@@ -168,9 +172,6 @@ namespace ASOFT.CoreAI.Business
             string extension = Path.GetExtension(sourcePdfPath);
             if (!string.Equals(extension, ".pdf", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("File is not a PDF.");
-
-            if (pagesPerFile <= 0)
-                throw new ArgumentOutOfRangeException(nameof(pagesPerFile), "pagesPerFile must be > 0.");
 
             var outputPaths = new List<AttachFileModel>();
 
@@ -208,7 +209,7 @@ namespace ASOFT.CoreAI.Business
             }
             return outputPaths;
         }
-        private  string EnsureUniquePath(string path)
+        private string EnsureUniquePath(string path)
         {
             if (!File.Exists(path)) return path;
 

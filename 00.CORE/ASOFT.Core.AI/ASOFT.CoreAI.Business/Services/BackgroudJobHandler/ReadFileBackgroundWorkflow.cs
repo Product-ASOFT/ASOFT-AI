@@ -2,6 +2,7 @@
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 using static ASOFT.CoreAI.Common.EnumConstants;
 
@@ -160,12 +161,13 @@ namespace ASOFT.CoreAI.Business
 
         private List<AttachFileModel> SplitAttachFiles(List<AttachFileModel>? attachFiles)
         {
+            var pageSplit = _settingsManagerService.GetPageSplit().Result;
             var result = new List<AttachFileModel>();
             if (attachFiles == null || attachFiles.Count == 0) return result;
 
             foreach (var file in attachFiles)
             {
-                var split = _filePathService.SplitEveryNPages_KeepOriginal(file);
+                var split = _filePathService.SplitEveryNPages_KeepOriginal(file, 1000);
                 if (split != null && split.Count > 0)
                     result.AddRange(split);
                 else
