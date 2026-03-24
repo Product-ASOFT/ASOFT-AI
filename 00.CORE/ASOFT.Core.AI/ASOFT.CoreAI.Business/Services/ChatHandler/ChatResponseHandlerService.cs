@@ -149,6 +149,7 @@ namespace ASOFT.CoreAI.Business
 
                     if (result == null)
                     {
+                        _logger.LogError("Lỗi không có thông tin được parse JSON từ LLM. Raw response: {Content}", content);
                         throw new JsonException("Deserialize trả về null");
                     }
 

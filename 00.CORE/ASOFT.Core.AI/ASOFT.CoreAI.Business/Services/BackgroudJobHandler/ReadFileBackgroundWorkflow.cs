@@ -108,10 +108,10 @@ namespace ASOFT.CoreAI.Business
                 ValidateRequest(request);
 
                 // 0. Split file (nếu cần)
-                var files = SplitAttachFiles(request.AttachFiles);
+                //var files = SplitAttachFiles(request.AttachFiles);
 
                 // 1. OCR
-                var (ocrText, ocrResults) = await _ocrService.ReadAsync(files, request.BEMF2000ViewModel!.APK);
+                var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles, request.BEMF2000ViewModel!.APK);
 
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
