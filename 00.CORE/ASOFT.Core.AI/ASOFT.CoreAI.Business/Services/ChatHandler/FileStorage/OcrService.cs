@@ -143,7 +143,7 @@ namespace ASOFT.CoreAI.Business
                 NumberOrder = numberOrder,
                 FilePath = attach?.AttachURL ?? string.Empty,
                 AttachID = attach?.AttachID ?? 1,
-                FileName = attach?.AttachNameOrigin ?? string.Empty
+                FileName = attach?.AttachName ?? string.Empty
             };
         }
 
