@@ -1,4 +1,5 @@
-﻿using ASOFT.CoreAI.Entities;
+﻿using ASOFT.A00.Entities;
+using ASOFT.CoreAI.Entities;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,8 @@ namespace ASOFT.CoreAI.Business
         private readonly IST2131Queries _ST2131;
         private readonly IST2130Queries _ST2130;
         private readonly IST2136Queries _ST2136;
+        private readonly IOOT9002Queries _OOT9002;
+        private readonly IOOT9003Queries _OOT9003;
 
         private readonly ITrainingDataService _trainingService;
         private readonly IOCRService _ocrService;
@@ -79,6 +82,8 @@ namespace ASOFT.CoreAI.Business
             IST2131Queries ST2131,
             IST2130Queries ST2130,
             IST2136Queries ST2136,
+            IOOT9002Queries OOT9002,
+            IOOT9003Queries OOT9003,
             IOCRService ocrService,
             ITrainingDataService trainingService,
             AgentCompareService compareService,
@@ -90,6 +95,8 @@ namespace ASOFT.CoreAI.Business
             _ST2131 = ST2131;
             _ST2130 = ST2130;
             _ST2136 = ST2136;
+            _OOT9002 = OOT9002;
+            _OOT9003 = OOT9003;
             _ocrService = ocrService;
             _trainingService = trainingService;
             _compareService = compareService;
@@ -106,12 +113,11 @@ namespace ASOFT.CoreAI.Business
             try
             {
                 ValidateRequest(request);
-
                 // 0. Split file (nếu cần)
                 //var files = SplitAttachFiles(request.AttachFiles);
 
                 // 1. OCR
-                var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles, request.BEMF2000ViewModel!.APK);
+                var (ocrText, ocrResults) = await _ocrService.ReadAsync(request.AttachFiles!, request.BEMF2000ViewModel!.APK);
 
                 if (string.IsNullOrWhiteSpace(ocrText))
                     throw new Exception("Không có thông tin đọc được từ tệp đính kèm");
@@ -132,6 +138,7 @@ namespace ASOFT.CoreAI.Business
                     MarkFailed(entity);
                     entity.TextContentOCR = ocrText;
                     await _ST2131.UpdateData(entity);
+                    await NotificationResultAI(request);
                     return;
                 }
 
@@ -145,17 +152,20 @@ namespace ASOFT.CoreAI.Business
                 UpdateCompareResult(entity, request, ocrText, aiResult, criteriaList);
 
                 await _ST2131.UpdateData(entity);
+                await NotificationResultAI(request);
             }
             catch (OperationCanceledException)
             {
                 MarkFailed(entity);
                 await _ST2131.UpdateData(entity);
+                await NotificationResultAI(request);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);
                 MarkFailed(entity);
                 await _ST2131.UpdateData(entity);
-                _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);
+                await NotificationResultAI(request);
             }
         }
 
@@ -286,6 +296,75 @@ namespace ASOFT.CoreAI.Business
             entity.Status = StatusResultCompare.NG.ToString();
             entity.Percentage = "0%";
             entity.StatusProcess = StatusProcessCompareOCR.FAILED.ToString();
+        }
+        private async Task NotificationResultAI(ReadFileRequest request)
+        {
+            if (request?.OOT9002 == null || request.OOT9003s == null || !request.OOT9003s.Any())
+                return;
+
+            var now = DateTime.Now;
+
+            var createUserId = request.BEMF2001ViewModels?
+                .Select(x => x.CreateUserID)
+                .FirstOrDefault();
+
+
+            var voucherNo = request.BEMF2000ViewModel?.VoucherNo ?? string.Empty;
+
+            var message = $"Phiếu DNTT/DNTTTU/DNTU {voucherNo} đã hoàn tất đối chiếu";
+
+            var notify = request.OOT9002;
+
+            notify.Title = message;
+            notify.Description = message;
+
+            notify.CreateDate = now;
+            notify.LastModifyDate = now;
+
+            notify.CreateUserID = createUserId;
+            notify.LastModifyUserID = createUserId;
+
+            notify.EffectDate = now;
+            notify.ExpiryDate = now;
+
+            // 3. Map OOT9003
+            foreach (var item in request.OOT9003s)
+            {
+                item.CreateDate = now;
+                item.LastModifyDate = now;
+
+                item.CreateUserID = createUserId;
+                item.LastModifyUserID = createUserId;
+            }
+
+            // 4. Save DB 
+            bool IsSaveOOT9002 = await _OOT9002.SaveData(notify);
+            bool IsSaveOOT9003 = await _OOT9003.SaveData(request.OOT9003s);
+            if (IsSaveOOT9002 && IsSaveOOT9003)
+            {
+                // 5. Call API notify client
+                await SendNotificationToClientAsync();
+            }
+        }
+        private async Task SendNotificationToClientAsync()
+        {
+            var baseUrl = await _settingsManagerService.GetUrlERPAsync();
+
+            if (string.IsNullOrWhiteSpace(baseUrl))
+                return;
+
+            const string tokenRequest = "hkv156jcbhkjvcbKJlkjbvSAHG8D4521VX12C234AG4574JSVB456bhdgfs78214OFidugjvmkjbvcbcvhjdfgjkbcnmhg7675JHBJHBVBSV6JHJHj7sdfj32156465431ksf";
+
+            using var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(baseUrl)
+            };
+
+            var url = $"Notification/SendToClient?tokenRequest={Uri.EscapeDataString(tokenRequest)}";
+
+            using var response = await httpClient.GetAsync(url);
+
+            response.EnsureSuccessStatusCode();
         }
     }
 }
