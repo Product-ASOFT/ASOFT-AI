@@ -129,7 +129,7 @@ namespace ASOFT.CoreAI.Business
                 await _ST2137Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng master dữ liệu đọc từ file đính kèm
                 await _ST2138Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng detail dữ liệu đọc từ file đính kèm
                 await _ST2136Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng chi tiết  kết quả đối chiếu từ AI
-                await _ST2131Queries.DeleteData(ST2131_Delete); // Xóa dữ liệu bảng chính kết quả đối chiếu từ AI
+                await _ST2131Queries.DeleteData(BEMF2000ViewModel.APK); // Xóa dữ liệu bảng chính kết quả đối chiếu từ AI
             }
             catch (Exception)
             {

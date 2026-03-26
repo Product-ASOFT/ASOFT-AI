@@ -17,5 +17,7 @@ namespace ASOFT.CoreAI.Entities
         public List<BEMF2001ViewModel>? BEMF2001ViewModels { get; set; } = null;
         public List<AttachFileModel>? AttachFiles { get; set; } = null;
         public string? TextContent { get; set; } = null;
+        public OOT9002? OOT9002 { get; set; }
+        public List<OOT9003>? OOT9003s { get; set; }
     }
 }
