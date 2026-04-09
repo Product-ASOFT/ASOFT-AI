@@ -2,7 +2,7 @@
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2131 : BaseEntity
+    public class BEMT2003 : BaseEntity
     {
         public Guid? APKMaster { get; set; }
         public int AttachID { get; set; }

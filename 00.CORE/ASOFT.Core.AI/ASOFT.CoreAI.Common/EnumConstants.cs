@@ -82,5 +82,17 @@ namespace ASOFT.CoreAI.Common
             OutOfCredit,
             UnknownError
         }
+        public enum ParameterRole
+        {
+            ViewLabel = 0, // Dùng để hiển thị label cho các trường dữ liệu động
+            ViewValue = 1,  // Dùng để hiển thị value cho các trường dữ liệu động
+            SaveData = 2, // Dùng để lưu dữ liệu động vào database
+            FileType = 3, // Dùng để cấu hình các loại file
+        }
+        public enum TypeCase
+        {
+            E_ParameterID = 1, // Dùng để lấy theo ParameterID ở ONT1041
+            E_TypeConfigID = 2, // Dùng để lấy theo TypeConfig ở ONT1040
+        }
     }
 }

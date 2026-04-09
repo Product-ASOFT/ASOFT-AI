@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public class ST2138Queries : IST2138Queries
+    public class BEMT2006Queries : IBEMT2006Queries
     {
 
-        private readonly IBusinessContext<ST2138> _businessContext;
+        private readonly IBusinessContext<BEMT2006> _businessContext;
 
-        public ST2138Queries(IBusinessContext<ST2138> businessContext)
+        public BEMT2006Queries(IBusinessContext<BEMT2006> businessContext)
         {
             _businessContext = Checker.NotNull(businessContext, nameof(businessContext));
         }
-        public Task SaveData(IEnumerable<ST2138> datas, CancellationToken cancellationToken = default)
+        public Task SaveData(IEnumerable<BEMT2006> datas, CancellationToken cancellationToken = default)
         {
             return _businessContext.UnitOfWork.ExecuteInTransactionAsync(
                async transactionHolder =>
@@ -27,13 +27,13 @@ namespace ASOFT.CoreAI.Infrastructure
                    await _businessContext.UnitOfWork.CompleteAsync();
                });
         }
-        public async Task<IEnumerable<ST2138>> GetData(Guid apkMater_ST2131)
+        public async Task<IEnumerable<BEMT2006>> GetData(Guid apkMater_BEMT2003)
         {
-            return await _businessContext.QueryAsync(new FilterQuery<ST2138>(m => m.APKMaster_ST2131 == apkMater_ST2131));
+            return await _businessContext.QueryAsync(new FilterQuery<BEMT2006>(m => m.APKMaster == apkMater_BEMT2003));
         }
-        public async Task<bool> DeleteData(Guid apkMater_ST2131, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteData(Guid apkMater_BEMT2003, CancellationToken cancellationToken = default)
         {
-            var datas = await GetData(apkMater_ST2131);
+            var datas = await GetData(apkMater_BEMT2003);
             if (datas == null)
                 return true;
             return await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async tran =>

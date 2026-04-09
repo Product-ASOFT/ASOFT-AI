@@ -48,7 +48,7 @@ namespace ASOFT.CoreAI.Business
 
             httpClient.Timeout = Timeout.InfiniteTimeSpan;
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(15));
+            using var cts = new CancellationTokenSource();
 
             var requestBody = new
             {

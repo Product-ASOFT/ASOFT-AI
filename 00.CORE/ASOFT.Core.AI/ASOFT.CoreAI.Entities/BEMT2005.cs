@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2137 : BaseEntity
+    public class BEMT2005 : BaseEntity
     {
-        public Guid APKMaster_ST2131 { get; set; }
+        public Guid APKMaster { get; set; } // lưu APK BEMT2003
         public string SectionType { get; set; } = null!;
         public int SectionOrder { get; set; }
         public string? SectionTitle { get; set; }

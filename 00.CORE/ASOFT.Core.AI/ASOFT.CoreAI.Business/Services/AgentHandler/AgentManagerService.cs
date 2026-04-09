@@ -94,7 +94,6 @@ public class AgentManagerService
         [AgentKeys.CRM_AGENT_CRMF2160] = () => TryHandlePluginAsync<CRMF2160ViewModel>(request, AgentKeys.CRM_AGENT_CRMF2160, "yêu cầu hỗ trợ"),
         [AgentKeys.RESEARCH_AGENT] = () => TryHandlePluginAsync<RedisearchResultItem>(request, AgentKeys.RESEARCH_AGENT, "tra cứu thông tin"),
         [AgentKeys.READFILE_AGENT] = () => TryHandlePluginAsync<RedisearchResultItem>(request, AgentKeys.READFILE_AGENT, "Đọc thông tin"),
-        [AgentKeys.BEM_AGENT_BEMF2000] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.BEM_AGENT_BEMF2000, "DNTT/DNTTTU/DNTU"),
         [AgentKeys.HRM_AGENT_HRMF2220] = () => TryHandlePluginAsync<BEMF2000ViewModel>(request, AgentKeys.HRM_AGENT_HRMF2220, "Chấm công"),
         [AgentKeys.HRM_AGENT_HRMF1030] = () => TryHandlePluginAsync<HRMF1030ViewModel>(request, AgentKeys.HRM_AGENT_HRMF1030, "Hồ sơ ứng viên")
     };
@@ -212,50 +211,50 @@ public class AgentManagerService
         {
             if (data == null) continue;
 
-            string promptTemplate = await _agentPromptService.GetPromptTemplate(key);
-            if (string.IsNullOrWhiteSpace(promptTemplate))
+            var promptTemplate = await _agentPromptService.GetPromptTemplate(key);
+            if (promptTemplate == null)
                 return $"Hiện tại bạn chưa tạo Prompt cho agent `{key}`. Vui lòng thiết lập Prompt để tiếp tục.";
-
+            string promptConent = string.Format("{0} \n {1}", promptTemplate.PromptSystem, promptTemplate.PromptUser);
             switch (key)
             {
                 case AgentKeys.OO_AGENT_OOF2110:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<SimpleTaskInfo>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<SimpleTaskInfo>)data, chatHistory, promptConent, trainingData);
 
                 case AgentKeys.OO_AGENT_OOF2160:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<OOT2160ViewModel>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<OOT2160ViewModel>)data, chatHistory, promptConent, trainingData);
 
                 case AgentKeys.OO_AGENT_OOF2190:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<MilestoneViewModel>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<MilestoneViewModel>)data, chatHistory, promptConent, trainingData);
 
                 case AgentKeys.CRM_AGENT_CRMF2030:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2030ViewModel>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2030ViewModel>)data, chatHistory, promptConent, trainingData);
 
                 case AgentKeys.CRM_AGENT_CRMF2050:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2050ViewModel>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2050ViewModel>)data, chatHistory, promptConent, trainingData);
 
                 case AgentKeys.CRM_AGENT_CRMF2160:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2160ViewModel>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<CRMF2160ViewModel>)data, chatHistory, promptConent, trainingData);
 
                 case AgentKeys.HRM_AGENT_HRMF1030:
-                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<HRMF1030ViewModel>)data, chatHistory, promptTemplate, trainingData);
+                    return await _agentPromptService.SendPromptWithAgentAsync(request, isCheckData, (List<HRMF1030ViewModel>)data, chatHistory, promptConent, trainingData);
             }
         }
         // Agent tìm kiếm thông tin
         if (TryGetPluginData(pluginData, AgentKeys.RESEARCH_AGENT, out List<RedisearchResultItem>? redisearchResultItems))
         {
-            string promptTemplate = await _agentPromptService.GetPromptTemplate(AgentKeys.RESEARCH_AGENT);
-            if (string.IsNullOrWhiteSpace(promptTemplate))
+            var promptTemplate = await _agentPromptService.GetPromptTemplate(AgentKeys.RESEARCH_AGENT);
+            if (promptTemplate == null)
                 return "Hiện tại bạn chưa tạo Prompt tìm kiếm thông tin trong hệ thống. Vui lòng thiết lập Prompt để tiếp tục.";
 
             var answerOCR = new List<ResultReadFileModel>();
-            return await _agentPromptService.SendPromptWithDocsAsync(request, promptTemplate, answerOCR, chatHistory, trainingData, redisearchResultItems);
+            return await _agentPromptService.SendPromptWithDocsAsync(request, string.Format("{0} \n {1}", promptTemplate.PromptSystem, promptTemplate.PromptUser), answerOCR, chatHistory, trainingData, redisearchResultItems);
         }
 
         // Agent đọc file OCR
         if (pluginData.ContainsKey(AgentKeys.READFILE_AGENT))
         {
-            string promptTemplate = await _agentPromptService.GetPromptTemplate(AgentKeys.READFILE_AGENT);
-            if (string.IsNullOrWhiteSpace(promptTemplate))
+            var promptTemplate = await _agentPromptService.GetPromptTemplate(AgentKeys.READFILE_AGENT);
+            if (promptTemplate == null)
                 return "Hiện tại bạn chưa tạo Prompt để đọc file. Vui lòng thiết lập Prompt để tiếp tục.";
 
             if (request.FilePaths == null || request.FilePaths.Count == 0)
@@ -264,7 +263,7 @@ public class AgentManagerService
             var answerOCRs = await _readFileOrchestratorService.ReadFileFromChatBot(request.FilePaths, request.ChatSessionID!.Value);
             trainingData = await _redisHandler.GetDataByReadFileAsync(request, indexName, limit);
 
-            return await _agentPromptService.SendPromptWithDocsAsync(request, promptTemplate, answerOCRs, chatHistory, trainingData, new List<RedisearchResultItem>());
+            return await _agentPromptService.SendPromptWithDocsAsync(request, string.Format("{0} \n {1}", promptTemplate.PromptSystem, promptTemplate.PromptUser), answerOCRs, chatHistory, trainingData, new List<RedisearchResultItem>());
         }
 
         return "Agent chưa cung cấp thông tin phù hợp. Bạn có thể đặt lại câu hỏi cụ thể hơn không?";

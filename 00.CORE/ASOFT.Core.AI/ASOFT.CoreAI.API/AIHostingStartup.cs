@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using Kernel = ASOFT.CoreAI.Abstractions.Kernel;
 using ASOFT.CoreAI.Abstractions.PromptTemplate;
+using ASOFT.CoreAI.Infrastructure.Queries;
 
 [assembly: HostingStartup(typeof(AIHostingStartup))]
 
@@ -51,16 +52,18 @@ public class AIHostingStartup : IHostingStartup
 
         // Business / Query services
         services.AddScoped<IPermissionHandler, PermissionService>();
-        services.AddScoped<IST2130Queries, ST2130Queries>();
-        services.AddScoped<IST2131Queries, ST2131Queries>();
-        services.AddScoped<IST2136Queries, ST2136Queries>();
-        services.AddScoped<IST2137Queries, ST2137Queries>();
-        services.AddScoped<IST2138Queries, ST2138Queries>();
+        services.AddScoped<IBEMT2003Queries, BEMT2003Queries>();
+        services.AddScoped<IBEMT2004Queries, BEMT2004Queries>();
+        services.AddScoped<IBEMT2005Queries, BEMT2005Queries>();
+        services.AddScoped<IBEMT2006Queries, BEMT2006Queries>();
+        services.AddScoped<IONT1041Queries, ONT1041Queries>();
+        services.AddScoped<IONT1042Queries, ONT1042Queries>();
         services.AddScoped<IOOT9002Queries, OOT9002Queries>();
         services.AddScoped<IOOT9003Queries, OOT9003Queries>();
         services.AddScoped<IONT1021Service, ONT1021Service>();
         services.AddScoped<IONT1030Service, ONT1030Service>();
         services.AddScoped<IDataLoader, DataLoaderService>();
+
 
         // Embedding + Redis
         services.AddScoped<IOpenAIEmbeddingService, OpenAIEmbeddingService>();
@@ -77,11 +80,12 @@ public class AIHostingStartup : IHostingStartup
         services.AddScoped<ReadFileOrchestratorService>();
         services.AddScoped<AgentPromptService>();
         services.AddScoped<IReadFileBackgroundWorkflow, ReadFileBackgroundWorkflow>();
+        services.AddScoped<DynamicConfigService>();
 
         // Job queue + worker
         services.AddSingleton<IJobQueue>(_ => new ChannelJobQueue(capacity: 200));
         services.AddHostedService<ReadFileWorker>();
-
+                services.AddScoped<DynamicConfigService>();
         // Redis IDatabase (lấy từ IConnectionMultiplexer)
         services.AddScoped<IDatabase>(sp =>
         {

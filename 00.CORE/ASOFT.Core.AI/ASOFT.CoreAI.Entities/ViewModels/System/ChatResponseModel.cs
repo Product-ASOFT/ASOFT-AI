@@ -12,6 +12,6 @@
     {
         public bool Success { get; set; }
         public string Message { get; set; }
-        public List<ST2131>? ReadFileResults { get; set; } = null;
+        public List<BEMT2003>? ReadFileResults { get; set; } = null;
     }
 }

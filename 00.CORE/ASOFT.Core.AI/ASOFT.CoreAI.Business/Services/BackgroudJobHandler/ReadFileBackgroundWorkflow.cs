@@ -1,5 +1,6 @@
 ﻿using ASOFT.A00.Entities;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using ASOFT.CoreAI.Infrastructure;
 using ASOFT.CoreAI.Infrastructure.Interface;
 using Microsoft.Extensions.Logging;
@@ -11,9 +12,9 @@ namespace ASOFT.CoreAI.Business
 {
     public sealed class ReadFileBackgroundWorkflow : IReadFileBackgroundWorkflow
     {
-        private readonly IST2131Queries _ST2131;
-        private readonly IST2130Queries _ST2130;
-        private readonly IST2136Queries _ST2136;
+        private readonly IBEMT2003Queries _BEMT2003;
+        private readonly IONT1042Queries _ONT1042;
+        private readonly IBEMT2004Queries _BEMT2004;
         private readonly IOOT9002Queries _OOT9002;
         private readonly IOOT9003Queries _OOT9003;
 
@@ -23,65 +24,11 @@ namespace ASOFT.CoreAI.Business
         private readonly ILogger<ReadFileBackgroundWorkflow> _logger;
         private readonly AgentCompareService _agentCompareService;
         private readonly SettingsManagerService _settingsManagerService;
-        private readonly FilePathService _filePathService;
 
-        private static readonly IReadOnlyList<AgentCriteriaInfo> _criteriaInfos = new[]
-         {
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_SUPPLIER_NAME,
-                Name = "Tên nhà cung cấp"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_INVOICE_NO,
-                Name = "Số hóa đơn"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_INVOICE_DATE,
-                Name = "Ngày hóa đơn"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_AMOUNT,
-                Name = "Số tiền"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_AMOUNT_CUSTOMSHEET,
-                Name = "Số tiền tờ khai"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_CURRENCY,
-                Name = "Loại tiền"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_PAYMENT_DEADLINE,
-                Name = "Hạn thanh toán"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_CHECK_COMPLETED_DATE,
-                Name = "Ngày hoàn thành kiểm tra"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_INCOTERM,
-                Name = "Điều kiện giao hàng"
-            },
-            new AgentCriteriaInfo
-            {
-                Key = AgentCriteriaKeys.CRITERIA_SIGNATURE_STAMP,
-                Name = "Chữ ký và Con dấu"
-            }
-        };
         public ReadFileBackgroundWorkflow(
-            IST2131Queries ST2131,
-            IST2130Queries ST2130,
-            IST2136Queries ST2136,
+            IBEMT2003Queries BEMT2003,
+            IONT1042Queries ONT1042,
+            IBEMT2004Queries BEMT2004,
             IOOT9002Queries OOT9002,
             IOOT9003Queries OOT9003,
             IOCRService ocrService,
@@ -89,12 +36,11 @@ namespace ASOFT.CoreAI.Business
             AgentCompareService compareService,
             ILogger<ReadFileBackgroundWorkflow> logger,
             AgentCompareService agentCompareService,
-            SettingsManagerService settingsManagerService,
-            FilePathService filePathService)
+            SettingsManagerService settingsManagerService)
         {
-            _ST2131 = ST2131;
-            _ST2130 = ST2130;
-            _ST2136 = ST2136;
+            _BEMT2003 = BEMT2003;
+            _ONT1042 = ONT1042;
+            _BEMT2004 = BEMT2004;
             _OOT9002 = OOT9002;
             _OOT9003 = OOT9003;
             _ocrService = ocrService;
@@ -103,11 +49,10 @@ namespace ASOFT.CoreAI.Business
             _logger = logger;
             _agentCompareService = agentCompareService;
             _settingsManagerService = settingsManagerService;
-            _filePathService = filePathService;
         }
-        public async Task RunAsync(Guid ST2131APK, ReadFileRequest request, List<ST2130> promptList, CancellationToken ct = default)
+        public async Task RunAsync(Guid BEMT2003APK, ReadFileRequest request, List<PromptContentViewModel> promptList, CancellationToken ct = default)
         {
-            var entity = await _ST2131.GetData(ST2131APK);
+            var entity = await _BEMT2003.GetData(BEMT2003APK);
             if (entity == null) return;
 
             try
@@ -134,10 +79,10 @@ namespace ASOFT.CoreAI.Business
                 // 5. Nếu không có kết quả -> fail
                 if (criteriaList.Count == 0)
                 {
-                    _logger.LogError("Không có kết quả tiêu chí được tổng hợp. APK={APK}", ST2131APK);
+                    _logger.LogError("Không có kết quả tiêu chí được tổng hợp. APK={APK}", BEMT2003APK);
                     MarkFailed(entity);
                     entity.TextContentOCR = ocrText;
-                    await _ST2131.UpdateData(entity);
+                    await _BEMT2003.UpdateData(entity);
                     await NotificationResultAI(request);
                     return;
                 }
@@ -145,46 +90,28 @@ namespace ASOFT.CoreAI.Business
                 // 6. Lưu tiêu chí + tổng hợp kết quả
                 entity.TextContentOCR = ocrText;
 
-                await _ST2136.SaveData(criteriaList);
+                await _BEMT2004.SaveData(criteriaList);
 
                 // aiResult hiện tại chưa dùng (bạn đang compare theo từng tiêu chí)
                 const string aiResult = "";
                 UpdateCompareResult(entity, request, ocrText, aiResult, criteriaList);
 
-                await _ST2131.UpdateData(entity);
+                await _BEMT2003.UpdateData(entity);
                 await NotificationResultAI(request);
             }
             catch (OperationCanceledException)
             {
                 MarkFailed(entity);
-                await _ST2131.UpdateData(entity);
+                await _BEMT2003.UpdateData(entity);
                 await NotificationResultAI(request);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ReadFile job failed for {APK}", ST2131APK);
+                _logger.LogError(ex, "ReadFile job failed for {APK}", BEMT2003APK);
                 MarkFailed(entity);
-                await _ST2131.UpdateData(entity);
+                await _BEMT2003.UpdateData(entity);
                 await NotificationResultAI(request);
             }
-        }
-
-        private List<AttachFileModel> SplitAttachFiles(List<AttachFileModel>? attachFiles)
-        {
-            var pageSplit = _settingsManagerService.GetPageSplit().Result;
-            var result = new List<AttachFileModel>();
-            if (attachFiles == null || attachFiles.Count == 0) return result;
-
-            foreach (var file in attachFiles)
-            {
-                var split = _filePathService.SplitEveryNPages_KeepOriginal(file, 1000);
-                if (split != null && split.Count > 0)
-                    result.AddRange(split);
-                else
-                    result.Add(file);
-            }
-
-            return result;
         }
 
         private async Task<IEnumerable<RedisearchResultItem>?> GetTrainingDataIfNeeded(ReadFileRequest request)
@@ -195,9 +122,9 @@ namespace ASOFT.CoreAI.Business
             return await _trainingService.GetTrainingDataAsync(request, AgentKeys.BEM_AGENT_BEMF2000);
         }
 
-        private async Task<List<AISectionCompare>> BuildAiSectionComparesAsync(IEnumerable<ResultReadFileModel> ocrResults, ST2131 entity)
+        private async Task<List<Dictionary<string, object?>>> BuildAiSectionComparesAsync(IEnumerable<ResultReadFileModel> ocrResults, BEMT2003 entity)
         {
-            var result = new List<AISectionCompare>();
+            var result = new List<Dictionary<string, object?>>();
             foreach (var item in ocrResults)
             {
                 var formatResult = await FormatOCRIfNeeded(item.TextContent, entity, item.FileName);
@@ -207,29 +134,24 @@ namespace ASOFT.CoreAI.Business
 
             return result;
         }
-        private async Task<List<ST2136>> BuildCriteriaListAsync(ReadFileRequest request, ST2131 entity, List<ST2130> promptList, List<AISectionCompare> aiSectionCompares, List<ResultReadFileModel> ocrResults, CancellationToken ct)
+        private async Task<List<BEMT2004>> BuildCriteriaListAsync(ReadFileRequest request, BEMT2003 entity, List<PromptContentViewModel> promptList, List<Dictionary<string, object?>> aiSectionCompares, List<ResultReadFileModel> ocrResults, CancellationToken ct)
         {
             const string textJson = "";
 
-            var criteriaList = new List<ST2136>();
+            var criteriaList = new List<BEMT2004>();
             int criteriaIndex = 1;
-            foreach (var criteriaKey in _criteriaInfos)
+            foreach (var prompt in promptList)
             {
-                ct.ThrowIfCancellationRequested();
-
-                var promptCriteria = promptList.FirstOrDefault(x => x.TypePrompt == criteriaKey.Key);
-                if (promptCriteria == null) continue;
-
                 var aiResultCompare = await _compareService.CompareAsync(
                     request,
-                    promptCriteria.Description!,
-                    promptCriteria.PromptContent,
+                    prompt.PromptSystem,
+                    prompt.PromptUser,
                     textJson,
                     ocrResults,
                     aiSectionCompares);
 
                 if (string.IsNullOrWhiteSpace(aiResultCompare)) continue;
-                var criteria = _agentCompareService.ParseCriteriaResult(entity, request, aiResultCompare, criteriaIndex, criteriaKey.Name);
+                var criteria = _agentCompareService.ParseCriteriaResult(entity, request, aiResultCompare, criteriaIndex, prompt.CriteriaName);
                 if (criteria != null)
                 {
                     criteriaIndex++;
@@ -244,17 +166,19 @@ namespace ASOFT.CoreAI.Business
             if (request == null)
                 throw new Exception("Không tìm thấy request.");
         }
-        private async Task<List<AISectionCompare>?> FormatOCRIfNeeded(string aiResult, ST2131 entity, string fileName)
+        private async Task<List<Dictionary<string, object?>>?> FormatOCRIfNeeded(string aiResult, BEMT2003 entity, string fileName)
         {
-            var promptReadFile = await _ST2130.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_READFILE);
+            var typeCase = 2; // case map từ ONT1040 với ONT1042
+            var dataPrompt = await _ONT1042.GetDataPrompt(typeCase, string.Empty, AgentKeys.BEM_AGENT_READFILE);
 
-            if (!string.IsNullOrWhiteSpace(promptReadFile?.PromptContent))
+            if (dataPrompt.Any())
             {
-                return await _agentCompareService.FormatOCRText(aiResult, entity, promptReadFile.PromptContent, promptReadFile.Description, fileName);
+                var promptContent = dataPrompt.FirstOrDefault();
+                return await _agentCompareService.FormatOCRText(aiResult, entity, promptContent.PromptUser, promptContent.PromptSystem, fileName);
             }
             return null;
         }
-        private static void UpdateCompareResult(ST2131 entity, ReadFileRequest request, string ocrText, string aiResult, List<ST2136> criteriaList)
+        private static void UpdateCompareResult(BEMT2003 entity, ReadFileRequest request, string ocrText, string aiResult, List<BEMT2004> criteriaList)
         {
             var statusOk = StatusResultCompare.OK.ToString();
             var statusNg = StatusResultCompare.NG.ToString();
@@ -290,7 +214,7 @@ namespace ASOFT.CoreAI.Business
                 entity.Status = statusOk;
             }
         }
-        private static void MarkFailed(ST2131 entity)
+        private static void MarkFailed(BEMT2003 entity)
         {
             entity.TextConditionFail = string.Empty;
             entity.Status = StatusResultCompare.NG.ToString();

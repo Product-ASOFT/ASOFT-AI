@@ -37,37 +37,11 @@
             public const string CRM_AGENT_CRMF2160 = "CRM_AGENT_CRMF2160";
             public const string RESEARCH_AGENT = "RESEARCH_AGENT";
             public const string READFILE_AGENT = "READFILE_AGENT";
-            public const string BEM_AGENT_BEMF2000 = "BEM_AGENT_BEMF2000";
             public const string TYPE_QUESTION = "TYPE_QUESTION";
-            public const string BEM_AGENT_BEMF2000_CREATEFILE = "BEM_AGENT_BEMF2000_CREATEFILE";
             public const string HRM_AGENT_HRMF2220 = "HRM_AGENT_HRMF2220";
             public const string HRM_AGENT_HRMF1030 = "HRM_AGENT_HRMF1030";
-            public const string BEM_AGENT_BEMF2000_SUMMARY = "BEM_AGENT_BEMF2000_SUMMARY";
-            public const string BEM_AGENT_BEMF2000_READFILE = "BEM_AGENT_BEMF2000_READFILE";
-
-          
-        }
-        public static class AgentCriteriaKeys
-        {
-            // Criteria keys
-            public const string CRITERIA_SUPPLIER_NAME = "CRITERIA_SUPPLIER_NAME";
-            public const string CRITERIA_INVOICE_NO = "CRITERIA_INVOICE_NO";
-            public const string CRITERIA_INVOICE_DATE = "CRITERIA_INVOICE_DATE";
-            public const string CRITERIA_AMOUNT = "CRITERIA_AMOUNT";
-            public const string CRITERIA_AMOUNT_CUSTOMSHEET = "CRITERIA_AMOUNT_CUSTOMSHEET";
-            public const string CRITERIA_CURRENCY = "CRITERIA_CURRENCY";
-            public const string CRITERIA_INCOTERM = "CRITERIA_INCOTERM";
-            public const string CRITERIA_PAYMENT_DEADLINE = "CRITERIA_PAYMENT_DEADLINE";
-            public const string CRITERIA_CHECK_COMPLETED_DATE = "CRITERIA_CHECK_COMPLETED_DATE";
-            public const string CRITERIA_SIGNATURE_STAMP = "CRITERIA_SIGNATURE_STAMP";
-        }
-        public static class AgentTypeKeys
-        {
-            public const string BEM_AGENT_BEMF2000_WAREHOUSE = "BEM_AGENT_BEMF2000_WAREHOUSE";
-            public const string BEM_AGENT_BEMF2000_MACHINE = "BEM_AGENT_BEMF2000_MACHINE";
-            public const string BEM_AGENT_BEMF2000_SERVICE = "BEM_AGENT_BEMF2000_SERVICE";
-            public const string BEM_AGENT_BEMF2000_BUILD = "BEM_AGENT_BEMF2000_BUILD";
-            public const string BEM_AGENT_BEMF2000_OTHER = "BEM_AGENT_BEMF2000_OTHER";
+            public const string BEM_AGENT_READFILE = "BEM_AGENT_READFILE";
+            public const string BEM_AGENT_BEMF2000 = "BEM_AGENT_BEMF2000";
         }
         #endregion Tạo các key cho Agent
         public static class MimeTypesConstants
@@ -124,20 +98,5 @@
     {
         public const string ROLE_USER = "user";
         public const string ROLE_SYSTEM = "system";
-    }
-    public static class SECTIONTYPE
-    {
-        public const string INVOICE = "INVOICE"; // Hóa đơn
-        public const string CUSTOMSHEET = "CUSTOMSHEET"; // Tờ khai
-        public const string PO = "PO"; // Đơn đặt hàng
-        public const string CONTRACT = "CONTRACT"; // Hợp đồng
-        public const string RINGI = "RINGI"; // Ringi - Quy trình phê duyệt nội bộ của công ty Nhật Bản
-        public const string INSPECTION = "INSPECTION"; // Biên bản nghiệm thu 
-        public const string HANDOVER = "HANDOVER"; // Biên bản bàn giao
-        public const string STATEMENT = "STATEMENT"; // Bảng kê hóa đơn
-        public const string BILL = "BILL"; // Bill
-        public const string COMMERCIALINVOICE = "COMMERCIALINVOICE"; // Hóa đơn thương mại
-        public const string PACKINGLIST = "PACKINGLIST"; // Packing list
-        public const string OTHER = "OTHER"; // Các loại khác
     }
 }
