@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ASOFT.CoreAI.Entities.ViewModels.AI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,5 +7,5 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public sealed record ReadFileJob(Guid ST2131APK, ReadFileRequest request, List<ST2130> ST2130s);
+    public sealed record ReadFileJob(Guid BEMT2003APK, ReadFileRequest request, List<PromptContentViewModel> PromptContents);
 }

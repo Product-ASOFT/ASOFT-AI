@@ -3,6 +3,7 @@ using ASOFT.CoreAI.Business.LibraryKernel;
 using ASOFT.CoreAI.Business.Services.PromptHandler;
 using ASOFT.CoreAI.Common;
 using ASOFT.CoreAI.Entities;
+using ASOFT.CoreAI.Entities.ViewModels.AI;
 using ASOFT.CoreAI.Infrastructure;
 using Microsoft.OpenApi.Exceptions;
 using System.Text;
@@ -13,35 +14,30 @@ namespace ASOFT.CoreAI.Business
 {
     public class AgentPromptService
     {
-        private IST2130Queries _agentPromptQueries;
+        private IONT1042Queries _ONT1042Queries;
         private readonly Kernel _kernel;
         private SettingsManagerService _settingsManagerService;
         private IChatResponseHandlerService _chatResponseHandlerService;
 
-        public AgentPromptService(IST2130Queries agentPromptQueries,
+        public AgentPromptService(IONT1042Queries ONT1042Queries,
             Kernel kernel, SettingsManagerService settingsManagerService,
             IChatResponseHandlerService chatResponseHandlerService)
         {
-            _agentPromptQueries = agentPromptQueries;
+            _ONT1042Queries = ONT1042Queries;
             _kernel = kernel;
             _settingsManagerService = settingsManagerService;
             _chatResponseHandlerService = chatResponseHandlerService;
         }
 
-        public async Task<string> GetPromptTemplate(string agentKey)
+        public async Task<PromptContentViewModel?> GetPromptTemplate(string agentKey)
         {
-            var prompt = await _agentPromptQueries.GetPromptByCode(agentKey);
+            var promptDatas = await _ONT1042Queries.GetDataPrompt((int)TypeCase.E_ParameterID, agentKey, string.Empty);
 
-            if (prompt == null || string.IsNullOrWhiteSpace(prompt.PromptContent))
-                return string.Empty;
+            if (promptDatas == null || promptDatas.Count() == 0)
+                return null;
 
-            return prompt.PromptContent;
+            return promptDatas.FirstOrDefault();
         }
-        public async Task<ST2130> GetPromptByCode(string agentKey)
-        {
-            return await _agentPromptQueries.GetPromptByCode(agentKey);
-        }
-
         public async Task<string> SendPromptWithReadFile<T>(
         ReadFileRequest request,
         string promptSystem,
@@ -104,7 +100,7 @@ namespace ASOFT.CoreAI.Business
         IEnumerable<ChatHistoryResponseModel> chatHistory,
         List<T> datas,
         List<BEMF2001ViewModel> details,
-        List<AISectionCompare> aiSectionCompares,
+        List<Dictionary<string, object?>> aiSectionCompares,
         IEnumerable<RedisearchResultItem>? trainingData = null)
         {
             try

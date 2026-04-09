@@ -4,15 +4,15 @@ using ASOFT.CoreAI.Entities;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public class ST2131Queries : IST2131Queries
+    public class BEMT2003Queries : IBEMT2003Queries
     {
-        private readonly IBusinessContext<ST2131> _businessContext;
+        private readonly IBusinessContext<BEMT2003> _businessContext;
 
-        public ST2131Queries(IBusinessContext<ST2131> businessContext)
+        public BEMT2003Queries(IBusinessContext<BEMT2003> businessContext)
         {
             _businessContext = Checker.NotNull(businessContext, nameof(businessContext));
         }
-        public async Task<bool> SaveData(ST2131 data, CancellationToken cancellationToken = default)
+        public async Task<bool> SaveData(BEMT2003 data, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace ASOFT.CoreAI.Infrastructure
             }
         }
 
-        public async Task<bool> CreateData(IEnumerable<ST2131> datas, CancellationToken cancellationToken = default)
+        public async Task<bool> CreateData(IEnumerable<BEMT2003> datas, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace ASOFT.CoreAI.Infrastructure
                 throw;
             }
         }
-        public async Task UpdateData(ST2131 data, CancellationToken cancellationToken = default)
+        public async Task UpdateData(BEMT2003 data, CancellationToken cancellationToken = default)
         {
             await _businessContext.UnitOfWork.ExecuteInTransactionAsync(async (transactionHolder) =>
            {
@@ -53,17 +53,17 @@ namespace ASOFT.CoreAI.Infrastructure
                await _businessContext.UnitOfWork.CompleteAsync();
            });
         }
-        public async Task<ST2131> GetData(Guid APK)
+        public async Task<BEMT2003> GetData(Guid APK)
         {
-            return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.APK == APK));
+            return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<BEMT2003>(m => m.APK == APK));
         }
-        public async Task<List<ST2131>> GetAllDataByAPK(Guid APKMaster)
+        public async Task<List<BEMT2003>> GetAllDataByAPK(Guid APKMaster)
         {
-            return await _businessContext.QueryAsync(new FilterQuery<ST2131>(m => m.APKMaster == APKMaster));
+            return await _businessContext.QueryAsync(new FilterQuery<BEMT2003>(m => m.APKMaster == APKMaster));
         }
-        public async Task<ST2131> GetDataByAPKMaster(Guid APKMaster)
+        public async Task<BEMT2003> GetDataByAPKMaster(Guid APKMaster)
         {
-            return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<ST2131>(m => m.APKMaster == APKMaster));
+            return await _businessContext.QueryFirstOrDefaultAsync(new FilterQuery<BEMT2003>(m => m.APKMaster == APKMaster));
         }
         public async Task<bool> DeleteData(Guid APKMaster, CancellationToken cancellationToken = default)
         {

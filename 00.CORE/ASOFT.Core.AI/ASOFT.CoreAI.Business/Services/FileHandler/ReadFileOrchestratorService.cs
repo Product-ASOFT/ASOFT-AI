@@ -8,26 +8,26 @@ namespace ASOFT.CoreAI.Business
 {
     public class ReadFileOrchestratorService
     {
-        private readonly IST2130Queries _ST2130Queries;
-        private readonly IST2131Queries _ST2131Queries;
-        private readonly IST2136Queries _ST2136Queries;
-        private readonly IST2137Queries _ST2137Queries;
-        private readonly IST2138Queries _ST2138Queries;
+        private readonly IONT1042Queries _ONT1042Queries;
+        private readonly IBEMT2003Queries _BEMT2003Queries;
+        private readonly IBEMT2004Queries _BEMT2004Queries;
+        private readonly IBEMT2005Queries _BEMT2005Queries;
+        private readonly IBEMT2006Queries _BEMT2006Queries;
         private readonly IOCRService _ocrService;
         private readonly SettingsManagerService _settingsManager;
         private readonly IJobQueue _jobQueue;
 
-        public ReadFileOrchestratorService(IST2130Queries ST2130Queries,
-            IST2131Queries ST2131Queries, IST2136Queries ST2136Queries,
-            IST2137Queries ST2137Queries, IST2138Queries ST2138Queries,
+        public ReadFileOrchestratorService(IONT1042Queries ONT1042Queries,
+            IBEMT2003Queries BEMT2003Queries, IBEMT2004Queries BEMT2004Queries,
+            IBEMT2005Queries BEMT2005Queries, IBEMT2006Queries BEMT2006Queries,
             IOCRService ocrService, SettingsManagerService settingsManager,
             AgentPromptService agentPromptService, IJobQueue jobQueue)
         {
-            _ST2130Queries = ST2130Queries;
-            _ST2131Queries = ST2131Queries;
-            _ST2136Queries = ST2136Queries;
-            _ST2137Queries = ST2137Queries;
-            _ST2138Queries = ST2138Queries;
+            _ONT1042Queries = ONT1042Queries;
+            _BEMT2003Queries = BEMT2003Queries;
+            _BEMT2004Queries = BEMT2004Queries;
+            _BEMT2005Queries = BEMT2005Queries;
+            _BEMT2006Queries = BEMT2006Queries;
             _ocrService = ocrService;
             _settingsManager = settingsManager;
             _jobQueue = jobQueue;
@@ -45,12 +45,13 @@ namespace ASOFT.CoreAI.Business
 
             //// 2) (Tuỳ chọn) Kiểm tra tồn tại prompt sớm để fail fast (hoặc để workflow kiểm tra)
             string typeCompare = request.BEMF2000ViewModel!.PaymentRequestTypeID;
-            var agentPrompts = await _ST2130Queries.GetPromptsByAgentCodeAndTypeCompare(AgentKeys.BEM_AGENT_BEMF2000, typeCompare);
+            int caseType = 1; // 1 - sử dụng để phân loại đối chiếu theo tiêu chí
+            var agentPrompts = await _ONT1042Queries.GetDataPrompt(caseType, typeCompare, string.Empty);
             if (agentPrompts == null || !agentPrompts.Any())
                 return ChatHandlerHelper.CreateResponseReadFile("Chưa thiết lập thông tin prompt!", false);
 
             // 3) Tạo record PROCESSING
-            var entity = new ST2131
+            var entity = new BEMT2003
             {
                 APK = Guid.NewGuid(),
                 APKMaster = request.BEMF2000ViewModel.APK,
@@ -61,7 +62,7 @@ namespace ASOFT.CoreAI.Business
                 StatusProcess = StatusProcessCompareOCR.PROCESSING.ToString(),
             };
 
-            var saved = await _ST2131Queries.SaveData(entity);
+            var saved = await _BEMT2003Queries.SaveData(entity);
             if (!saved)
                 return ChatHandlerHelper.CreateResponseReadFile("Không thể khởi tạo lưu kết quả.", false);
 
@@ -91,7 +92,7 @@ namespace ASOFT.CoreAI.Business
             }
             return new List<ResultReadFileModel>();
         }
-       
+
         // Hàm validate request đọc file
         private (bool IsValid, string Message) ValidateReadFileRequest(ReadFileRequest request)
         {
@@ -121,15 +122,15 @@ namespace ASOFT.CoreAI.Business
         {
             try
             {
-                var ST2131_Delete = await _ST2131Queries.GetDataByAPKMaster(BEMF2000ViewModel.APK);
-                if (ST2131_Delete == null)
+                var BEMT2003_Delete = await _BEMT2003Queries.GetDataByAPKMaster(BEMF2000ViewModel.APK);
+                if (BEMT2003_Delete == null)
                 {
                     return;
                 }
-                await _ST2137Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng master dữ liệu đọc từ file đính kèm
-                await _ST2138Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng detail dữ liệu đọc từ file đính kèm
-                await _ST2136Queries.DeleteData(ST2131_Delete.APK); // Xóa dữ liệu bảng chi tiết  kết quả đối chiếu từ AI
-                await _ST2131Queries.DeleteData(BEMF2000ViewModel.APK); // Xóa dữ liệu bảng chính kết quả đối chiếu từ AI
+                await _BEMT2005Queries.DeleteData(BEMT2003_Delete.APK); // Xóa dữ liệu bảng master dữ liệu đọc từ file đính kèm
+                await _BEMT2006Queries.DeleteData(BEMT2003_Delete.APK); // Xóa dữ liệu bảng detail dữ liệu đọc từ file đính kèm
+                await _BEMT2004Queries.DeleteData(BEMT2003_Delete.APK); // Xóa dữ liệu bảng chi tiết  kết quả đối chiếu từ AI
+                await _BEMT2003Queries.DeleteData(BEMF2000ViewModel.APK); // Xóa dữ liệu bảng chính kết quả đối chiếu từ AI
             }
             catch (Exception)
             {

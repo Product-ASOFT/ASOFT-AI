@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2136
+    public class BEMT2004
     {
         public Guid APK { get; set; }
-        public Guid APKMaster { get; set; }
+        public Guid APKMaster { get; set; } // lưu APK BEMT2003
         public string? BusinessParent { get; set; }
         public int? CriteriaID { get; set; }
         public string? CriteriaName { get; set; }

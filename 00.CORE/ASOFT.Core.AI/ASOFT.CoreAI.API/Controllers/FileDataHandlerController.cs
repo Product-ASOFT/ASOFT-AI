@@ -15,10 +15,12 @@ namespace ASOFT.CoreAI.API.Controllers
     {
         private readonly ReadFileOrchestratorService _orchestrator;
         private readonly FilePathService _filePathService;
-        public FileDataHandlerController(ReadFileOrchestratorService orchestrator, FilePathService filePathService)
+        private readonly AgentCompareService _agentCompareService;
+        public FileDataHandlerController(ReadFileOrchestratorService orchestrator, FilePathService filePathService, AgentCompareService agentCompareService)
         {
             _orchestrator = orchestrator;
             _filePathService = filePathService;
+            _agentCompareService = agentCompareService;
         }
         [HttpPost]
         [ActionName("HandlerFile")]
@@ -33,11 +35,78 @@ namespace ASOFT.CoreAI.API.Controllers
         {
             return await _filePathService.UpLoadFile(files, IsCompare);
         }
-        [HttpPost]
-        [ActionName("CreateFile")]
-        public async Task<ChatResponseReadFileModel> CreateFileAsync(ReadFileRequest request)
+        [HttpGet]
+        [ActionName("ConvertJSon")]
+        public async Task ConvertJSon(Guid apkMaster)
         {
-            return await _filePathService.CreateFile(request);
+            string json = @"{
+  ""sections"": [
+    {
+      ""master"": {
+        ""SectionOrder"": 1,
+        ""SectionType"": ""INVOICE"",
+        ""SectionTitle"": ""INVOICE"",
+        ""TotalAmount"": 71851000,
+        ""TotalCurrency"": ""USD"",
+        ""Signature"": ""BLANK""
+      },
+      ""details"": [
+        {
+          ""OrderNo"": ""1"",
+          ""VoucherNo"": ""28484 TT"",
+          ""VoucherDate"": ""2025-12-26"",
+          ""Amount"": 71851000,
+          ""Currency"": ""USD"",
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD."",
+          ""DeliveryTerm"": ""FOB YOKOHAMA""
+        }
+      ]
+    },
+    {
+      ""master"": {
+        ""SectionOrder"": 2,
+        ""SectionType"": ""PACKINGLIST"",
+        ""SectionTitle"": ""PACKING LIST"",
+        ""TotalAmount"": 0,
+        ""TotalCurrency"": null,
+        ""Signature"": ""BLANK""
+      },
+      ""details"": [
+        {
+          ""OrderNo"": ""1"",
+          ""PackingListNo"": ""28484TT"",
+          ""PackingListDate"": ""2025-12-02"",
+          ""GoodsName"": ""Clean roller type cleaning machine"",
+          ""Quantity"": 1,
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD.""
+        },
+        {
+          ""OrderNo"": ""2"",
+          ""PackingListNo"": ""28484TT"",
+          ""PackingListDate"": ""2025-12-02"",
+          ""GoodsName"": ""MC-2000 Robo Sticky"",
+          ""Quantity"": 1,
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD.""
+        },
+        {
+          ""OrderNo"": ""3"",
+          ""PackingListNo"": ""28484TT"",
+          ""PackingListDate"": ""2025-12-02"",
+          ""GoodsName"": ""Cleaning tape for MC-2000"",
+          ""Quantity"": 1,
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD.""
+        }
+      ]
+    }
+  ]
+}";
+            var bEMT2003 = new BEMT2003()
+            {
+                APK = Guid.NewGuid(),
+                CreateUserID = "admin",
+            };
+            await _agentCompareService.ProcessInfomationFileAsync(json, bEMT2003, "");
+            string s = "";
         }
     }
 }

@@ -109,7 +109,8 @@ namespace ASOFT.CoreAI.Business
 
                        try
                        {
-                           result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
+                           //result.TextContent = await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal);
+                           result.TextContent = "await ExtractByMimeTypeAsync(result.FilePath, mimeType, useLocal)";
                            //if (!string.IsNullOrWhiteSpace(result.TextContent))
                            //    await _redis.SaveFileCacheAsync(result.FilePath, result.TextContent, cacheKey);
                        }

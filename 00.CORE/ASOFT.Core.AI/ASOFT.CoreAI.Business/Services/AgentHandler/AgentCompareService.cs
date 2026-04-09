@@ -6,10 +6,13 @@ using ASOFT.CoreAI.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Data.Common;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using static ASOFT.CoreAI.Common.AIConstants;
 using static ASOFT.CoreAI.Common.EnumConstants;
 using JsonException = Newtonsoft.Json.JsonException;
@@ -20,31 +23,34 @@ namespace ASOFT.CoreAI.Business
     {
         private readonly AgentPromptService _agentPromptService;
         private readonly SettingsManagerService _settings;
-        private readonly IST2137Queries _ST2137Queries;
-        private readonly IST2138Queries _ST2138Queries;
+        private readonly IBEMT2005Queries _BEMT2005Queries;
+        private readonly IBEMT2006Queries _BEMT2006Queries;
+        private readonly DynamicConfigService _dynamicConfigService;
         private readonly ILogger _logger;
 
         public AgentCompareService(AgentPromptService agentPromptService,
             SettingsManagerService settings,
-            IST2137Queries ST2137Queries,
-            IST2138Queries ST2138Queries,
+            IBEMT2005Queries BEMT2005Queries,
+            IBEMT2006Queries BEMT2006Queries,
+            DynamicConfigService dynamicConfigService,
             ILoggerFactory logger)
         {
             _agentPromptService = agentPromptService;
             _agentPromptService = agentPromptService;
             _settings = settings;
-            _ST2137Queries = ST2137Queries;
-            _ST2138Queries = ST2138Queries;
+            _BEMT2005Queries = BEMT2005Queries;
+            _BEMT2006Queries = BEMT2006Queries;
+            _dynamicConfigService = dynamicConfigService;
             _logger = Checker.NotNull(logger, nameof(logger)).CreateLogger(GetType());
         }
 
         public async Task<string> CompareAsync(
             ReadFileRequest request,
             string promptSystem,
-            string promptTemplate,
+            string promptUser,
             string? ocrTextMerged,
             List<ResultReadFileModel>? ocrResults,
-            List<AISectionCompare> aiSectionCompares,
+           List<Dictionary<string, object?>> aiSectionCompares,
             IEnumerable<RedisearchResultItem>? trainingData = null)
         {
             request.Question = "Hãy dùng thông tin dưới đây để so sánh tiêu chí";
@@ -56,7 +62,7 @@ namespace ASOFT.CoreAI.Business
                 return await _agentPromptService.SendPromptWithLocalsAsync(
                     request,
                     promptSystem,
-                    promptTemplate,
+                    promptUser,
                     ocrTextMerged ?? string.Empty,
                     Enumerable.Empty<ChatHistoryResponseModel>(),
                     new List<BEMF2000ViewModel> { detail },
@@ -68,7 +74,7 @@ namespace ASOFT.CoreAI.Business
             return await _agentPromptService.SendPromptWithReadFile(
                 request,
                 promptSystem,
-                promptTemplate,
+                promptUser,
                 ocrResults ?? new List<ResultReadFileModel>(),
                 Enumerable.Empty<ChatHistoryResponseModel>(),
                 trainingData,
@@ -77,67 +83,13 @@ namespace ASOFT.CoreAI.Business
             ).ConfigureAwait(false);
         }
 
-        public async Task<CriteriaSummaryResult?> SummaryResultJson(string result)
-        {
-            // 1. Cắt block summary nếu có
-            //result = ExtractSummaryBlock(result);
-
-            // 2. Lấy prompt
-            var prompt = await _agentPromptService.GetPromptByCode(AgentKeys.BEM_AGENT_BEMF2000_SUMMARY);
-
-            if (string.IsNullOrWhiteSpace(prompt.PromptContent) || string.IsNullOrWhiteSpace(prompt.Description))
-                return null;
-
-            // 3. Gửi prompt cho LLM
-            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(prompt.Description, prompt.PromptContent, result);
-
-
-            if (string.IsNullOrWhiteSpace(resultJson))
-                return null;
-
-            // 4. Strip text ngoài JSON (```json ... ```, text giải thích...)
-            var resultJsonFormat = StripOutsideJson(resultJson);
-
-            if (string.IsNullOrWhiteSpace(resultJsonFormat))
-                return null;
-
-            resultJsonFormat = resultJsonFormat.Trim();
-
-            // 5. CHECK CÓ PHẢI JSON KHÔNG
-            if (!IsValidJson(resultJsonFormat))
-            {
-                // Log để bắt bệnh LLM
-                _logger.LogError("LLM trả dữ liệu không phải JSON: {Raw}", resultJsonFormat);
-                return null;
-            }
-
-            // 6. Deserialize an toàn
-            try
-            {
-                var objectResult =
-                    System.Text.Json.JsonSerializer.Deserialize<CriteriaSummaryResult>(
-                        resultJsonFormat,
-                        new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                return objectResult;
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Lỗi parse JSON: {Json}", resultJsonFormat);
-                return null;
-            }
-        }
-
-        public ST2136? ParseCriteriaResult(ST2131 entity, ReadFileRequest request, string json, int criteriaID, string criteriaInfoName)
+        public BEMT2004? ParseCriteriaResult(BEMT2003 entity, ReadFileRequest request, string json, int criteriaID, string criteriaInfoName)
         {
             try
             {
                 var parsedResult = BuildCriteriaResult(json, criteriaInfoName);
 
-                return new ST2136
+                return new BEMT2004
                 {
                     APK = Guid.NewGuid(),
                     APKMaster = entity.APK,
@@ -153,7 +105,7 @@ namespace ASOFT.CoreAI.Business
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang ST2136: {Json}", json);
+                _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang BEMT2004: {Json}", json);
                 return null;
             }
         }
@@ -200,24 +152,81 @@ namespace ASOFT.CoreAI.Business
             }
         }
 
-        public async Task<List<AISectionCompare>?> FormatOCRText(string ocrText, ST2131 sT2131, string promptContent, string promptContentSystem, string fileName)
+        public async Task<List<Dictionary<string, object?>>?> FormatOCRText(string ocrText, BEMT2003 BEMT2003, string promptContent, string promptContentSystem, string fileName)
         {
-            var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContentSystem, promptContent, ocrText);
+            //var resultJson = await _agentPromptService.SendPromptWithSumaryResultAsync(promptContentSystem, promptContent, ocrText);
+            string resultJson = @"{
+  ""sections"": [
+    {
+      ""master"": {
+        ""SectionOrder"": 1,
+        ""SectionType"": ""INVOICE"",
+        ""SectionTitle"": ""INVOICE"",
+        ""TotalAmount"": 71851000,
+        ""TotalCurrency"": ""USD"",
+        ""Signature"": ""BLANK""
+      },
+      ""details"": [
+        {
+          ""OrderNo"": ""1"",
+          ""VoucherNo"": ""28484 TT"",
+          ""VoucherDate"": ""2025-12-26"",
+          ""Amount"": 71851000,
+          ""Currency"": ""USD"",
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD."",
+          ""DeliveryTerm"": ""FOB YOKOHAMA""
+        }
+      ]
+    },
+    {
+      ""master"": {
+        ""SectionOrder"": 2,
+        ""SectionType"": ""PACKINGLIST"",
+        ""SectionTitle"": ""PACKING LIST"",
+        ""TotalAmount"": 0,
+        ""TotalCurrency"": null,
+        ""Signature"": ""BLANK""
+      },
+      ""details"": [
+        {
+          ""OrderNo"": ""1"",
+          ""PackingListNo"": ""28484TT"",
+          ""PackingListDate"": ""2025-12-02"",
+          ""GoodsName"": ""Clean roller type cleaning machine"",
+          ""Quantity"": 1,
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD.""
+        },
+        {
+          ""OrderNo"": ""2"",
+          ""PackingListNo"": ""28484TT"",
+          ""PackingListDate"": ""2025-12-02"",
+          ""GoodsName"": ""MC-2000 Robo Sticky"",
+          ""Quantity"": 1,
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD.""
+        },
+        {
+          ""OrderNo"": ""3"",
+          ""PackingListNo"": ""28484TT"",
+          ""PackingListDate"": ""2025-12-02"",
+          ""GoodsName"": ""Cleaning tape for MC-2000"",
+          ""Quantity"": 1,
+          ""SupplierName"": ""MEIKO ELECTRONICS VIETNAM CO.,LTD.""
+        }
+      ]
+    }
+  ]
+}";
             if (resultJson == null)
                 return null;
             string resultJsonFormat = StripOutsideJson(resultJson);
             try
             {
-                var aiNormalizeResult = ConvertAiJsonToST2137_2138(resultJsonFormat);
-                if (aiNormalizeResult == null)
-                {
-                    return null;
-                }
-                return await SaveInfomationFileAsync(aiNormalizeResult, sT2131, fileName);
+                var dataProcess = await ProcessInfomationFileAsync(resultJsonFormat, BEMT2003, fileName);
+                return dataProcess;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang ST2137/2138: {Json}", resultJsonFormat);
+                _logger.LogError(ex, "Lỗi khi convert JSON từ AI sang BEMT2005/BEMT2006: {Json}", resultJsonFormat);
                 return null;
             }
         }
@@ -297,127 +306,57 @@ namespace ASOFT.CoreAI.Business
             return IsValidJson(json) ? json : string.Empty;
         }
 
-        public AiNormalizeResult? ConvertAiJsonToST2137_2138(string aiJson)
+        public AiNormalizeResult? ConvertAiJsonToBEMT2005_BEMT2006(string aiJson)
         {
+            if (string.IsNullOrWhiteSpace(aiJson))
+                return null;
+
             var settings = new JsonSerializerSettings
             {
                 Culture = CultureInfo.GetCultureInfo("vi-VN"),
-                DateParseHandling = DateParseHandling.DateTime
+                DateParseHandling = DateParseHandling.DateTime,
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
             };
-            var result = JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson, settings);
-            if (result == null)
-                return null;
-            return result;
+
+            return JsonConvert.DeserializeObject<AiNormalizeResult>(aiJson, settings);
         }
-        /// <summary>
-        /// Lưu thông tin đã được chuẩn hóa từ AI vào database theo cấu trúc ST2137 (Master) và ST2138 (Detail)
-        /// </summary>
-        /// <param name="result"></param>
-        /// <param name="sT2131"></param>
-        /// <returns></returns>
-        private async Task<List<AISectionCompare>> SaveInfomationFileAsync(AiNormalizeResult result, ST2131 sT2131, string fileName)
+        public async Task<List<Dictionary<string, object?>>> ProcessInfomationFileAsync(string aiJson, BEMT2003 bemt2003, string fileName)
         {
-            var masters = new List<ST2137>();
-            var details = new List<ST2138>();
-            var lstAISectionCompare = new List<AISectionCompare>();
-            foreach (var section in result.Sections)
+
+            // 1. Parse JSON
+            var listDict = new List<Dictionary<string, object?>>();
+            var aiResult = ConvertAiJsonToBEMT2005_BEMT2006(aiJson);
+            if (aiResult == null || aiResult.Sections.Count == 0)
+                return listDict;
+
+            // 2. Load config
+            var configs = await _dynamicConfigService.ConvertDynamicFieldConfig();
+            var configMap = configs.ToDictionary(x => x.ParameterName!, StringComparer.OrdinalIgnoreCase);
+            var listMaster = new List<BEMT2005>();
+            var listDetail = new List<BEMT2006>();
+
+            foreach (var section in aiResult.Sections)
             {
-                var masterApk = Guid.NewGuid();
-                var master = new ST2137
-                {
-                    APK = masterApk,
-                    APKMaster_ST2131 = sT2131.APK,
-                    DivisionID = sT2131.DivisionID,
-                    SectionType = section.Master.SectionType,
-                    SectionOrder = section.Master.SectionOrder,
-                    SectionTitle = section.Master.SectionTitle,
-                    TotalAmount = section.Master.TotalAmount,
-                    TotalCurrency = section.Master.TotalCurrency,
-                    Signature = section.Master.Signature,
-                    CreateDate = DateTime.Now,
-                    CreateUserID = sT2131.CreateUserID,
-                };
-                masters.Add(master);
-                int orderNo = 1;
-                foreach (var d in section.Details)
-                {
-                    var detail = new ST2138
-                    {
-                        APK = Guid.NewGuid(),
-                        APKMaster_ST2131 = sT2131.APK,
-                        APKMaster_ST2137 = masterApk,
-                        OrderNo = d.OrderNo,
-                        VoucherNo = d.VoucherNo,
-                        VoucherName = d.VoucherName,
-                        Amount = d.Amount ?? 0,
-                        Currency = d.Currency,
-                        SupplierName = d.SupplierName,
-                        VoucherDate = d.VoucherDate,
-                        FileName = fileName,
-                        PaymentTerm = d.PaymentTerm,
-                        DeliveryTerm = d.DeliveryTerm,
-                        ClearanceStatus = d.ClearanceStatus,
-                        ClearanceDate = d.ClearanceDate,
-                        AcceptanceDate = d.AcceptanceDate,
-                        HandoverDate = d.HandoverDate,
-                        PackingListDate = d.PackingListDate,
-                        RingiNo = d.RingiNo,
-                        ContractNo = d.ContractNo,
-                        PackingListNo = d.PackingListNo,
-                        BillNo = d.BillNo,
-                        BillDate = d.BillDate,
-                        DeclarationNo = d.DeclarationNo,
-                        GoodsName = d.GoodsName,
-                        Quantity = d.Quantity,
-                        ApprovalLast = d.ApprovalLast,
-                        CreateDate = DateTime.Now,
-                        CreateUserID = sT2131.CreateUserID,
-                        Description = d.Description,
-                    };
-                    details.Add(detail);
-                    string? voucherNo = d.VoucherNo;
-                    DateTime? voucherDate = d.VoucherDate;
-                    if (master.SectionType == SECTIONTYPE.PO || master.SectionType == SECTIONTYPE.CONTRACT || master.SectionType == SECTIONTYPE.INSPECTION)
-                    {
-                        voucherNo = d.ContractNo;
-                        if (master.SectionType == SECTIONTYPE.INSPECTION)
-                        {
-                            voucherDate = d.AcceptanceDate;
-                        }
-                    }
-                    var AISectionCompare = new AISectionCompare
-                    {
-                        NoOrder = orderNo++,
-                        SectionType = master.SectionType,
-                        SupplierName = d.SupplierName,
-                        VoucherNo = voucherNo,
-                        Amount = d.Amount,
-                        Currency = d.Currency,
-                        CompleteCheckDate = d.ClearanceDate,
-                        ClearanceStatus = d.ClearanceStatus,
-                        DeliveryTerm = d.DeliveryTerm,
-                        Signature = section.Master.Signature,
-                        PaymentTerm = d.PaymentTerm,
-                        VoucherDate = d.VoucherDate,
-                        FileName = fileName,
-                        AmountCustomSheet = master.SectionType == "CUSTOMSHEET" ? d.Amount : 0,
-                    };
-                    lstAISectionCompare.Add(AISectionCompare);
-                }
+                // 3. Build master
+                var master = _dynamicConfigService.BuildMaster(section, configMap, bemt2003.APK, bemt2003.CreateUserID);
+                listMaster.Add(master);
+                // save master
+
+                // 4. Build detail
+                var details = _dynamicConfigService.BuildDetails(section, master, configMap, master.APK, bemt2003.APK, bemt2003.CreateUserID, fileName);
+                if (details == null || !details.Entities.Any())
+                    continue;
+
+                listDetail.AddRange(details.Entities);
+                listDict.AddRange(details.Rows);
             }
-            if (masters.Count == 0 || details.Count == 0)
-                return lstAISectionCompare;
-            try
-            {
-                // Lưu dữ liệu ở lần đối chiếu mới
-                await _ST2137Queries.SaveData(masters);
-                await _ST2138Queries.SaveData(details);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            return lstAISectionCompare;
+            // save detail
+            if (!listMaster.Any() || !listDetail.Any())
+                return listDict;
+            await _BEMT2005Queries.SaveData(listMaster);
+            await _BEMT2006Queries.SaveData(listDetail);
+            return listDict;
         }
     }
 }

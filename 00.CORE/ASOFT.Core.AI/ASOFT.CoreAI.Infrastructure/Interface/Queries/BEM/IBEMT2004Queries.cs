@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public interface IST2136Queries
+    public interface IBEMT2004Queries
     {
-        Task<List<ST2136>> GetData(string BusinessParent, CancellationToken cancellationToken = default);
-        Task SaveData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default);
+        Task<List<BEMT2004>> GetData(string BusinessParent, CancellationToken cancellationToken = default);
+        Task SaveData(IEnumerable<BEMT2004> datas, CancellationToken cancellationToken = default);
         Task<bool> DeleteData(Guid APKMaster, CancellationToken cancellationToken = default);
     }
 }

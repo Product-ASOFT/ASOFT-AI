@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Entities
 {
-    public class ST2137ViewModel : ST2137
+    public class ONT1041ViewModel
     {
-        public List<ST2138> details { get; set; } = new();
+        
     }
 }

@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 
 namespace ASOFT.CoreAI.Infrastructure
 {
-    public class ST2136Queries : IST2136Queries
+    public class BEMT2004Queries : IBEMT2004Queries
     {
 
-        private readonly IBusinessContext<ST2136> _businessContext;
+        private readonly IBusinessContext<BEMT2004> _businessContext;
 
-        public ST2136Queries(IBusinessContext<ST2136> businessContext)
+        public BEMT2004Queries(IBusinessContext<BEMT2004> businessContext)
         {
             _businessContext = Checker.NotNull(businessContext, nameof(businessContext));
         }
@@ -31,16 +31,16 @@ namespace ASOFT.CoreAI.Infrastructure
                 return true;
             });
         }
-        private async Task<List<ST2136>> GetDataByAPKMaster(Guid APKMaster, CancellationToken cancellationToken = default)
+        private async Task<List<BEMT2004>> GetDataByAPKMaster(Guid APKMaster, CancellationToken cancellationToken = default)
         {
-            return await _businessContext.QueryAsync(new FilterQuery<ST2136>(m => m.APKMaster == APKMaster));
+            return await _businessContext.QueryAsync(new FilterQuery<BEMT2004>(m => m.APKMaster == APKMaster));
         }
-        public async Task<List<ST2136>> GetData(string BusinessParent, CancellationToken cancellationToken = default)
+        public async Task<List<BEMT2004>> GetData(string BusinessParent, CancellationToken cancellationToken = default)
         {
-            return await _businessContext.QueryAsync(new FilterQuery<ST2136>(m => m.BusinessParent == BusinessParent));
+            return await _businessContext.QueryAsync(new FilterQuery<BEMT2004>(m => m.BusinessParent == BusinessParent));
         }
 
-        public Task SaveData(IEnumerable<ST2136> datas, CancellationToken cancellationToken = default)
+        public Task SaveData(IEnumerable<BEMT2004> datas, CancellationToken cancellationToken = default)
         {
             return _businessContext.UnitOfWork.ExecuteInTransactionAsync(
             async transactionHolder =>

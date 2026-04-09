@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
 using System.Text;
 using static ASOFT.CoreAI.Common.AIConstants;
+using static ASOFT.CoreAI.Common.EnumConstants;
 
 namespace ASOFT.CoreAI.API.Controllers
 {
@@ -21,19 +22,19 @@ namespace ASOFT.CoreAI.API.Controllers
         private readonly ChatCompletionAgent _agent;
         private readonly ChatHistory _chatHistory;
         private readonly Kernel _kernel;
-        private IST2130Queries _agentPromptQueries;
+        private IONT1042Queries _ONT1042Queries;
         private IChatHistoryHandler _chatHistoryHandler;
         private IChatResponseHandlerService _chatResponseHandlerService;
         private SettingsManagerService _settingsManagerService;
 
         public AgentCompletionsController(ChatCompletionAgent agent, Kernel kernel,
-            IST2130Queries agentPromptQueries, SettingsManagerService settingsManagerService,
+            IONT1042Queries ONT1042Queries, SettingsManagerService settingsManagerService,
             IChatHistoryHandler chatHistoryHandler, AgentManagerService agentManager, IChatResponseHandlerService chatResponseHandlerService)
         {
             this._agent = agent;
             this._chatHistory = [];
             this._kernel = kernel;
-            this._agentPromptQueries = agentPromptQueries;
+            this._ONT1042Queries = ONT1042Queries;
             _chatHistoryHandler = chatHistoryHandler;
             _chatResponseHandlerService = chatResponseHandlerService;
             _settingsManagerService = settingsManagerService;
@@ -186,11 +187,12 @@ namespace ASOFT.CoreAI.API.Controllers
         // Hàm phân loại câu hỏi để xác định là câu hỏi thường hay câu hỏi AI Plugin
         private async Task<ChatResponseModel> GetTypeQuestionAsync(AgentRequest agentRequest, CancellationToken cancellationToken)
         {
-            var prompt = await _agentPromptQueries.GetPromptByCode(AgentKeys.TYPE_QUESTION);
-            if (prompt == null || string.IsNullOrEmpty(prompt.PromptContent))
+            var promptData = await _ONT1042Queries.GetDataPrompt((int)TypeCase.E_TypeConfigID, string.Empty, AgentKeys.TYPE_QUESTION);
+            if (promptData == null || promptData.Count() == 0)
             {
                 return ChatHandlerHelper.CreateResponse(Guid.Empty, "Hiện tại bạn chưa tạo Prompt để phân loại câu hỏi. Vui lòng thiết lập Prompt để tiếp tục.", false);
             }
+            var prompt = promptData.FirstOrDefault();
             var chatHistoryModel = _chatHistoryHandler.CreateChatHistoryModel(agentRequest, string.Empty, 10);
             var chatHistory = await _chatHistoryHandler.GetChatHistoryAsync(chatHistoryModel);
             var arguments = new KernelArguments
@@ -211,13 +213,13 @@ namespace ASOFT.CoreAI.API.Controllers
                 if (configLLM != null && configLLM.IsUse)
                 {
                     string promptSystem = " Bạn là trợ lý ảo thông minh, giúp hỗ trợ trả lời các câu hỏi của người dùng một cách chính xác và nhanh chóng.";
-                    var result = await _chatResponseHandlerService.InvokePromptAsync(promptSystem, prompt.PromptContent, arguments);
+                    var result = await _chatResponseHandlerService.InvokePromptAsync(promptSystem, prompt!.PromptUser, arguments);
                     responseMessage = result.Text ?? string.Empty;
                 }
                 else
                 {
                     var result = await _kernel.InvokePromptAsync(
-                         promptTemplate: prompt.PromptContent,
+                         promptTemplate: prompt!.PromptUser,
                          arguments: arguments,
                          templateFormat: "handlebars",
                          promptTemplateFactory: new HandlebarsPromptTemplateFactory(),
